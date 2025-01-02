@@ -2,16 +2,16 @@ use crate::{CoordFloat, Point};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Haversine::bearing` method from the `Bearing` trait instead"
+    note = "请改用 `Bearing` 特征中的 `Haversine::bearing` 方法"
 )]
-/// Returns the bearing to another Point in degrees.
+/// 返回到另一个点的方位角，单位为度。
 ///
 /// Bullock, R.: Great Circle Distances and Bearings Between Two Locations, 2007.
 /// (<https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf>)
 pub trait HaversineBearing<T: CoordFloat> {
-    /// Returns the bearing to another Point in degrees, where North is 0° and East is 90°.
+    /// 返回到另一个点的方位角，单位为度，其中北为0°，东为90°。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -34,13 +34,13 @@ where
     T: CoordFloat,
 {
     fn haversine_bearing(&self, point: Point<T>) -> T {
-        let (lng_a, lat_a) = (self.x().to_radians(), self.y().to_radians());
-        let (lng_b, lat_b) = (point.x().to_radians(), point.y().to_radians());
-        let delta_lng = lng_b - lng_a;
-        let s = lat_b.cos() * delta_lng.sin();
-        let c = lat_a.cos() * lat_b.sin() - lat_a.sin() * lat_b.cos() * delta_lng.cos();
+        let (lng_a, lat_a) = (self.x().to_radians(), self.y().to_radians()); // 当前点的经纬度转换为弧度
+        let (lng_b, lat_b) = (point.x().to_radians(), point.y().to_radians()); // 目标点的经纬度转换为弧度
+        let delta_lng = lng_b - lng_a; // 经度差异
+        let s = lat_b.cos() * delta_lng.sin(); // 正弦计算
+        let c = lat_a.cos() * lat_b.sin() - lat_a.sin() * lat_b.cos() * delta_lng.cos(); // 余弦计算
 
-        T::atan2(s, c).to_degrees()
+        T::atan2(s, c).to_degrees() // 返回方位角，转换为度
     }
 }
 
@@ -58,7 +58,7 @@ mod test {
         let p_2 = point!(x: 9., y: 48.);
         #[allow(deprecated)]
         let bearing = p_1.haversine_bearing(p_2);
-        assert_relative_eq!(bearing, 0.);
+        assert_relative_eq!(bearing, 0.); // 北向方位角测试
     }
 
     #[test]
@@ -67,7 +67,7 @@ mod test {
         let p_2 = point!(x: 10., y: 0.);
         #[allow(deprecated)]
         let bearing = p_1.haversine_bearing(p_2);
-        assert_relative_eq!(bearing, 90.);
+        assert_relative_eq!(bearing, 90.); // 赤道东向方位角测试
     }
 
     #[test]
@@ -77,7 +77,7 @@ mod test {
 
         #[allow(deprecated)]
         let bearing = p_1.haversine_bearing(p_2);
-        assert_relative_eq!(bearing, 90.);
+        assert_relative_eq!(bearing, 90.); // 东向方位角测试
     }
 
     #[test]
@@ -86,7 +86,7 @@ mod test {
         let p_2 = point!(x: 9.274409949623548, y: 48.84033274015048);
         #[allow(deprecated)]
         let bearing = p_1.haversine_bearing(p_2);
-        assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
+        assert_relative_eq!(bearing, 45., epsilon = 1.0e-6); // 东北向方位角测试
     }
 
     #[test]
@@ -97,6 +97,6 @@ mod test {
 
         #[allow(deprecated)]
         let b_1 = p_1.haversine_bearing(p_2);
-        assert_relative_eq!(b_1, 45., epsilon = 1.0e-6);
+        assert_relative_eq!(b_1, 45., epsilon = 1.0e-6); // 与目的地一致性的测试
     }
 }

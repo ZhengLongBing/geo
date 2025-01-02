@@ -7,7 +7,7 @@ use std::{fmt, iter, marker, slice};
 
 type CoordinateChainOnce<T> = iter::Chain<iter::Once<Coord<T>>, iter::Once<Coord<T>>>;
 
-/// Iterate over geometry coordinates.
+/// 迭代几何坐标。
 pub trait CoordsIter {
     type Iter<'a>: Iterator<Item = Coord<Self::Scalar>>
     where
@@ -17,9 +17,9 @@ pub trait CoordsIter {
         Self: 'a;
     type Scalar: CoordNum;
 
-    /// Iterate over all exterior and (if any) interior coordinates of a geometry.
+    /// 迭代几何图形的所有外部坐标和（如果有的话）内部坐标。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// use geo::coords_iter::CoordsIter;
@@ -38,9 +38,9 @@ pub trait CoordsIter {
     /// ```
     fn coords_iter(&self) -> Self::Iter<'_>;
 
-    /// Return the number of coordinates in a geometry.
+    /// 返回几何图形中的坐标数量。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// use geo::coords_iter::CoordsIter;
@@ -56,15 +56,15 @@ pub trait CoordsIter {
     /// ```
     fn coords_count(&self) -> usize;
 
-    /// Iterate over all exterior coordinates of a geometry.
+    /// 迭代几何图形的所有外部坐标。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// use geo::coords_iter::CoordsIter;
     /// use geo::polygon;
     ///
-    /// // a diamond shape
+    /// // 一个菱形
     /// let polygon = polygon![
     ///     exterior: [
     ///         (x: 1.0, y: 0.0),
@@ -96,7 +96,7 @@ pub trait CoordsIter {
 }
 
 // ┌──────────────────────────┐
-// │ Implementation for Point │
+// │ Point 的实现              │
 // └──────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for Point<T> {
@@ -114,7 +114,7 @@ impl<T: CoordNum> CoordsIter for Point<T> {
         iter::once(self.0)
     }
 
-    /// Return the number of coordinates in the `Point`.
+    /// 返回 `Point` 中的坐标数量。
     fn coords_count(&self) -> usize {
         1
     }
@@ -125,7 +125,7 @@ impl<T: CoordNum> CoordsIter for Point<T> {
 }
 
 // ┌─────────────────────────┐
-// │ Implementation for Line │
+// │ Line 的实现              │
 // └─────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for Line<T> {
@@ -143,7 +143,7 @@ impl<T: CoordNum> CoordsIter for Line<T> {
         iter::once(self.start).chain(iter::once(self.end))
     }
 
-    /// Return the number of coordinates in the `Line`.
+    /// 返回 `Line` 中的坐标数量。
     fn coords_count(&self) -> usize {
         2
     }
@@ -154,7 +154,7 @@ impl<T: CoordNum> CoordsIter for Line<T> {
 }
 
 // ┌───────────────────────────────┐
-// │ Implementation for LineString │
+// │ LineString 的实现             │
 // └───────────────────────────────┘
 
 type LineStringIter<'a, T> = iter::Copied<slice::Iter<'a, Coord<T>>>;
@@ -174,7 +174,7 @@ impl<T: CoordNum> CoordsIter for LineString<T> {
         self.0.iter().copied()
     }
 
-    /// Return the number of coordinates in the `LineString`.
+    /// 返回 `LineString` 中的坐标数量。
     fn coords_count(&self) -> usize {
         self.0.len()
     }
@@ -185,7 +185,7 @@ impl<T: CoordNum> CoordsIter for LineString<T> {
 }
 
 // ┌────────────────────────────┐
-// │ Implementation for Polygon │
+// │ Polygon 的实现             │
 // └────────────────────────────┘
 
 type PolygonIter<'a, T> = iter::Chain<
@@ -210,7 +210,7 @@ impl<T: CoordNum> CoordsIter for Polygon<T> {
             .chain(MapCoordsIter(self.interiors().iter(), marker::PhantomData).flatten())
     }
 
-    /// Return the number of coordinates in the `Polygon`.
+    /// 返回 `Polygon` 中的坐标数量。
     fn coords_count(&self) -> usize {
         self.exterior().coords_count()
             + self
@@ -226,7 +226,7 @@ impl<T: CoordNum> CoordsIter for Polygon<T> {
 }
 
 // ┌───────────────────────────────┐
-// │ Implementation for MultiPoint │
+// │ MultiPoint 的实现             │
 // └───────────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for MultiPoint<T> {
@@ -244,7 +244,7 @@ impl<T: CoordNum> CoordsIter for MultiPoint<T> {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
     }
 
-    /// Return the number of coordinates in the `MultiPoint`.
+    /// 返回 `MultiPoint` 中的坐标数量。
     fn coords_count(&self) -> usize {
         self.0.len()
     }
@@ -255,7 +255,7 @@ impl<T: CoordNum> CoordsIter for MultiPoint<T> {
 }
 
 // ┌────────────────────────────────────┐
-// │ Implementation for MultiLineString │
+// │ MultiLineString 的实现            │
 // └────────────────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for MultiLineString<T> {
@@ -273,7 +273,7 @@ impl<T: CoordNum> CoordsIter for MultiLineString<T> {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
     }
 
-    /// Return the number of coordinates in the `MultiLineString`.
+    /// 返回 `MultiLineString` 中的坐标数量。
     fn coords_count(&self) -> usize {
         self.0
             .iter()
@@ -287,7 +287,7 @@ impl<T: CoordNum> CoordsIter for MultiLineString<T> {
 }
 
 // ┌─────────────────────────────────┐
-// │ Implementation for MultiPolygon │
+// │ MultiPolygon 的实现            │
 // └─────────────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for MultiPolygon<T> {
@@ -305,7 +305,7 @@ impl<T: CoordNum> CoordsIter for MultiPolygon<T> {
         MapCoordsIter(self.0.iter(), marker::PhantomData).flatten()
     }
 
-    /// Return the number of coordinates in the `MultiPolygon`.
+    /// 返回 `MultiPolygon` 中的坐标数量。
     fn coords_count(&self) -> usize {
         self.0.iter().map(|polygon| polygon.coords_count()).sum()
     }
@@ -316,7 +316,7 @@ impl<T: CoordNum> CoordsIter for MultiPolygon<T> {
 }
 
 // ┌───────────────────────────────────────┐
-// │ Implementation for GeometryCollection │
+// │ GeometryCollection 的实现            │
 // └───────────────────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for GeometryCollection<T> {
@@ -334,7 +334,7 @@ impl<T: CoordNum> CoordsIter for GeometryCollection<T> {
         Box::new(self.0.iter().flat_map(|geometry| geometry.coords_iter()))
     }
 
-    /// Return the number of coordinates in the `GeometryCollection`.
+    /// 返回 `GeometryCollection` 中的坐标数量。
     fn coords_count(&self) -> usize {
         self.0.iter().map(|geometry| geometry.coords_count()).sum()
     }
@@ -349,7 +349,7 @@ impl<T: CoordNum> CoordsIter for GeometryCollection<T> {
 }
 
 // ┌─────────────────────────┐
-// │ Implementation for Rect │
+// │ Rect 的实现             │
 // └─────────────────────────┘
 
 type RectIter<T> =
@@ -385,10 +385,9 @@ impl<T: CoordNum> CoordsIter for Rect<T> {
         }))
     }
 
-    /// Return the number of coordinates in the `Rect`.
+    /// 返回 `Rect` 中的坐标数量。
     ///
-    /// Note: Although a `Rect` is represented by two coordinates, it is
-    /// spatially represented by four, so this method returns `4`.
+    /// 注意：虽然 `Rect` 是由两个坐标表示的，它在空间上由四个坐标表示，因此此方法返回 `4`。
     fn coords_count(&self) -> usize {
         4
     }
@@ -399,7 +398,7 @@ impl<T: CoordNum> CoordsIter for Rect<T> {
 }
 
 // ┌─────────────────────────────┐
-// │ Implementation for Triangle │
+// │ Triangle 的实现             │
 // └─────────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for Triangle<T> {
@@ -419,7 +418,7 @@ impl<T: CoordNum> CoordsIter for Triangle<T> {
             .chain(iter::once(self.2))
     }
 
-    /// Return the number of coordinates in the `Triangle`.
+    /// 返回 `Triangle` 中的坐标数量。
     fn coords_count(&self) -> usize {
         3
     }
@@ -430,7 +429,7 @@ impl<T: CoordNum> CoordsIter for Triangle<T> {
 }
 
 // ┌─────────────────────────────┐
-// │ Implementation for Geometry │
+// │ Geometry 的实现             │
 // └─────────────────────────────┘
 
 impl<T: CoordNum> CoordsIter for Geometry<T> {
@@ -461,7 +460,7 @@ impl<T: CoordNum> CoordsIter for Geometry<T> {
         }
     }
     crate::geometry_delegate_impl! {
-        /// Return the number of coordinates in the `Geometry`.
+        /// 返回 `Geometry` 中的坐标数量。
         fn coords_count(&self) -> usize;
     }
 
@@ -492,7 +491,7 @@ impl<T: CoordNum> CoordsIter for Geometry<T> {
 }
 
 // ┌──────────────────────────┐
-// │ Implementation for Array │
+// │ Array 的实现              │
 // └──────────────────────────┘
 
 impl<const N: usize, T: CoordNum> CoordsIter for [Coord<T>; N] {
@@ -520,7 +519,7 @@ impl<const N: usize, T: CoordNum> CoordsIter for [Coord<T>; N] {
 }
 
 // ┌──────────────────────────┐
-// │ Implementation for Slice │
+// │ Slice 的实现             │
 // └──────────────────────────┘
 
 impl<'a, T: CoordNum> CoordsIter for &'a [Coord<T>] {
@@ -550,10 +549,10 @@ impl<'a, T: CoordNum> CoordsIter for &'a [Coord<T>] {
 }
 
 // ┌───────────┐
-// │ Utilities │
+// │ 实用工具  │
 // └───────────┘
 
-// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coord>>
+// 将 Iterator<CoordsIter> 转换为 Iterator<Iterator<Coord>> 的实用工具
 #[doc(hidden)]
 #[derive(Debug)]
 pub struct MapCoordsIter<
@@ -577,7 +576,7 @@ impl<'a, T: 'a + CoordNum, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter>
     }
 }
 
-// Utility to transform Iterator<CoordsIter> into Iterator<Iterator<Coord>>
+// 将 Iterator<CoordsIter> 转换为 Iterator<Iterator<Coord>> 的实用工具
 #[doc(hidden)]
 #[derive(Debug)]
 pub struct MapExteriorCoordsIter<
@@ -601,7 +600,7 @@ impl<'a, T: 'a + CoordNum, Iter1: Iterator<Item = &'a Iter2>, Iter2: CoordsIter>
     }
 }
 
-// Utility to transform Geometry into Iterator<Coord>
+// 将 Geometry 转换为 Iterator<Coord> 的实用工具
 #[doc(hidden)]
 pub enum GeometryCoordsIter<'a, T: CoordNum + 'a> {
     Point(<Point<T> as CoordsIter>::Iter<'a>),
@@ -674,7 +673,7 @@ impl<T: CoordNum + Debug> fmt::Debug for GeometryCoordsIter<'_, T> {
     }
 }
 
-// Utility to transform Geometry into Iterator<Coord>
+// 将 Geometry 转换为 Iterator<Coord> 的实用工具
 #[doc(hidden)]
 pub enum GeometryExteriorCoordsIter<'a, T: CoordNum + 'a> {
     Point(<Point<T> as CoordsIter>::ExteriorIter<'a>),

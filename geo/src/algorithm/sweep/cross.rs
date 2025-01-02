@@ -5,24 +5,21 @@ use geo_types::Line;
 use super::*;
 use crate::GeoFloat;
 
-/// Interface for types that can be processed to detect crossings.
+/// 可以处理以检测交叉点的类型接口。
 ///
-/// This type is implemented by [`LineOrPoint`], but users may also implement
-/// this on custom types to store extra information. Any type that represents an
-/// ordered line-segment may implement this.
+/// 此类型由 [`LineOrPoint`] 实现，但用户也可以在自定义类型上实现
+/// 以存储额外的信息。任何代表有序线段的类型都可以实现此接口。
 ///
-/// # Cloning
+/// # 克隆
 ///
-/// Note that for usage with the planar sweep iterators, the type must
-/// also impl. `Clone`. If the custom type is not cheap to clone, use
-/// either a reference to the type, a [`Rc`] or an [`Arc`]. All these
-/// are supported via blanket trait implementations.
+/// 注意，为了在平面扫描迭代器中使用，该类型必须实现 `Clone`。
+/// 如果自定义类型克隆成本较高，请使用对类型的引用、[`Rc`] 或 [`Arc`]。
+/// 所有这些都通过 blanket 特征实现来支持。
 pub trait Cross: Sized + Debug {
-    /// Scalar used the coordinates.
+    /// 用于坐标的标量。
     type Scalar: GeoFloat;
 
-    /// The geometry associated with this type. Use a `Line` with the
-    /// `start` and `end` coordinates to represent a point.
+    /// 与此类型关联的几何。使用带有 `start` 和 `end` 坐标的 `Line` 来表示一个点。
     fn line(&self) -> LineOrPoint<Self::Scalar>;
 }
 
@@ -50,6 +47,7 @@ impl<T: GeoFloat> Cross for Line<T> {
     }
 }
 
+// 定义 blanket_impl_smart_pointer 宏，用于实现 Cross 特征，方便为智能指针类型添加实现
 macro_rules! blanket_impl_smart_pointer {
     ($ty:ty) => {
         impl<T: Cross> Cross for $ty {
@@ -61,6 +59,7 @@ macro_rules! blanket_impl_smart_pointer {
         }
     };
 }
+// 使用 blanket_impl_smart_pointer 宏为 Box、Rc 和 Arc 类型实现 Cross 特征
 blanket_impl_smart_pointer!(Box<T>);
 blanket_impl_smart_pointer!(Rc<T>);
 blanket_impl_smart_pointer!(Arc<T>);

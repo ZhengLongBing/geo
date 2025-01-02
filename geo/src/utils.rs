@@ -1,12 +1,11 @@
-//! Internal utility functions, types, and data structures.
+//! 内部工具函数、类型和数据结构。  
 
 use geo_types::{Coord, CoordFloat, CoordNum};
 use num_traits::FromPrimitive;
 
-/// Partition a mutable slice in-place so that it contains all elements for
-/// which `predicate(e)` is `true`, followed by all elements for which
-/// `predicate(e)` is `false`. Returns sub-slices to all predicated and
-/// non-predicated elements, respectively.
+/// 对可变切片进行原地划分，使其包含所有满足 `predicate(e)` 为 `true` 的元素，
+/// 后跟所有 `predicate(e)` 为 `false` 的元素。分别返回包含满足和不满足谓词条件的
+/// 子切片。
 ///
 /// https://github.com/llogiq/partition/blob/master/src/lib.rs
 pub fn partition_slice<T, P>(data: &mut [T], predicate: P) -> (&mut [T], &mut [T])
@@ -75,7 +74,7 @@ where
     }
 }
 
-// The Rust standard library has `max` for `Ord`, but not for `PartialOrd`
+// Rust 标准库为 `Ord` 提供了 `max`，但没有为 `PartialOrd` 提供
 pub fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
     if a > b {
         a
@@ -84,7 +83,7 @@ pub fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
     }
 }
 
-// The Rust standard library has `min` for `Ord`, but not for `PartialOrd`
+// Rust 标准库为 `Ord` 提供了 `min`，但没有为 `PartialOrd` 提供
 pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
     if a < b {
         a
@@ -95,9 +94,8 @@ pub fn partial_min<T: PartialOrd>(a: T, b: T) -> T {
 
 use std::cmp::Ordering;
 
-/// Compare two coordinates lexicographically: first by the
-/// x coordinate, and break ties with the y coordinate.
-/// Expects none of coordinates to be uncomparable (eg. nan)
+/// 按字典顺序比较两个坐标：先按 x 坐标比较，如相等则比较 y 坐标。
+/// 假设坐标都是可比较的（例如，没有 nan）。
 #[inline]
 pub fn lex_cmp<T: CoordNum>(p: &Coord<T>, q: &Coord<T>) -> Ordering {
     p.x.partial_cmp(&q.x)
@@ -105,11 +103,9 @@ pub fn lex_cmp<T: CoordNum>(p: &Coord<T>, q: &Coord<T>) -> Ordering {
         .then(p.y.partial_cmp(&q.y).unwrap())
 }
 
-/// Compute index of the least point in slice. Comparison is
-/// done using [`lex_cmp`].
+/// 计算切片中最小点的索引。比较使用 [`lex_cmp`]。
 ///
-/// Should only be called on a non-empty slice with no `nan`
-/// coordinates.
+/// 仅应在非空切片且无 `nan` 坐标时调用。
 pub fn least_index<T: CoordNum>(pts: &[Coord<T>]) -> usize {
     pts.iter()
         .enumerate()
@@ -118,11 +114,9 @@ pub fn least_index<T: CoordNum>(pts: &[Coord<T>]) -> usize {
         .0
 }
 
-/// Compute index of the lexicographically least _and_ the
-/// greatest coordinate in one pass.
+/// 在一次遍历中计算字典顺序上的最小和最大的坐标索引。
 ///
-/// Should only be called on a non-empty slice with no `nan`
-/// coordinates.
+/// 仅应在非空切片且无 `nan` 坐标时调用。
 pub fn least_and_greatest_index<T: CoordNum>(pts: &[Coord<T>]) -> (usize, usize) {
     assert_ne!(pts.len(), 0);
     let (min, max) = pts
@@ -153,7 +147,7 @@ pub fn least_and_greatest_index<T: CoordNum>(pts: &[Coord<T>]) -> (usize, usize)
     (min.unwrap().0, max.unwrap().0)
 }
 
-/// Normalize a longitude to coordinate to ensure it's within [-180,180]
+/// 规范化经度坐标以确保其在 [-180,180] 范围内
 pub fn normalize_longitude<T: CoordFloat + FromPrimitive>(coord: T) -> T {
     let one_eighty = T::from(180.0f64).unwrap();
     let three_sixty = T::from(360.0f64).unwrap();

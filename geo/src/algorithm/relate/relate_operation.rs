@@ -12,15 +12,13 @@ use crate::{Coord, GeoFloat, GeometryCow};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// Computes an [`IntersectionMatrix`] describing the topological relationship between two
-/// Geometries.
+/// 计算描述两个几何体之间拓扑关系的 [`IntersectionMatrix`]。
 ///
-/// `RelateOperation` does not currently support [`GeometryCollection`]s with overlapping Polygons,
-/// and may provide surprising results in that case.
+/// `RelateOperation` 当前不支持包含重叠多边形的 [`GeometryCollection`]，并且在这种情况下可能会提供令人意外的结果。
 ///
-/// This implementation relies heavily on the functionality of [`GeometryGraph`].
+/// 此实现严重依赖于 [`GeometryGraph`] 的功能。
 ///
-/// Based on [JTS's `RelateComputer` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/RelateComputer.java)
+/// 基于 [JTS 的 `RelateComputer` ，版本 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/RelateComputer.java)
 pub(crate) struct RelateOperation<'a, F>
 where
     F: GeoFloat,
@@ -70,38 +68,36 @@ where
             (Some(bounding_rect_a), Some(bounding_rect_b))
                 if bounding_rect_a.intersects(&bounding_rect_b) => {}
             _ => {
-                // since Geometries don't overlap, we can skip most of the work
+                // 由于几何体不重叠，我们可以跳过大部分工作
                 intersection_matrix
                     .compute_disjoint(self.graph_a.geometry(), self.graph_b.geometry());
                 return intersection_matrix;
             }
         }
 
-        // Since changes to topology are inspected at nodes, we must crate a node for each
-        // intersection.
+        // 由于拓扑改变是在节点处检查的，我们必须为每个交点创建一个节点。
         self.graph_a
             .compute_self_nodes(Box::new(self.line_intersector.clone()));
         self.graph_b
             .compute_self_nodes(Box::new(self.line_intersector.clone()));
 
-        // compute intersections between edges of the two input geometries
+        // 计算两个输入几何体的边之间的交点
         let segment_intersector = self
             .graph_a
             .compute_edge_intersections(&self.graph_b, Box::new(self.line_intersector.clone()));
 
         self.compute_intersection_nodes(0);
         self.compute_intersection_nodes(1);
-        // Copy the labelling for the nodes in the parent Geometries.  These override any labels
-        // determined by intersections between the geometries.
+        // 复制父几何体中节点的标记。这些将覆盖通过几何体之间的交点所确定的任何标记。
         self.copy_nodes_and_labels(0);
         self.copy_nodes_and_labels(1);
-        // complete the labelling for any nodes which only have a label for a single geometry
+        // 完成仅为单一几何体提供标签的任何节点的标记
         self.label_isolated_nodes();
-        // If a proper intersection was found, we can set a lower bound on the IM.
+        // 如果找到适当的交点，我们可以在 IM 上设置一个下界。
         self.compute_proper_intersection_im(&segment_intersector, &mut intersection_matrix);
-        // Now process improper intersections
-        // (eg where one or other of the geometries has a vertex at the intersection point)
-        // We need to compute the edge graph at all nodes to determine the IM.
+        // 现在处理不当的交点
+        // （例如，在交点处一个或另一个几何体有一个顶点的情况）
+        // 我们需要计算所有节点处的边图以确定 IM。
         let edge_end_builder = EdgeEndBuilder::new();
         let edge_ends_a: Vec<_> = edge_end_builder.compute_ends_for_edges(self.graph_a.edges());
         self.insert_edge_ends(edge_ends_a);
@@ -115,16 +111,14 @@ where
             .map(|(node, edges)| (node, edges.into_labeled(&self.graph_a, &self.graph_b)))
             .collect();
 
-        // Compute the labeling for "isolated" components
+        // 计算“孤立”组件的标记
         //
-        // Isolated components are components that do not touch any other components in the graph.
+        // 孤立组件是指在图中不接触任何其他组件的组件。
         //
-        // They can be identified by the fact that their labels will have only one non-empty
-        // element, the one for their parent geometry.
+        // 它们可以通过两个几何体的标签中只有一个非空元素来识别。
         //
-        // We only need to check components contained in the input graphs, since, by definition,
-        // isolated components will not have been replaced by new components formed by
-        // intersections.
+        // 根据定义，我们只需要检查输入图中包含的组件，因为孤立组件不会被
+        // 交点所形成的新组件所取代。
         self.label_isolated_edges(0, 1);
         self.label_isolated_edges(1, 0);
 
@@ -151,7 +145,7 @@ where
         segment_intersector: &SegmentIntersector<F>,
         intersection_matrix: &mut IntersectionMatrix,
     ) {
-        // If a proper intersection is found, we can set a lower bound on the IM.
+        // 如果找到适当的交点，我们可以在 IM 上设置一个下界。
         let dim_a = self.graph_a.geometry().dimensions();
         let dim_b = self.graph_b.geometry().dimensions();
 
@@ -164,7 +158,7 @@ where
         );
 
         match (dim_a, dim_b) {
-            // If edge segments of Areas properly intersect, the areas must properly overlap.
+            // 如果区域的边段正确相交，则区域必须正确重叠。
             (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
                 if has_proper {
                     intersection_matrix
@@ -173,12 +167,9 @@ where
                 }
             }
 
-            // If a Line segment properly intersects an edge segment of an Area, it follows that
-            // the Interior of the Line intersects the Boundary of the Area.
-            // If the intersection is a proper *interior* intersection, then there is an
-            // Interior-Interior intersection too.
-            // Note that it does not follow that the Interior of the Line intersects the Exterior
-            // of the Area, since there may be another Area component which contains the rest of the Line.
+            // 如果线段正确地与区域的边段相交，则线段的内部与区域的边界相交。
+            // 如果交点是一个正确的“内部”交点，则在内部也有一个内-内交点。
+            // 请注意，这并不意味着线段的内部与区域的外部相交，因为可能有另一个区域组件包含线段的其余部分。
             (Dimensions::TwoDimensional, Dimensions::OneDimensional) => {
                 if has_proper {
                     intersection_matrix
@@ -207,13 +198,9 @@ where
                 }
             }
 
-            // If edges of LineStrings properly intersect *in an interior point*, all we can deduce
-            // is that the interiors intersect.  (We can NOT deduce that the exteriors intersect,
-            // since some other segments in the geometries might cover the points in the
-            // neighbourhood of the intersection.)
-            // It is important that the point be known to be an interior point of both Geometries,
-            // since it is possible in a self-intersecting geometry to have a proper intersection
-            // on one segment that is also a boundary point of another segment.
+            // 如果线字符串的边在内部点正确相交，我们能推断出的是内-内交点。
+            // （我们不能推断出外部相交，因为几何体中的其他一些段可能覆盖交点附近的点）。
+            // 确保该点是两个几何体的内部点很重要，因为在自相交几何体中，可能一个段上的正确交点也是另一个段的边界点。
             (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
                 if has_proper_interior {
                     intersection_matrix
@@ -225,12 +212,10 @@ where
         }
     }
 
-    /// Copy all nodes from an arg geometry into this graph.
+    /// 将所有节点从参数几何体复制到此图中。
     ///
-    /// The node label in the arg geometry overrides any previously computed label for that
-    /// argIndex.  (E.g. a node may be an intersection node with a computed label of BOUNDARY, but
-    /// in the original arg Geometry it is actually in the interior due to the Boundary
-    /// Determination Rule)
+    /// 参数几何体中的节点标签会覆盖先前计算的该参数索引的任何标签。
+    /// （例如，一个节点可能是一个带有计算标签的交点节点，其标签为边界，但在原始参数几何体中，由于边界确定规则，该节点实际上在内部。
     fn copy_nodes_and_labels(&mut self, geom_index: usize) {
         let graph = if geom_index == 0 {
             &self.graph_a
@@ -252,13 +237,12 @@ where
         }
     }
 
-    /// Insert nodes for all intersections on the edges of a Geometry.
+    /// 为几何体边上的所有交点插入节点。
     ///
-    /// Label the created nodes the same as the edge label if they do not already have a label.
-    /// This allows nodes created by either self-intersections or mutual intersections to be
-    /// labeled.
+    /// 如果创建的节点没有标签，标记节点为相同的边标签。
+    /// 这允许由自交或互交创建的节点被标记。
     ///
-    /// Endpoint nodes will already be labeled from when they were inserted.
+    /// 端点节点在插入时已标记。
     fn compute_intersection_nodes(&mut self, geom_index: usize) {
         let graph = if geom_index == 0 {
             &self.graph_a
@@ -311,12 +295,9 @@ where
         }
     }
 
-    /// Processes isolated edges by computing their labelling and adding them to the isolated edges
-    /// list.
+    /// 通过计算其标签并将其添加到孤立边列表中来处理孤立边。
     ///
-    /// By definition, "isolated" edges are guaranteed not to touch the boundary of the target
-    /// (since if they did, they would have caused an intersection to be computed and hence would
-    /// not be isolated).
+    /// 根据定义，“孤立”边保证不触摸目标的边界（因为如果它们触碰了边界，它们将导致计算一个交点，因此不会保持孤立）。
     fn label_isolated_edges(&mut self, this_index: usize, target_index: usize) {
         let (this_graph, target_graph) = if this_index == 0 {
             (&self.graph_a, &self.graph_b)
@@ -333,14 +314,12 @@ where
         }
     }
 
-    /// Label an isolated edge of a graph with its relationship to the target geometry.
-    /// If the target has dim 2 or 1, the edge can either be in the interior or the exterior.
-    /// If the target has dim 0, the edge must be in the exterior
+    /// 标记图中孤立边与目标几何体的关系。
+    /// 如果目标的维度是 2 或 1，边可以在内部或外部。
+    /// 如果目标的维度是 0，边必须在外部
     fn label_isolated_edge(edge: &mut Edge<F>, target_index: usize, target: &GeometryCow<F>) {
         if target.dimensions() > Dimensions::ZeroDimensional {
-            // An isolated edge doesn't cross any boundary, so it's either wholly inside, or wholly
-            // outside of the geometry. As such, we can use any point from the edge to infer the
-            // position of the edge as a whole.
+            // 一个孤立边不跨越任何边界，因此它要么完全在几何体内部，要么完全在外部。 因此，我们可以使用边上的任何一点来推断整个边的位置。
             let coord = edge.coords().first().expect("can't create empty edge");
             let position = target.coordinate_position(coord);
             edge.label_mut().set_all_positions(target_index, position);
@@ -350,18 +329,15 @@ where
         }
     }
 
-    /// Isolated nodes are nodes whose labels are incomplete (e.g. the location for one Geometry is
-    /// null).
-    /// This is the case because nodes in one graph which don't intersect nodes in the other
-    /// are not completely labeled by the initial process of adding nodes to the nodeList.  To
-    /// complete the labelling we need to check for nodes that lie in the interior of edges, and in
-    /// the interior of areas.
+    /// 孤立节点是标签不完整的节点（例如，一个几何体的位置为空）。
+    /// 这是因为一个图中的节点在添加到节点列表的初始过程中没有与另一个图中的节点相交，因此没有完全被标记。
+    /// 为了完成标记，我们需要检查位于边内部和区域内部的节点。
     fn label_isolated_nodes(&mut self) {
         let geometry_a = self.graph_a.geometry();
         let geometry_b = self.graph_b.geometry();
         for (node, _edges) in self.nodes.iter_mut() {
             let label = node.label();
-            // isolated nodes should always have at least one geometry in their label
+            // 孤立节点的标签中应始终至少包含一个几何体
             debug_assert!(label.geometry_count() > 0, "node with empty label found");
             if node.is_isolated() {
                 if label.is_empty(0) {
@@ -486,7 +462,7 @@ mod test {
         ];
         let polyrelation = square_a.relate(&square_b);
 
-        // same, but different coordinate order
+        // 相同，但坐标顺序不同
         let ls1 = line_string![(x: 1.0, y: 1.0), (x: 2.0, y: 2.0)];
         let ls2 = line_string![(x: 2.0, y: 2.0), (x: 1.0, y: 1.0)];
         let lsrelation = ls1.relate(&ls2);

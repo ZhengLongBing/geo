@@ -4,6 +4,7 @@ use crate::{
 };
 use std::mem;
 
+// 为Coord<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for Coord<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -16,6 +17,7 @@ where
     }
 }
 
+// 为Point<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for Point<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -25,6 +27,7 @@ where
     }
 }
 
+// 为LineString<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for LineString<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -38,11 +41,13 @@ where
         }
     }
 
+    // 提供大小提示
     fn size_hint(_depth: usize) -> (usize, Option<usize>) {
         (mem::size_of::<T>() * 2, None)
     }
 }
 
+// 为Polygon<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for Polygon<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -55,6 +60,7 @@ where
     }
 }
 
+// 为MultiPoint<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for MultiPoint<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -64,6 +70,7 @@ where
     }
 }
 
+// 为MultiLineString<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for MultiLineString<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -73,6 +80,7 @@ where
     }
 }
 
+// 为MultiPolygon<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for MultiPolygon<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -82,6 +90,7 @@ where
     }
 }
 
+// 为GeometryCollection<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for GeometryCollection<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -91,6 +100,7 @@ where
     }
 }
 
+// 为Rect<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for Rect<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -103,6 +113,7 @@ where
     }
 }
 
+// 为Triangle<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for Triangle<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -116,6 +127,7 @@ where
     }
 }
 
+// 为Geometry<T>实现arbitrary::Arbitrary trait
 impl<'a, T> arbitrary::Arbitrary<'a> for Geometry<T>
 where
     T: arbitrary::Arbitrary<'a> + CoordFloat,
@@ -123,6 +135,7 @@ where
     fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
         let n = u.int_in_range(0..=8)?;
 
+        // 根据随机数选择不同的几何类型
         Ok(match n {
             0 => Self::Point(u.arbitrary()?),
             1 => Self::LineString(u.arbitrary()?),

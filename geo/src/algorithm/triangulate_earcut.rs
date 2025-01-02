@@ -1,20 +1,20 @@
 use crate::{coord, CoordFloat, CoordsIter, Polygon, Triangle};
 
-/// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
+/// 使用[ear-cutting算法](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf)对多边形进行三角剖分。
 ///
-/// Requires the `"earcutr"` feature, which is enabled by default.
+/// 需要 `"earcutr"` 特性，默认启用。
 pub trait TriangulateEarcut<T: CoordFloat> {
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
     ///
     /// let square_polygon = polygon![
-    ///     (x: 0., y: 0.), // SW
-    ///     (x: 10., y: 0.), // SE
-    ///     (x: 10., y: 10.), // NE
-    ///     (x: 0., y: 10.), // NW
-    ///     (x: 0., y: 0.), // SW
+    ///     (x: 0., y: 0.), // 西南
+    ///     (x: 10., y: 0.), // 东南
+    ///     (x: 10., y: 10.), // 东北
+    ///     (x: 0., y: 10.), // 西北
+    ///     (x: 0., y: 0.), // 西南
     /// ];
     ///
     /// let triangles = square_polygon.earcut_triangles();
@@ -22,14 +22,14 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// assert_eq!(
     ///     vec![
     ///         Triangle(
-    ///             coord! { x: 0., y: 10. }, // NW
-    ///             coord! { x: 10., y: 10. }, // NE
-    ///             coord! { x: 10., y: 0. }, // SE
+    ///             coord! { x: 0., y: 10. }, // 西北
+    ///             coord! { x: 10., y: 10. }, // 东北
+    ///             coord! { x: 10., y: 0. }, // 东南
     ///         ),
     ///         Triangle(
-    ///             coord! { x: 10., y: 0. }, // SE
-    ///             coord! { x: 0., y: 0. }, // SW
-    ///             coord! { x: 0., y: 10. }, // NW
+    ///             coord! { x: 10., y: 0. }, // 东南
+    ///             coord! { x: 0., y: 0. }, // 西南
+    ///             coord! { x: 0., y: 10. }, // 西北
     ///         ),
     ///     ],
     ///     triangles,
@@ -39,35 +39,35 @@ pub trait TriangulateEarcut<T: CoordFloat> {
         self.earcut_triangles_iter().collect()
     }
 
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
     ///
     /// let square_polygon = polygon![
-    ///     (x: 0., y: 0.), // SW
-    ///     (x: 10., y: 0.), // SE
-    ///     (x: 10., y: 10.), // NE
-    ///     (x: 0., y: 10.), // NW
-    ///     (x: 0., y: 0.), // SW
+    ///     (x: 0., y: 0.), // 西南
+    ///     (x: 10., y: 0.), // 东南
+    ///     (x: 10., y: 10.), // 东北
+    ///     (x: 0., y: 10.), // 西北
+    ///     (x: 0., y: 0.), // 西南
     /// ];
     ///
     /// let mut triangles_iter = square_polygon.earcut_triangles_iter();
     ///
     /// assert_eq!(
     ///     Some(Triangle(
-    ///             coord! { x: 0., y: 10. }, // NW
-    ///             coord! { x: 10., y: 10. }, // NE
-    ///             coord! { x: 10., y: 0. }, // SE
+    ///             coord! { x: 0., y: 10. }, // 西北
+    ///             coord! { x: 10., y: 10. }, // 东北
+    ///             coord! { x: 10., y: 0. }, // 东南
     ///     )),
     ///     triangles_iter.next(),
     /// );
     ///
     /// assert_eq!(
     ///     Some(Triangle(
-    ///         coord! { x: 10., y: 0. }, // SE
-    ///         coord! { x: 0., y: 0. }, // SW
-    ///         coord! { x: 0., y: 10. }, // NW
+    ///         coord! { x: 10., y: 0. }, // 东南
+    ///         coord! { x: 0., y: 0. }, // 西南
+    ///         coord! { x: 0., y: 10. }, // 西北
     ///     )),
     ///     triangles_iter.next(),
     /// );
@@ -78,24 +78,22 @@ pub trait TriangulateEarcut<T: CoordFloat> {
         Iter(self.earcut_triangles_raw())
     }
 
-    /// Return the raw result from the `earcutr` library: a one-dimensional vector of polygon
-    /// vertices (in XY order), and the indices of the triangles within the vertices vector. This
-    /// method is less ergonomic than the `earcut_triangles` and `earcut_triangles_iter`
-    /// methods, but can be helpful when working in graphics contexts that expect flat vectors of
-    /// data.
+    /// 返回 `earcutr` 库的原始结果：一个一维的多边形顶点向量（按XY顺序）和三角形在顶点向量中的索引。
+    /// 此方法不如 `earcut_triangles` 和 `earcut_triangles_iter` 方法那么方便，但在图形上下文中使用
+    /// 一维数据时可能会很有帮助。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
     /// use geo::triangulate_earcut::RawTriangulation;
     ///
     /// let square_polygon = polygon![
-    ///     (x: 0., y: 0.), // SW
-    ///     (x: 10., y: 0.), // SE
-    ///     (x: 10., y: 10.), // NE
-    ///     (x: 0., y: 10.), // NW
-    ///     (x: 0., y: 0.), // SW
+    ///     (x: 0., y: 0.), // 西南
+    ///     (x: 10., y: 0.), // 东南
+    ///     (x: 10., y: 10.), // 东北
+    ///     (x: 0., y: 10.), // 西北
+    ///     (x: 0., y: 0.), // 西南
     /// ];
     ///
     /// let mut triangles_raw = square_polygon.earcut_triangles_raw();
@@ -103,15 +101,15 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// assert_eq!(
     ///     RawTriangulation {
     ///         vertices: vec![
-    ///             0., 0., // SW
-    ///             10., 0., // SE
-    ///             10., 10., // NE
-    ///             0., 10., // NW
-    ///             0., 0., // SW
+    ///             0., 0., // 西南
+    ///             10., 0., // 东南
+    ///             10., 10., // 东北
+    ///             0., 10., // 西北
+    ///             0., 0., // 西南
     ///         ],
     ///         triangle_indices: vec![
-    ///             3, 0, 1, // NW-SW-SE
-    ///             1, 2, 3, // SE-NE-NW
+    ///             3, 0, 1, // 西北-西南-东南
+    ///             1, 2, 3, // 东南-东北-西北
     ///         ],
     ///     },
     ///     triangles_raw,
@@ -132,13 +130,13 @@ impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
     }
 }
 
-/// The raw result of triangulating a polygon from `earcutr`.
+/// 来自 `earcutr` 的多边形三角剖分原始结果。
 #[derive(Debug, PartialEq, Clone)]
 pub struct RawTriangulation<T: CoordFloat> {
-    /// Flattened one-dimensional vector of polygon vertices (in XY order).
+    /// 一维多边形顶点向量（按XY顺序）。
     pub vertices: Vec<T>,
 
-    /// Indices of the triangles within the vertices vector.
+    /// 顶点向量中三角形的索引。
     pub triangle_indices: Vec<usize>,
 }
 
@@ -182,7 +180,7 @@ fn polygon_to_earcutr_input<T: CoordFloat>(polygon: &crate::Polygon<T>) -> Earcu
     flat_line_string_coords_2(polygon.exterior(), &mut vertices);
 
     for interior in polygon.interiors() {
-        debug_assert!(interior.0.len() >= 4);
+        debug_assert!(interior.0.len() >= 4); // 内部的线必须至少有四个点
         interior_indexes.push(vertices.len() / 2);
         flat_line_string_coords_2(interior, &mut vertices);
     }
@@ -198,8 +196,8 @@ fn flat_line_string_coords_2<T: CoordFloat>(
     vertices: &mut Vec<T>,
 ) {
     for coord in &line_string.0 {
-        vertices.push(coord.x);
-        vertices.push(coord.y);
+        vertices.push(coord.x); // 添加x坐标
+        vertices.push(coord.y); // 添加y坐标
     }
 }
 

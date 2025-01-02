@@ -7,21 +7,18 @@ use crate::{
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;
 
-/// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
-/// their geometry, a concave hull does so while trying to further minimize its area by
-/// constructing edges such that the exterior of the polygon incorporates points that would
-/// be interior points in a convex hull.
+/// 返回覆盖几何体的多边形。与凸包不同的是，凹包不仅覆盖它们的几何体，
+/// 而且通过构建边缘来尽量减少面积，使多边形的外部包含在凸包中会是内部点的点。
 ///
-/// This implementation is inspired by <https://github.com/mapbox/concaveman>
-/// and also uses ideas from the following paper:
-/// www.iis.sinica.edu.tw/page/jise/2012/201205_10.pdf
+/// 该实现受到 <https://github.com/mapbox/concaveman> 的启发
+/// 并使用了以下论文中的一些想法： www.iis.sinica.edu.tw/page/jise/2012/201205_10.pdf
 ///
-/// # Examples
+/// # 示例
 /// ```
 /// use geo::{line_string, polygon};
 /// use geo::ConcaveHull;
 ///
-/// // a square shape
+/// // 一个正方形
 /// let poly = polygon![
 ///     (x: 0.0, y: 0.0),
 ///     (x: 4.0, y: 0.0),
@@ -29,7 +26,7 @@ use std::collections::VecDeque;
 ///     (x: 0.0, y: 4.0),
 /// ];
 ///
-/// // The correct concave hull coordinates
+/// // 正确的凹包坐标
 /// let correct_hull = line_string![
 ///     (x: 4.0, y: 0.0),
 ///     (x: 4.0, y: 4.0),
@@ -147,9 +144,9 @@ where
                 .peekable();
             let peeked_edge = edges_nearby_point.peek();
 
-            // Clippy is having an issue here. It might be a valid suggestion,
-            // but the automatic clippy fix breaks the code, so may need to be done by hand.
-            // See https://github.com/rust-lang/rust/issues/94241
+            // Clippy在这里有一个问题。这可能是一个有效的建议，
+            // 但Clippy的自动修复会破坏代码，因此可能需要手动进行。
+            // 参见 https://github.com/rust-lang/rust/issues/94241
             #[allow(clippy::manual_map)]
             let closest_edge_option = match peeked_edge {
                 None => None,
@@ -185,7 +182,7 @@ where
     }
 }
 
-// This takes significant inspiration from:
+// 这一函数在很大程度上得到了以下代码的启发:
 // https://github.com/mapbox/concaveman/blob/54838e1/index.js#L11
 fn concave_hull<T>(coords: &mut [Coord<T>], concavity: T) -> LineString<T>
 where
@@ -197,7 +194,7 @@ where
         return hull;
     }
 
-    //Get points in overall dataset that aren't on the exterior linestring of the hull
+    // 获取不在壳体外部线串上的整个数据集中点
     let hull_tree: RTree<Coord<T>> = RTree::bulk_load(hull.clone().0);
 
     let interior_coords: Vec<Coord<T>> = coords
@@ -239,7 +236,7 @@ where
             line_queue.push_front(end_line);
             line_queue.push_front(start_line);
         } else {
-            // Make sure we don't add duplicates
+            // 确保我们不添加重复项
             if concave_list.is_empty() || !concave_list.ends_with(&[line.start_point()]) {
                 concave_list.push(line.start_point());
             }

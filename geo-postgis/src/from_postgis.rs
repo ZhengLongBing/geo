@@ -6,11 +6,10 @@ use geo_types::{
 use postgis::ewkb::{GeometryCollectionT, GeometryT};
 
 #[cfg_attr(docsrs, doc(cfg(feature = "postgis")))]
-/// Creates geometry from a PostGIS type.
+/// 从PostGIS类型创建几何对象。
 ///
-/// Note that PostGIS databases can store data under any spatial
-/// reference system - not just WGS84. No attempt is made to convert
-/// data between reference systems.
+/// 请注意，PostGIS数据库可以在任何空间参考系统下存储数据 —— 不仅仅是WGS84。
+/// 不会尝试在参考系统之间转换数据。
 pub trait FromPostgis<T> {
     fn from_postgis(_: T) -> Self;
 }
@@ -36,8 +35,8 @@ impl<'a, T> FromPostgis<&'a T> for Option<Polygon<f64>>
 where
     T: postgis::Polygon<'a>,
 {
-    /// This returns an `Option`, because it's possible for a PostGIS `Polygon`
-    /// to contain zero rings, which makes for an invalid `geo::Polygon`.
+    /// 这将返回一个`Option`，因为一个PostGIS`Polygon`可能不包含任何环，
+    /// 这会导致一个无效的`geo::Polygon`。
     fn from_postgis(poly: &'a T) -> Self {
         let mut rings = poly
             .rings()
@@ -72,8 +71,8 @@ impl<'a, T> FromPostgis<&'a T> for MultiPolygon
 where
     T: postgis::MultiPolygon<'a>,
 {
-    /// This implementation discards PostGIS polygons that don't convert
-    /// (return `None` when `from_postgis()` is called on them).
+    /// 此实现丢弃不能转换的PostGIS多边形
+    /// （当调用`from_postgis()`时返回`None`）。
     fn from_postgis(mp: &'a T) -> Self {
         let ret = mp.polygons().filter_map(Option::from_postgis).collect();
         MultiPolygon::new(ret)
@@ -83,8 +82,8 @@ impl<'a, T> FromPostgis<&'a GeometryCollectionT<T>> for GeometryCollection
 where
     T: postgis::Point + postgis::ewkb::EwkbRead,
 {
-    /// This implementation discards geometries that don't convert
-    /// (return `None` when `from_postgis()` is called on them).
+    /// 此实现丢弃不能转换的几何体
+    /// （当调用`from_postgis()`时返回`None`）。
     fn from_postgis(gc: &'a GeometryCollectionT<T>) -> Self {
         let geoms = gc
             .geometries
@@ -98,8 +97,7 @@ impl<'a, T> FromPostgis<&'a GeometryT<T>> for Option<Geometry>
 where
     T: postgis::Point + postgis::ewkb::EwkbRead,
 {
-    /// This returns an `Option`, because the supplied geometry
-    /// could be an invalid `Polygon`.
+    /// 返回一个`Option`，因为提供的几何体可能是一个无效的`Polygon`。
     fn from_postgis(geo: &'a GeometryT<T>) -> Self {
         Some(match *geo {
             GeometryT::Point(ref p) => Geometry::Point(Point::from_postgis(p)),

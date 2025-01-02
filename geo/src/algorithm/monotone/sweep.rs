@@ -4,26 +4,22 @@ use std::{collections::BinaryHeap, fmt::Debug};
 
 use super::{RcSegment, Segment};
 
-/// Simple planar sweep algorithm.
+/// 简单平面扫描算法。
 ///
-/// Performs a planar sweep along the x-axis on a set of line or points.  This
-/// can be initialized with a iterator of line segments or points, along with an
-/// optional payload.
+/// 对一组线段或点沿X轴执行平面扫描。
+/// 这可以通过线段或点的迭代器初始化，以及一个可选的负载。
 ///
-/// The sweep is used to:
+/// 扫描用于：
 ///
-/// - iterate over all end-points of the input line or points in lex. order
+/// - 以词汇顺序迭代输入线段或点的所有终点。
 ///
-/// - query the set of active segments at the current iteration point: these are
-///   the segments currently intersecting the sweep line, and are ordered by their
-///    position on the line
+/// - 查询在当前迭代点处的活动段集合：这些是当前与扫描线相交的段，并按它们在线上的位置排序。
 ///
-/// # Note
+/// # 注意
 ///
-/// This is a simpler version, which does not support intersections that are
-/// interior to both segments.  That is, every intersection between two segments
-/// should be at the end point of at least one of them.  In particular, overlaps
-/// are also not supported (will panic).
+/// 这是一个更简单的版本，不支持两个段内部的交点。
+/// 即，每个段之间的交叉点应在其中至少一个的终点处。
+/// 特别是，重叠也不支持（会触发恐慌）。
 pub(crate) struct SimpleSweep<T: GeoNum, P: Debug> {
     events: BinaryHeap<Event<T, RcSegment<T, P>>>,
     active_segments: VecSet<Active<RcSegment<T, P>>>,
@@ -54,14 +50,10 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
         }
     }
 
-    /// Progress and obtain the next sweep point along with the set of segments
-    /// ending at the current sweep point.
+    /// 进展并获取下一个扫描点以及在当前扫描点结束的段集合。
     ///
-    /// The segments are returned as per the ordering of their `EventType`; in
-    /// particular, all segments ending at the current sweep point are returned
-    /// before the ones starting at the current sweep point.  The idx of the
-    /// first segment starting at the current sweep point is returned in the
-    /// `split_idx` parameter.
+    /// 段按照其`EventType`的顺序返回；特别是，所有在当前扫描点结束的段优先于在当前扫描点开始的段返回。
+    /// 返回第一个在当前扫描点开始的段的索引在`split_idx`参数中。
     pub(crate) fn next_point<F: FnMut(RcSegment<T, P>, EventType)>(
         &mut self,
         mut f: F,
@@ -85,7 +77,7 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
     where
         F: FnMut(Event<T, RcSegment<T, P>>),
     {
-        // We may get spurious events from adjusting the line segment.  Ignore.
+        // 我们可能会从调整线段中获得虚假事件。忽略。
         if event.point != event.payload.line().left() && event.point != event.payload.line().right()
         {
             return;
@@ -94,7 +86,7 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
         use EventType::*;
         let segment = &event.payload;
         trace!(
-            "handling event: {pt:?} ({ty:?}) @ {seg:?}",
+            "处理事件: {pt:?} ({ty:?}) @ {seg:?}",
             pt = event.point,
             ty = event.ty,
             seg = segment,
@@ -134,11 +126,9 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
                         SplitResult::None => {}
                     }
 
-                    // Special case:  if we split at the current event point, then
-                    // we have LineRight events in the queue that have to be
-                    // processed before this.
+                    // 特殊情况：如果我们在当前事件点分割，那么队列中需要在此之前处理 LineRight 事件。
 
-                    // There's always a top as this is a left event.
+                    // 由于这是一个左事件，总会有一个顶点。
                     while self.events.peek().unwrap() > &event {
                         debug_assert_eq!(self.events.peek().unwrap().ty, LineRight);
                         debug_assert_eq!(self.events.peek().unwrap().point, event.point);
@@ -182,7 +172,7 @@ impl<T: GeoNum, P: Debug + Clone> SimpleSweep<T, P> {
         }
     }
 
-    /// Check if the two segments intersect at a point interior to one of them.
+    /// 检查两个段是否在其中一个内部的点相交。
     fn check_interior_intersection(
         &self,
         a: &RcSegment<T, P>,

@@ -1,20 +1,19 @@
 use crate::{GeoFloat, Point};
 
-/// The result of trying to find the closest spot on an object to a point.
+/// 尝试在对象上找到离某点最近点的结果。
 #[cfg_attr(feature = "use-serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Closest<F: GeoFloat> {
-    /// The point actually intersects with the object.
+    /// 实际上与对象相交的点。
     Intersection(Point<F>),
-    /// There is exactly one place on this object which is closest to the point.
+    /// 在该对象上只有一个地方最接近该点。
     SinglePoint(Point<F>),
-    /// There are two or more (possibly infinite or undefined) possible points.
+    /// 存在两个或更多（可能是无限或未定义）的可能点。
     Indeterminate,
 }
 
 impl<F: GeoFloat> Closest<F> {
-    /// Compare two `Closest`s relative to `p` and return a copy of the best
-    /// one.
+    /// 相对于 `p` 比较两个 `Closest` 并返回较优者的副本。
     pub fn best_of_two(&self, other: &Self, p: Point<F>) -> Self {
         use crate::{Distance, Euclidean};
 
@@ -37,85 +36,84 @@ impl<F: GeoFloat> Closest<F> {
     }
 }
 
-/// Implements the common pattern where a Geometry enum simply delegates its trait impl to it's inner type.
+/// 实现一个常见的模式，即 Geometry 枚举简单地将其特性实现委托给其内部类型。
 ///
 /// ```
 /// # use geo::{GeoNum, Coord, Point, Line, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection, Rect, Triangle, Geometry};
 ///
 /// trait Foo<T: GeoNum> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool;
+///     fn foo_1(&self, coord: Coord<T>) -> bool;
 ///     fn foo_2(&self) -> i32;
 /// }
 ///
-/// // Assuming we have an impl for all the inner types like this:
+/// // 假设我们为所有的内部类型实现了如下：
 /// impl<T: GeoNum> Foo<T> for Point<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
-///     fn foo_2(&self)  -> i32 { 1 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { true }
+///     fn foo_2(&self) -> i32 { 1 }
 /// }
 /// impl<T: GeoNum> Foo<T> for Line<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
-///     fn foo_2(&self)  -> i32 { 2 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { false }
+///     fn foo_2(&self) -> i32 { 2 }
 /// }
 /// impl<T: GeoNum> Foo<T> for LineString<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
-///     fn foo_2(&self)  -> i32 { 3 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { true }
+///     fn foo_2(&self) -> i32 { 3 }
 /// }
 /// impl<T: GeoNum> Foo<T> for Polygon<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
-///     fn foo_2(&self)  -> i32 { 4 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { false }
+///     fn foo_2(&self) -> i32 { 4 }
 /// }
 /// impl<T: GeoNum> Foo<T> for MultiPoint<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
-///     fn foo_2(&self)  -> i32 { 5 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { true }
+///     fn foo_2(&self) -> i32 { 5 }
 /// }
 /// impl<T: GeoNum> Foo<T> for MultiLineString<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
-///     fn foo_2(&self)  -> i32 { 6 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { false }
+///     fn foo_2(&self) -> i32 { 6 }
 /// }
 /// impl<T: GeoNum> Foo<T> for MultiPolygon<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
-///     fn foo_2(&self)  -> i32 { 7 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { true }
+///     fn foo_2(&self) -> i32 { 7 }
 /// }
 /// impl<T: GeoNum> Foo<T> for GeometryCollection<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { false }
-///     fn foo_2(&self)  -> i32 { 8 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { false }
+///     fn foo_2(&self) -> i32 { 8 }
 /// }
 /// impl<T: GeoNum> Foo<T> for Rect<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
-///     fn foo_2(&self)  -> i32 { 9 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { true }
+///     fn foo_2(&self) -> i32 { 9 }
 /// }
 /// impl<T: GeoNum> Foo<T> for Triangle<T> {
-///     fn foo_1(&self, coord: Coord<T>)  -> bool { true }
-///     fn foo_2(&self)  -> i32 { 10 }
+///     fn foo_1(&self, coord: Coord<T>) -> bool { true }
+///     fn foo_2(&self) -> i32 { 10 }
 /// }
 ///
-/// // If we want the impl for Geometry to simply delegate to it's
-/// // inner case...
+/// // 如果我们想要为 Geometry 的实现简单地委托到其内部情形...
 /// impl<T: GeoNum> Foo<T> for Geometry<T> {
-///     // Instead of writing out this trivial enum delegation...
-///     // fn foo_1(&self, coord: Coord<T>)  -> bool {
-///     //     match self {
-///     //        Geometry::Point(g) => g.foo_1(coord),
-///     //        Geometry::LineString(g) => g.foo_1(coord),
-///     //        _ => unimplemented!("...etc for other cases")
-///     //     }
-///     // }
-///     //
-///     // fn foo_2(&self)  -> i32 {
-///     //     match self {
-///     //        Geometry::Point(g) => g.foo_2(),
-///     //        Geometry::LineString(g) => g.foo_2(),
-///     //        _ => unimplemented!("...etc for other cases")
-///     //     }
-///     // }
+///     // 代替写出这些简单的枚举委托...
+///     fn foo_1(&self, coord: Coord<T>) -> bool {
+///         match self {
+///            Geometry::Point(g) => g.foo_1(coord),
+///            Geometry::LineString(g) => g.foo_1(coord),
+///            _ => unimplemented!("...etc for other cases")
+///         }
+///     }
+///    
+///     fn foo_2(&self) -> i32 {
+///         match self {
+///            Geometry::Point(g) => g.foo_2(),
+///            Geometry::LineString(g) => g.foo_2(),
+///            _ => unimplemented!("...etc for other cases")
+///         }
+///     }
 ///
-///     // we can equivalently write:
+///     // 我们可以等效地写作：
+/// impl<T: GeoNum> Foo<T> for Geometry<T> {
 ///     geo::geometry_delegate_impl! {
 ///         fn foo_1(&self, coord: Coord<T>) -> bool;
 ///         fn foo_2(&self) -> i32;
 ///     }
 /// }
-/// ```
 #[macro_export]
 macro_rules! geometry_delegate_impl {
     ($($a:tt)*) => { $crate::__geometry_delegate_impl_helper!{ Geometry, $($a)* } }

@@ -4,28 +4,27 @@ use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::utils::normalize_longitude;
 use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 
-/// A spherical model of the earth using the [haversine formula].
+/// 使用 [haversine 公式] 的地球球面模型。
 ///
-/// Distances are considered [great circle] lengths and are measured in meters.
+/// 距离被认为是 [大圆] 长度，并以米为单位测量。
 ///
-/// # References
+/// # 参考文献
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *注意*：该实现使用了基于 [IUGG 推荐](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf) 的 6371.088 km 的平均地球半径。
 ///
-/// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula//
-/// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+/// [haversine 公式]: https://en.wikipedia.org/wiki/Haversine_formula
+/// [大圆]: https://en.wikipedia.org/wiki/Great_circle
 pub struct Haversine;
 
 impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
-    /// Returns the bearing from `origin` to `destination` in degrees along a [great circle].
+    /// 返回沿 [大圆] 从 `origin` 到 `destination` 的方位角，以度为单位。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`, `destination`: Points where x/y are lon/lat degree coordinates
-    /// - returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
+    /// - `origin`, `destination`: 点，其 x/y 是经纬度坐标
+    /// - 返回值：度数，北: 0°, 东: 90°, 南: 180°, 西: 270°
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -35,16 +34,16 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
     /// let origin = Point::new(9.0, 10.0);
     /// let destination = Point::new(9.5, 10.1);
     /// let bearing = Haversine::bearing(origin, destination);
-    /// // A little north of east
+    /// // 略偏于东
     /// assert_relative_eq!(bearing, 78.47, epsilon = 1.0e-2);
     /// ```
     ///
-    /// # References
+    /// # 参考文献
     ///
     /// Bullock, R.: Great Circle Distances and Bearings Between Two Locations, 2007.
     /// (<https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf>)
     ///
-    /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+    /// [大圆]: https://en.wikipedia.org/wiki/Great_circle
     fn bearing(origin: Point<F>, destination: Point<F>) -> F {
         let three_sixty =
             F::from(360.0).expect("Numeric type to be constructable from primitive 360");
@@ -60,17 +59,16 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Haversine {
 }
 
 impl<F: CoordFloat + FromPrimitive> Destination<F> for Haversine {
-    /// Returns a new point having travelled the `distance` along a [great circle]
-    /// from the `origin` point with the given `bearing`.
+    /// 返回从 `origin` 点沿指定 `bearing` 经过 `distance` 的 [大圆] 新点。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`: Point where x/y are lon/lat degree coordinates
-    /// - `bearing`: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
-    /// - `distance`: meters
-    /// - returns: Point where x/y are lon/lat degree coordinates
+    /// - `origin`: 点，其 x/y 是经纬度坐标
+    /// - `bearing`: 度数，北: 0°, 东: 90°, 南: 180°, 西: 270°
+    /// - `distance`: 米
+    /// - 返回值：点，其 x/y 是经纬度坐标
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -82,12 +80,11 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Haversine {
     /// assert_relative_eq!(Point::new(9.274409949623532, 48.84033274015048), destination);
     /// ```
     ///
-    /// # References
+    /// # 参考文献
     ///
-    /// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-    /// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+    /// *注意*：该实现使用了基于 [IUGG 推荐](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf) 的 6371.088 km 的平均地球半径。
     ///
-    /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+    /// [大圆]: https://en.wikipedia.org/wiki/Great_circle
     fn destination(origin: Point<F>, bearing: F, meters: F) -> Point<F> {
         let center_lng = origin.x().to_radians();
         let center_lat = origin.y().to_radians();
@@ -107,14 +104,14 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Haversine {
 }
 
 impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversine {
-    /// Determine the distance between two points using the [haversine formula].
+    /// 使用 [haversine 公式] 确定两点之间的距离。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`, `destination`: Points where x/y are lon/lat degree coordinates
-    /// - returns: meters
+    /// - `origin`, `destination`: 点，其 x/y 是经纬度坐标
+    /// - 返回值：米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -127,17 +124,16 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
     /// let distance = Haversine::distance(new_york_city, london);
     ///
     /// assert_relative_eq!(
-    ///     5_570_230., // meters
+    ///     5_570_230., // 米
     ///     distance.round()
     /// );
     /// ```
     ///
-    /// # References
+    /// # 参考文献
     ///
-    /// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-    /// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+    /// *注意*：该实现使用了基于 [IUGG 推荐](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf) 的 6371.088 km 的平均地球半径。
     ///
-    /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
+    /// [haversine 公式]: https://en.wikipedia.org/wiki/Haversine_formula
     fn distance(origin: Point<F>, destination: Point<F>) -> F {
         let two = F::one() + F::one();
         let theta1 = origin.y().to_radians();
@@ -151,13 +147,13 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
     }
 }
 
-/// Interpolate Point(s) along a [great circle].
+/// 沿 [大圆] 插值点。
 ///
-/// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+/// [大圆]: https://en.wikipedia.org/wiki/Great_circle
 impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
-    /// Returns a new Point along a [great circle] between two existing points.
+    /// 返回两个现有点之间 [大圆] 上的新点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -174,15 +170,15 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
     /// assert_relative_eq!(closer_to_p2, Point::new(112.33, 30.57), epsilon = 1.0e-2);
     /// ```
     ///
-    /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+    /// [大圆]: https://en.wikipedia.org/wiki/Great_circle
     fn point_at_distance_between(start: Point<F>, end: Point<F>, meters_from_start: F) -> Point<F> {
         let bearing = Self::bearing(start, end);
         Self::destination(start, bearing, meters_from_start)
     }
 
-    /// Returns a new Point along a [great circle] between two existing points.
+    /// 返回两个现有点之间 [大圆] 上的新点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -202,7 +198,7 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
     /// assert_relative_eq!(midpoint, Point::new(65.87, 37.62), epsilon = 1.0e-2);
     /// ```
     ///
-    /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
+    /// [大圆]: https://en.wikipedia.org/wiki/Great_circle
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
         if start == end || ratio_from_start == F::zero() {
             return start;
@@ -214,16 +210,15 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Haversine {
         calculation.point_at_ratio(ratio_from_start)
     }
 
-    /// Interpolates `Point`s along a [great circle] between `start` and `end`.
+    /// 在 `start` 和 `end` 之间沿 [大圆] 插值 `Point`。
     ///
-    /// As many points as necessary will be added such that the [haversine distance] between points
-    /// never exceeds `max_distance`. If the distance between start and end is less than
-    /// `max_distance`, no additional points will be included in the output.
+    /// 将添加尽可能多的点，以使两点之间的 [haversine 距离] 从不超过 `max_distance`。
+    /// 如果起点和终点之间的距离小于 `max_distance`，则输出中不会包含其他点。
     ///
-    /// `include_ends`: Should the start and end points be included in the output?
+    /// `include_ends`: 是否应在输出中包含起点和终点？
     ///
-    /// [great circle]: https://en.wikipedia.org/wiki/Great_circle
-    /// [haversine formula]: https://en.wikipedia.org/wiki/Haversine_formula
+    /// [大圆]: https://en.wikipedia.org/wiki/Great_circle
+    /// [haversine 公式]: https://en.wikipedia.org/wiki/Haversine_formula
     fn points_along_line(
         start: Point<F>,
         end: Point<F>,
@@ -297,6 +292,7 @@ impl<T: CoordFloat + FromPrimitive> HaversineIntermediateFillCalculation<T> {
         let p = lat1_cos * lon1_sin;
         let q = lat2_cos * lon2_sin;
 
+        // haversine公式的距离的计算，包括在最终的d中
         let k =
             (((lat1 - lat2) / two).sin().powi(2) + m * ((lon1 - lon2) / two).sin().powi(2)).sqrt();
 
@@ -327,6 +323,7 @@ impl<T: CoordFloat + FromPrimitive> HaversineIntermediateFillCalculation<T> {
             s,
         } = *self;
 
+        // 根据比例计算沿大圆的新点
         let a = ((one - ratio_from_start) * d).sin() / d.sin();
         let b = (ratio_from_start * d).sin() / d.sin();
 
@@ -434,7 +431,7 @@ mod tests {
             let distance = MetricSpace::distance(new_york_city, london);
 
             assert_relative_eq!(
-                5_570_230., // meters
+                5_570_230., // 米
                 distance.round()
             );
         }
@@ -453,7 +450,7 @@ mod tests {
         fn points_along_line_with_endpoints() {
             let start = Point::new(10.0, 20.0);
             let end = Point::new(125.0, 25.0);
-            let max_dist = 1000000.0; // meters
+            let max_dist = 1000000.0; // 米
             let route =
                 MetricSpace::points_along_line(start, end, max_dist, true).collect::<Vec<_>>();
             assert_eq!(route.len(), 13);
@@ -465,7 +462,7 @@ mod tests {
         fn points_along_line_without_endpoints() {
             let start = Point::new(10.0, 20.0);
             let end = Point::new(125.0, 25.0);
-            let max_dist = 1000000.0; // meters
+            let max_dist = 1000000.0; // 米
             let route =
                 MetricSpace::points_along_line(start, end, max_dist, false).collect::<Vec<_>>();
             assert_eq!(route.len(), 11);

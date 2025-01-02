@@ -6,22 +6,18 @@ use crate::{
     coord, Coord, CoordFloat, Geometry, LineString, MultiLineString, MultiPolygon, Polygon,
 };
 
-/// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
+/// 使用 Chaikin 算法平滑 `LineString`、`Polygon`、`MultiLineString` 和 `MultiPolygon`。
 ///
-/// [Chaikins smoothing algorithm](http://www.idav.ucdavis.edu/education/CAGDNotes/Chaikins-Algorithm/Chaikins-Algorithm.html)
+/// [Chaikin 平滑算法](http://www.idav.ucdavis.edu/education/CAGDNotes/Chaikins-Algorithm/Chaikins-Algorithm.html)
 ///
-/// Each iteration of the smoothing doubles the number of vertices of the geometry, so in some
-/// cases it may make sense to apply a simplification afterwards to remove insignificant
-/// coordinates.
+/// 平滑的每次迭代都会使几何体的顶点数加倍，因此某些情况下，之后应用简化以移除无关紧要的坐标可能是有意义的。
 ///
-/// This implementation preserves the start and end vertices of an open linestring and
-/// smoothes the corner between start and end of a closed linestring.
+/// 此实现保留开放线串的起始和结束顶点，并平滑闭合线串起始和结束之间的角部。
 pub trait ChaikinSmoothing<T>
 where
     T: CoordFloat + FromPrimitive,
 {
-    /// create a new geometry with the Chaikin smoothing being
-    /// applied `n_iterations` times.
+    /// 创建新的几何体，应用 Chaikin 平滑 `n_iterations` 次。
     fn chaikin_smoothing(&self, n_iterations: usize) -> Self;
 }
 
@@ -116,7 +112,7 @@ where
 
     if let (Some(first), Some(last)) = (linestring.0.first(), linestring.0.last()) {
         if first != last {
-            // preserve start coordinate when the linestring is open
+            // 当线串为开放时保留起始坐标
             out_coords.push(*first);
         }
     }
@@ -128,11 +124,10 @@ where
 
     if let (Some(first), Some(last)) = (linestring.0.first(), linestring.0.last()) {
         if first != last {
-            // preserve the last coordinate of an open linestring
+            // 保留开放线串的最后一个坐标
             out_coords.push(*last);
         } else {
-            // smoothen the edge between the beginning and the end in closed
-            // linestrings while keeping the linestring closed.
+            // 平滑闭合线串起始和结束之间的边缘，同时保持线串闭合。
             if let Some(out_first) = out_coords.first().copied() {
                 out_coords.push(out_first);
             }
@@ -163,7 +158,7 @@ mod test {
 
     #[test]
     fn geometry() {
-        // Test implemented geometry
+        // 测试已实现的几何类型
         let ls = LineString::from(vec![(3.0, 0.0), (6.0, 3.0), (3.0, 6.0), (0.0, 3.0)]);
         let ls_geo: Geometry = ls.into();
         let ls_geo_out = ls_geo.chaikin_smoothing(1);
@@ -182,7 +177,7 @@ mod test {
             ])
         );
 
-        // Test unimplemented geometry
+        // 测试未实现的几何类型
         let pt = Point::from((3.0, 0.0));
         let pt_geo: Geometry = pt.into();
         let pt_geo_out = pt_geo.chaikin_smoothing(1);

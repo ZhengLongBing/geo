@@ -13,38 +13,31 @@ use rstar::{RTree, RTreeNum};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// The computation of the [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) relies on the use of a
-/// structure called a "topology graph". The topology graph contains nodes (CoordNode) and
-/// edges (Edge) corresponding to the nodes and line segments of a [`Geometry`](crate::Geometry). Each
-/// node and edge in the graph is labeled with its topological location
-/// relative to the source geometry.
+/// [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) 的计算依赖于一种称为“拓扑图”的结构。拓扑图包含与 [`Geometry`](crate::Geometry) 的节点和线段对应的节点（CoordNode）和边（Edge）。图中的每个节点和边都标有其相对于源几何体的位置。
 ///
-/// Note that there is no requirement that points of self-intersection be a
-/// vertex. Thus, to obtain a correct topology graph, [`Geometry`](crate::Geometry) must be
-/// self-noded before constructing their graphs.
+/// 注意，自相交点并不要求是顶点。因此，为了获得正确的拓扑图，必须在构建几何图之前对其进行自节点化。
 ///
-/// Two fundamental operations are supported by topology graphs:
-///   - Computing the intersections between all the edges and nodes of a single graph
-///   - Computing the intersections between the edges and nodes of two different graphs
+/// 拓扑图支持两个基本操作：
+/// - 计算单个图的所有边和节点之间的交集
+/// - 计算两个不同图的边和节点之间的交集
 ///
-/// GeometryGraph is based on [JTS's `GeomGraph` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/GeometryGraph.java)
+/// GeometryGraph 基于 [JTS's `GeomGraph` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/GeometryGraph.java)
 #[derive(Clone)]
 pub struct GeometryGraph<'a, F>
 where
     F: GeoFloat,
 {
-    arg_index: usize,
-    parent_geometry: GeometryCow<'a, F>,
-    tree: Option<Rc<RTree<Segment<F>>>>,
-    use_boundary_determination_rule: bool,
-    has_computed_self_nodes: bool,
-    planar_graph: PlanarGraph<F>,
+    arg_index: usize,                      // 参数索引
+    parent_geometry: GeometryCow<'a, F>,   // 父几何体
+    tree: Option<Rc<RTree<Segment<F>>>>,   // 线段R树
+    use_boundary_determination_rule: bool, // 使用边界判定规则
+    has_computed_self_nodes: bool,         // 是否已计算自节点
+    planar_graph: PlanarGraph<F>,          // 平面图
 }
 
-///  PlanarGraph delegations
+/// PlanarGraph 委托
 ///
-/// In JTS, which is written in Java, GeometryGraph inherits from PlanarGraph. Here in Rust land we
-/// use composition and delegation to the same effect.
+/// 在用 Java 编写的 JTS 中，GeometryGraph 继承自 PlanarGraph。在 Rust 中我们使用组合和委托实现相同的效果。
 impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
@@ -66,7 +59,7 @@ where
             .enumerate()
             .flat_map(|(edge_idx, edge)| {
                 let edge = RefCell::borrow(edge);
-                let start_of_final_segment: usize = edge.coords().len() - 1;
+                let start_of_final_segment: usize = edge.coords().len() - 1; // 最后的线段起始点
                 (0..start_of_final_segment).map(move |segment_idx| {
                     let p1 = edge.coords()[segment_idx];
                     let p2 = edge.coords()[segment_idx + 1];
@@ -88,10 +81,7 @@ where
     }
 
     pub(crate) fn clone_for_arg_index(&self, arg_index: usize) -> Self {
-        debug_assert!(
-            self.has_computed_self_nodes,
-            "should only be called after computing self nodes"
-        );
+        debug_assert!(self.has_computed_self_nodes, "应在计算自节点后调用");
         let planar_graph = self
             .planar_graph
             .clone_for_arg_index(self.arg_index, arg_index);
@@ -147,11 +137,10 @@ where
         &self.parent_geometry
     }
 
-    /// Determine whether a component (node or edge) that appears multiple times in elements
-    /// of a Multi-Geometry is in the boundary or the interior of the Geometry
+    /// 确定多几何体中多次出现的组件（节点或边）是在几何体的边界还是内部
     pub fn determine_boundary(boundary_count: usize) -> CoordPos {
-        // For now, we only support the SFS "Mod-2 Rule"
-        // We could make this configurable if we wanted to support alternative boundary rules.
+        // 目前，我们只支持 SFS 的 "Mod-2 Rule"
+        // 如果我们想支持其他边界规则，可以使其配置化。
         if boundary_count % 2 == 1 {
             CoordPos::OnBoundary
         } else {
@@ -170,7 +159,7 @@ where
         match geometry {
             GeometryCow::Line(line) => self.add_line(line),
             GeometryCow::Rect(rect) => {
-                // PERF: avoid this conversion/clone?
+                // PERF: 避免这种转换/克隆？
                 self.add_polygon(&rect.to_polygon());
             }
             GeometryCow::Point(point) => {
@@ -178,7 +167,7 @@ where
             }
             GeometryCow::Polygon(polygon) => self.add_polygon(polygon),
             GeometryCow::Triangle(triangle) => {
-                // PERF: avoid this conversion/clone?
+                // PERF: 避免这种转换/克隆？
                 self.add_polygon(&triangle.to_polygon());
             }
             GeometryCow::LineString(line_string) => self.add_line_string(line_string),
@@ -188,8 +177,8 @@ where
                 }
             }
             GeometryCow::MultiPolygon(multi_polygon) => {
-                // check if this Geometry should obey the Boundary Determination Rule
-                // all collections except MultiPolygons obey the rule
+                // 检查此几何体是否应遵循边界判定规则
+                // 除多边形之外，所有集合都遵循规则
                 self.use_boundary_determination_rule = false;
                 for polygon in &multi_polygon.0 {
                     self.add_polygon(polygon);
@@ -220,7 +209,7 @@ where
         }
 
         let mut coords: Vec<Coord<F>> = Vec::with_capacity(linear_ring.0.len());
-        // remove repeated coords
+        // 移除重复的坐标
         for coord in &linear_ring.0 {
             if coords.last() != Some(coord) {
                 coords.push(*coord)
@@ -228,10 +217,8 @@ where
         }
 
         if coords.len() < 4 {
-            // TODO: we could return an Err here, but this has ramifications for how we can
-            // use this code in other operations - do we want all our methods, like `contains` to
-            // return a Result?
-            warn!("encountered invalid ring, which has undefined results");
+            // TODO: 我们可以在此返回Err，但这会对如何在其他操作中使用此代码产生影响 - 我们希望所有方法，比如`contains`返回Result吗？
+            warn!("遇到无效环，结果未定义");
         }
         let first_point = coords[0];
 
@@ -240,7 +227,7 @@ where
             Some(WindingOrder::Clockwise) => (cw_left, cw_right),
             Some(WindingOrder::CounterClockwise) => (cw_right, cw_left),
             None => {
-                warn!("polygon had no winding order. Results are undefined.");
+                warn!("多边形没有绕圈顺序。结果未定义。");
                 (cw_left, cw_right)
             }
         };
@@ -254,15 +241,14 @@ where
         );
         self.insert_edge(edge);
 
-        // insert the endpoint as a node, to mark that it is on the boundary
+        // 插入端点为节点，以标记它在边界上
         self.insert_point(self.arg_index, first_point, CoordPos::OnBoundary);
     }
 
     fn add_polygon(&mut self, polygon: &Polygon<F>) {
         self.add_polygon_ring(polygon.exterior(), CoordPos::Outside, CoordPos::Inside);
-        // Holes are topologically labeled opposite to the shell, since
-        // the interior of the polygon lies on their opposite side
-        // (on the left, if the hole is oriented CW)
+        // 孔的拓扑标签与壳体相对，因为多边形的内部位于它们的对侧
+        // （如果孔是顺时针定向的，则在左侧）
         for hole in polygon.interiors() {
             self.add_polygon_ring(hole, CoordPos::Inside, CoordPos::Outside)
         }
@@ -281,7 +267,7 @@ where
         }
 
         if coords.len() < 2 {
-            warn!("Treating invalid linestring as point, which has undefined results");
+            warn!("将无效线字符串处理为点，结果未定义");
             self.add_point(&coords[0].into());
             return;
         }
@@ -314,17 +300,14 @@ where
         self.insert_edge(edge);
     }
 
-    /// Add a point computed externally.  The point is assumed to be a
-    /// Point Geometry part, which has a location of INTERIOR.
+    /// 添加外部计算的点。假设该点是一个几何体的点部分，位置在内部。
     fn add_point(&mut self, point: &Point<F>) {
         self.insert_point(self.arg_index, (*point).into(), CoordPos::Inside);
     }
 
-    /// Compute self-nodes, taking advantage of the Geometry type to minimize the number of
-    /// intersection tests.  (E.g. rings are not tested for self-intersection, since they are
-    /// assumed to be valid).
+    /// 计算自节点，利用几何体类型来最小化相交测试的数量。（例如，圆环不进行自相交测试，因为假设它们是有效的）。
     ///
-    /// `line_intersector` the [`LineIntersector`] to use to determine intersection
+    /// `line_intersector` 用于确定相交的 [`LineIntersector`]
     pub(crate) fn compute_self_nodes(&mut self, line_intersector: Box<dyn LineIntersector<F>>) {
         if self.has_computed_self_nodes {
             return;
@@ -333,7 +316,7 @@ where
 
         let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
 
-        // optimize intersection search for valid Polygons and LinearRings
+        // 优化有效多边形和线性环的相交搜索
         let is_rings = match self.geometry() {
             GeometryCow::LineString(ls) => ls.is_closed(),
             GeometryCow::MultiLineString(ls) => ls.is_closed(),
@@ -377,14 +360,14 @@ where
         node.label_mut().set_on_position(arg_index, position);
     }
 
-    /// Add the boundary points of 1-dim (line) geometries.
+    /// 添加一维（线）几何体的边界点。
     fn insert_boundary_point(&mut self, coord: Coord<F>) {
         let arg_index = self.arg_index;
         let node: &mut CoordNode<F> = self.add_node_with_coordinate(coord);
 
         let label: &mut Label = node.label_mut();
 
-        // determine the current location for the point (if any)
+        // 确定该点的当前位置（如果有）
         let boundary_count = {
             #[allow(clippy::bool_to_int_with_if)]
             let prev_boundary_count =
@@ -409,7 +392,7 @@ where
                 let position = edge
                     .label()
                     .on_position(self.arg_index)
-                    .expect("all edge labels should have an `on` position by now");
+                    .expect("所有边标签现在应该有一个`on`位置");
                 let coordinates = edge
                     .edge_intersections()
                     .iter()
@@ -426,12 +409,11 @@ where
         }
     }
 
-    /// Add a node for a self-intersection.
+    /// 为自交添加一个节点。
     ///
-    /// If the node is a potential boundary node (e.g. came from an edge which is a boundary), then
-    /// insert it as a potential boundary node.  Otherwise, just add it as a regular node.
+    /// 如果节点是潜在的边界节点（例如来自边界的边），则将其作为潜在的边界节点插入。否则，只需作为普通节点添加即可。
     fn add_self_intersection_node(&mut self, coord: Coord<F>, position: CoordPos) {
-        // if this node is already a boundary node, don't change it
+        // 如果此节点已经是边界节点，则不更改
         if self.is_boundary_node(coord) {
             return;
         }

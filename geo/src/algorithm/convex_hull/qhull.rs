@@ -3,11 +3,9 @@ use crate::kernels::{Kernel, Orientation};
 use crate::utils::partition_slice;
 use crate::{coord, Coord, GeoNum, LineString};
 
-// Determines if `p_c` lies on the positive side of the
-// segment `p_a` to `p_b`. In other words, whether segment
-// `p_a` to `p_c` is a counter-clockwise rotation from the
-// segment. We use kernels to ensure this predicate is
-// exact.
+// 判断 `p_c` 是否位于线段 `p_a` 到  `p_b` 的正侧。
+// 换句话说，是否存在线段 `p_a` 到 `p_c` 是对线段的逆时针旋转。
+// 我们使用内核来确保这一谓词是精确的。
 #[inline]
 fn is_ccw<T>(p_a: Coord<T>, p_b: Coord<T>, p_c: Coord<T>) -> bool
 where
@@ -17,12 +15,12 @@ where
     o == Orientation::CounterClockwise
 }
 
-// Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
+// 改编自 https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
 pub fn quick_hull<T>(mut points: &mut [Coord<T>]) -> LineString<T>
 where
     T: GeoNum,
 {
-    // can't build a hull from fewer than four points
+    // 如果点少于四个，则无法构建外壳
     if points.len() < 4 {
         return trivial_hull(points, false);
     }
@@ -33,15 +31,14 @@ where
         let (min_idx, mut max_idx) = least_and_greatest_index(points);
         let min = swap_with_first_and_remove(&mut points, min_idx);
 
-        // Two special cases to consider:
-        // (1) max_idx = 0, and got swapped
+        // 需要考虑的两个特例：
+        // (1) max_idx = 0，并且进行了交换
         if max_idx == 0 {
             max_idx = min_idx;
         }
 
-        // (2) max_idx = min_idx: then any point could be
-        // chosen as max. But from case (1), it could now be
-        // 0, and we should not decrement it.
+        // (2) max_idx = min_idx: 那么可以选择任意点作为最大值。
+        // 但在情况 (1) 中，它可能是 0，我们不应该减少它。
         max_idx = max_idx.saturating_sub(1);
 
         let max = swap_with_first_and_remove(&mut points, max_idx);
@@ -56,13 +53,13 @@ where
     let (points, _) = partition_slice(points, |p| is_ccw(*min, *max, *p));
     hull_set(*min, *max, points, &mut hull);
     hull.push(*min);
-    // close the polygon
+    // 闭合多边形
     let mut hull: LineString<_> = hull.into();
     hull.close();
     hull
 }
 
-/// Recursively calculate the convex hull of a subset of points
+/// 递归计算点子集的凸包
 fn hull_set<T>(p_a: Coord<T>, p_b: Coord<T>, mut set: &mut [Coord<T>], hull: &mut Vec<Coord<T>>)
 where
     T: GeoNum,
@@ -75,9 +72,8 @@ where
         return;
     }
 
-    // Construct orthogonal vector to `p_b` - `p_a` We
-    // compute inner product of this with `v` - `p_a` to
-    // find the farthest point from the line segment a-b.
+    // 构造 `p_b` - `p_a` 的正交向量。
+    // 我们计算其与 `v` - `p_a` 的内积，以找到离线段 a-b 最远的点。
     let p_orth = coord! {
         x: p_a.y - p_b.y,
         y: p_b.x - p_a.x,
@@ -97,15 +93,15 @@ where
         .unwrap()
         .0;
 
-    // move Coord at furthest_point from set into hull
+    // 将 set 中的触及点移动到 hull
     let furthest_point = swap_with_first_and_remove(&mut set, furthest_idx);
-    // points over PB
+    // 点位于 PB 上的情况
     {
         let (points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));
         hull_set(*furthest_point, p_b, points, hull);
     }
     hull.push(*furthest_point);
-    // points over AP
+    // 点位于 AP 上的情况
     let (points, _) = partition_slice(set, |p| is_ccw(p_a, *furthest_point, *p));
     hull_set(p_a, *furthest_point, points, hull);
 }
@@ -155,7 +151,7 @@ mod test {
     }
 
     #[test]
-    // test whether output is ccw
+    // 测试输出是否为逆时针
     fn quick_hull_test_ccw() {
         let initial = [
             (1.0, 0.0),
@@ -174,7 +170,7 @@ mod test {
 
     #[test]
     fn quick_hull_test_ccw_maintain() {
-        // initial input begins at min y, is oriented ccw
+        // 初始输入从最小的 y 值开始，是逆时针方向
         let initial = [
             (0., 0.),
             (2., 0.),
@@ -208,9 +204,9 @@ mod test {
 
     #[test]
     fn quick_hull_test_collinear() {
-        // Initial input begins at min x, but not min y
-        // There are three points with same x.
-        // Output should not contain the middle point.
+        // 初始输入从最小的 x 开始，但不是最小的 y
+        // 有三点具有相同的 x。
+        // 输出不应包含中间点。
         let initial = [
             (-1., 0.),
             (-1., -1.),

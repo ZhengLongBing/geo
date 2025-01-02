@@ -4,22 +4,20 @@ use crate::{
 };
 use geo_types::GeometryCollection;
 
-/// Remove repeated points from a `MultiPoint` and repeated consecutive coordinates
-/// from `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon`.
+/// 从 `MultiPoint` 中移除重复点，以及从 `LineString`、`Polygon`、`MultiLineString` 和 `MultiPolygon` 中移除重复的连续坐标。
 ///
-/// For `GeometryCollection` it individually removes the repeated points
-/// of each geometry in the collection.
+/// 对于 `GeometryCollection`，单独移除集合中每个几何体的重复点。
 ///
-/// For `Point`, `Line`, `Rect` and `Triangle` the geometry remains the same.
+/// 对于 `Point`、`Line`、`Rect` 和 `Triangle`，几何体保持不变。
 pub trait RemoveRepeatedPoints<T: CoordNum> {
-    /// Create a new geometry with (consecutive) repeated points removed.
+    /// 创建一个去除（连续）重复点的新几何对象。
     fn remove_repeated_points(&self) -> Self;
-    /// Remove (consecutive) repeated points inplace.
+    /// 就地移除（连续）重复点。
     fn remove_repeated_points_mut(&mut self);
 }
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPoint<T> {
-    /// Create a MultiPoint with repeated points removed.
+    /// 创建一个去除重复点的 MultiPoint。
     fn remove_repeated_points(&self) -> Self {
         let mut points = vec![];
         for p in self.0.iter() {
@@ -30,7 +28,7 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPoint<T> {
         MultiPoint(points)
     }
 
-    /// Remove repeated points from a MultiPoint inplace.
+    /// 就地从 MultiPoint 中移除重复点。
     fn remove_repeated_points_mut(&mut self) {
         let mut points = vec![];
         for p in self.0.iter() {
@@ -43,21 +41,21 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPoint<T> {
 }
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for LineString<T> {
-    /// Create a LineString with consecutive repeated points removed.
+    /// 创建一个去除连续重复点的 LineString。
     fn remove_repeated_points(&self) -> Self {
         let mut coords = self.0.clone();
         coords.dedup();
         LineString(coords)
     }
 
-    /// Remove consecutive repeated points from a LineString inplace.
+    /// 就地移除 LineString 中连续的重复点。
     fn remove_repeated_points_mut(&mut self) {
         self.0.dedup();
     }
 }
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for Polygon<T> {
-    /// Create a Polygon with consecutive repeated points removed.
+    /// 创建一个去除连续重复点的 Polygon。
     fn remove_repeated_points(&self) -> Self {
         Polygon::new(
             self.exterior().remove_repeated_points(),
@@ -68,7 +66,7 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for Polygon<T> {
         )
     }
 
-    /// Remove consecutive repeated points from a Polygon inplace.
+    /// 就地移除 Polygon 中连续的重复点。
     fn remove_repeated_points_mut(&mut self) {
         self.exterior_mut(|exterior| exterior.remove_repeated_points_mut());
         self.interiors_mut(|interiors| {
@@ -80,7 +78,7 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for Polygon<T> {
 }
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiLineString<T> {
-    /// Create a MultiLineString with consecutive repeated points removed.
+    /// 创建一个去除连续重复点的 MultiLineString。
     fn remove_repeated_points(&self) -> Self {
         MultiLineString::new(
             self.0
@@ -90,7 +88,7 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiLineString<T> {
         )
     }
 
-    /// Remove consecutive repeated points from a MultiLineString inplace.
+    /// 就地移除 MultiLineString 中连续的重复点。
     fn remove_repeated_points_mut(&mut self) {
         for ls in self.0.iter_mut() {
             ls.remove_repeated_points_mut();
@@ -99,12 +97,12 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiLineString<T> {
 }
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPolygon<T> {
-    /// Create a MultiPolygon with consecutive repeated points removed.
+    /// 创建一个去除连续重复点的 MultiPolygon。
     fn remove_repeated_points(&self) -> Self {
         MultiPolygon::new(self.0.iter().map(|p| p.remove_repeated_points()).collect())
     }
 
-    /// Remove consecutive repeated points from a MultiPolygon inplace.
+    /// 就地移除 MultiPolygon 中连续的重复点。
     fn remove_repeated_points_mut(&mut self) {
         for p in self.0.iter_mut() {
             p.remove_repeated_points_mut();
@@ -112,9 +110,9 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for MultiPolygon<T> {
     }
 }
 
-// Implementation for types that are not candidate for coordinates removal
-// (Point / Line / Triangle / Rect), where `remove_repeated_points` returns a clone of the geometry
-// and `remove_repeated_points_mut` is a no-op.
+// 对于不适合坐标移除的类型的实现
+// （Point / Line / Triangle / Rect），`remove_repeated_points` 返回几何对象的克隆，
+// 而 `remove_repeated_points_mut` 是一个无操作（no-op）。
 macro_rules! impl_for_not_candidate_types {
     ($type:ident) => {
         impl<T: CoordNum> RemoveRepeatedPoints<T> for $type<T> {
@@ -123,7 +121,7 @@ macro_rules! impl_for_not_candidate_types {
             }
 
             fn remove_repeated_points_mut(&mut self) {
-                // no-op
+                // 无操作
             }
         }
     };
@@ -135,13 +133,12 @@ impl_for_not_candidate_types!(Triangle);
 impl_for_not_candidate_types!(Line);
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for GeometryCollection<T> {
-    /// Create a GeometryCollection with (consecutive) repeated points
-    /// of its geometries removed.
+    /// 创建一个去除其几何体的（连续）重复点的 GeometryCollection。
     fn remove_repeated_points(&self) -> Self {
         GeometryCollection::new_from(self.0.iter().map(|g| g.remove_repeated_points()).collect())
     }
 
-    /// Remove (consecutive) repeated points of its geometries from a GeometryCollection inplace.
+    /// 就地从 GeometryCollection 中移除其几何体的（连续）重复点。
     fn remove_repeated_points_mut(&mut self) {
         for g in self.0.iter_mut() {
             g.remove_repeated_points_mut();
@@ -150,15 +147,15 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for GeometryCollection<T> {
 }
 
 impl<T: CoordNum> RemoveRepeatedPoints<T> for Geometry<T> {
-    // The following couldn't be used for implementing `remove_repeated_points` until
-    // "impl<T: CoordNum> From<GeometryCollection<T>> for Geometry<T>" is implemented
-    // (see geo-types/src/geometry/mod.rs, lines 101-106) so we implement it manually for now
+    // 在实现 "impl<T: CoordNum> From<GeometryCollection<T>> for Geometry<T>" 之前，
+    // 下面的内容无法用于实现 `remove_repeated_points`
+    // （参见 geo-types/src/geometry/mod.rs，第 101-106 行），所以我们暂时手动实现
     //
     //   crate::geometry_delegate_impl! {
     //       fn remove_repeated_points(&self) -> Geometry<T>;
     //   }
 
-    /// Create a Geometry with consecutive repeated points removed.
+    /// 创建一个去除连续重复点的几何体。
     fn remove_repeated_points(&self) -> Self {
         match self {
             Geometry::Point(p) => Geometry::Point(p.remove_repeated_points()),
@@ -178,7 +175,7 @@ impl<T: CoordNum> RemoveRepeatedPoints<T> for Geometry<T> {
         }
     }
 
-    /// Remove consecutive repeated points from a Geometry inplace.
+    /// 就地从几何体中移除连续重复点。
     fn remove_repeated_points_mut(&mut self) {
         match self {
             Geometry::Point(p) => p.remove_repeated_points_mut(),

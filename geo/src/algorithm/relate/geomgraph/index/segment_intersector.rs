@@ -3,18 +3,17 @@ use crate::{Coord, GeoFloat, Line};
 
 use std::cell::{Ref, RefCell};
 
-/// Computes the intersection of line segments and adds the intersection to the [`Edge`s] containing
-/// the segments.
+/// 计算线段的交集，并将交点添加到包含这些线段的 [`Edge`] 中。
 pub(crate) struct SegmentIntersector<F>
 where
     F: GeoFloat,
 {
-    // Though JTS leaves this abstract - we might consider hard coding it to a RobustLineIntersector
-    line_intersector: Box<dyn LineIntersector<F>>,
-    edges_are_from_same_geometry: bool,
-    proper_intersection_point: Option<Coord<F>>,
-    has_proper_interior_intersection: bool,
-    boundary_nodes: Option<[Vec<CoordNode<F>>; 2]>,
+    // 虽然 JTS 将其作为抽象留出——我们可以考虑将其硬编码为 RobustLineIntersector
+    line_intersector: Box<dyn LineIntersector<F>>, // 线段交集计算器
+    edges_are_from_same_geometry: bool,            // 边是否来自同一几何对象
+    proper_intersection_point: Option<Coord<F>>,   // 正确的交点
+    has_proper_interior_intersection: bool,        // 是否具有适当的内部交集
+    boundary_nodes: Option<[Vec<CoordNode<F>>; 2]>, // 边界节点
 }
 
 impl<F> SegmentIntersector<F>
@@ -22,6 +21,7 @@ where
     F: GeoFloat,
 {
     fn is_adjacent_segments(i1: usize, i2: usize) -> bool {
+        // 判断两个段是否相邻
         let difference = if i1 > i2 { i1 - i2 } else { i2 - i1 };
         difference == 1
     }
@@ -30,6 +30,7 @@ where
         line_intersector: Box<dyn LineIntersector<F>>,
         edges_are_from_same_geometry: bool,
     ) -> SegmentIntersector<F> {
+        // 创建新的 SegmentIntersector 对象
         SegmentIntersector {
             line_intersector,
             edges_are_from_same_geometry,
@@ -43,24 +44,26 @@ where
         boundary_nodes_0: Vec<CoordNode<F>>,
         boundary_nodes_1: Vec<CoordNode<F>>,
     ) {
+        // 设置边界节点
         debug_assert!(
             self.boundary_nodes.is_none(),
-            "Should only set boundaries between geometries once"
+            "应该只在几何体之间设置边界一次"
         );
         self.boundary_nodes = Some([boundary_nodes_0, boundary_nodes_1]);
     }
 
     pub fn has_proper_intersection(&self) -> bool {
+        // 检查是否有正确的交集
         self.proper_intersection_point.is_some()
     }
 
     pub fn has_proper_interior_intersection(&self) -> bool {
+        // 检查是否有正确的内部交集
         self.has_proper_interior_intersection
     }
 
-    /// A trivial intersection is an apparent self-intersection which in fact is simply the point
-    /// shared by adjacent line segments.  Note that closed edges require a special check for the
-    /// point shared by the beginning and end segments.
+    /// 一个平凡交集是看似自交实际上只是由相邻线段共享的点。注意，闭合边缘需要对
+    /// 由起始和结束段共享的点进行特殊检查。
     fn is_trivial_intersection(
         &self,
         intersection: LineIntersection<F>,
@@ -70,25 +73,25 @@ where
         segment_index_1: usize,
     ) -> bool {
         if edge0.as_ptr() != edge1.as_ptr() {
-            return false;
+            return false; // 线段不来自同一边
         }
 
         if matches!(intersection, LineIntersection::Collinear { .. }) {
-            return false;
+            return false; // 如果交点是共线的
         }
 
         if Self::is_adjacent_segments(segment_index_0, segment_index_1) {
-            return true;
+            return true; // 如果段相邻
         }
 
         let edge0 = edge0.borrow();
         if edge0.is_closed() {
-            // first and last coords in a ring are adjacent
+            // 首尾坐标在一个环中相邻
             let max_segment_index = edge0.coords().len() - 1;
             if (segment_index_0 == 0 && segment_index_1 == max_segment_index)
                 || (segment_index_1 == 0 && segment_index_0 == max_segment_index)
             {
-                return true;
+                return true; // 首尾部分相邻
             }
         }
 
@@ -102,7 +105,7 @@ where
         edge1: &RefCell<Edge<F>>,
         segment_index_1: usize,
     ) {
-        // avoid a segment spuriously "intersecting" with itself
+        // 避免线段虚假地“与自身相交”
         if edge0.as_ptr() == edge1.as_ptr() && segment_index_0 == segment_index_1 {
             return;
         }
@@ -119,7 +122,7 @@ where
         let intersection = self.line_intersector.compute_intersection(line_0, line_1);
 
         if intersection.is_none() {
-            return;
+            return; // 如果没有交集
         }
         let intersection = intersection.unwrap();
 
@@ -135,8 +138,7 @@ where
             segment_index_1,
         ) {
             if self.edges_are_from_same_geometry || !intersection.is_proper() {
-                // In the case of self-noding, `edge0` might alias `edge1`, so it's imperative that
-                // the mutable borrows are short lived and do not overlap.
+                // 在自节点的情况下，`edge0` 可能别名为 `edge1`，因此务必保证可变借用短暂且不重叠。
                 edge0
                     .borrow_mut()
                     .add_intersections(intersection, line_0, segment_index_0);
@@ -164,6 +166,7 @@ where
         intersection: &Coord<F>,
         boundary_nodes: &Option<[Vec<CoordNode<F>>; 2]>,
     ) -> bool {
+        // 判断交点是否为边界点
         match &boundary_nodes {
             Some(boundary_nodes) => boundary_nodes
                 .iter()

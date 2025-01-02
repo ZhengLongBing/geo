@@ -5,9 +5,9 @@ use crate::GeoFloat;
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;
 
-// Because the RDP algorithm is recursive, we can't assign an index to a point inside the loop
-// instead, we wrap a simple struct around index and point in a wrapper function,
-// passing that around instead, extracting either points or indices on the way back out
+// 由于RDP算法是递归的，我们无法在循环内为一个点分配索引
+// 因此，我们将索引和点包装在一个简单的结构体中，然后在一个包装函数中传递它，
+// 在传递过程中返回点或索引
 #[derive(Copy, Clone)]
 struct RdpIndex<T>
 where
@@ -17,7 +17,7 @@ where
     coord: Coord<T>,
 }
 
-// Wrapper for the RDP algorithm, returning simplified points
+// RDP算法的包装器，返回简化后的点
 fn rdp<T, I: Iterator<Item = Coord<T>>, const INITIAL_MIN: usize>(
     coords: I,
     epsilon: &T,
@@ -25,7 +25,7 @@ fn rdp<T, I: Iterator<Item = Coord<T>>, const INITIAL_MIN: usize>(
 where
     T: GeoFloat,
 {
-    // Epsilon must be greater than zero for any meaningful simplification to happen
+    // Epsilon必须大于零才能进行有意义的简化
     if *epsilon <= T::zero() {
         return coords.collect::<Vec<Coord<T>>>();
     }
@@ -43,7 +43,7 @@ where
     simplified_coords
 }
 
-// Wrapper for the RDP algorithm, returning simplified point indices
+// RDP算法的包装器，返回简化后的点索引
 fn calculate_rdp_indices<T, const INITIAL_MIN: usize>(
     rdp_indices: &[RdpIndex<T>],
     epsilon: &T,
@@ -68,9 +68,9 @@ where
     simplified_coords
 }
 
-// Ramer–Douglas-Peucker line simplification algorithm
-// This function returns both the retained points, and their indices in the original geometry,
-// for more flexible use by FFI implementers
+// Ramer-Douglas-Peucker线简化算法
+// 此函数返回保留的点及其在原始几何体中的索引，
+// 以便FFI实现者更灵活地使用
 fn compute_rdp<T, const INITIAL_MIN: usize>(
     rdp_indices: &[RdpIndex<T>],
     simplified_len: &mut usize,
@@ -91,12 +91,12 @@ where
 
     let first_last_line = Line::new(first.coord, last.coord);
 
-    // Find the farthest `RdpIndex` from `first_last_line`
+    // 找到距离`first_last_line`最远的`RdpIndex`
     let (farthest_index, farthest_distance) = rdp_indices
         .iter()
         .enumerate()
-        .take(rdp_indices.len() - 1) // Don't include the last index
-        .skip(1) // Don't include the first index
+        .take(rdp_indices.len() - 1) // 不包括最后一个索引
+        .skip(1) // 不包括第一个索引
         .map(|(index, rdp_index)| {
             (
                 index,
@@ -116,12 +116,11 @@ where
     debug_assert_ne!(farthest_index, 0);
 
     if farthest_distance > *epsilon {
-        // The farthest index was larger than epsilon, so we will recursively simplify subsegments
-        // split by the farthest index.
+        // 最远的索引大于epsilon，因此我们将递归简化由最远索引分割的子段。
         let mut intermediate =
             compute_rdp::<T, INITIAL_MIN>(&rdp_indices[..=farthest_index], simplified_len, epsilon);
 
-        intermediate.pop(); // Don't include the farthest index twice
+        intermediate.pop(); // 不要重复包括最远的索引
 
         intermediate.extend_from_slice(&compute_rdp::<T, INITIAL_MIN>(
             &rdp_indices[farthest_index..],
@@ -131,45 +130,41 @@ where
         return intermediate;
     }
 
-    // The farthest index was less than or equal to epsilon, so we will retain only the first
-    // and last indices, resulting in the indices inbetween getting culled.
+    // 最远的索引小于或等于epsilon，因此我们将只保留第一个和最后一个索引，导致中间的索引被剔除。
 
-    // Update `simplified_len` to reflect the new number of indices by subtracting the number
-    // of indices we're culling.
+    // 更新`simplified_len`以反映新的索引数量，方法是减去我们要剔除的索引数量。
     let number_culled = rdp_indices.len() - 2;
     let new_length = *simplified_len - number_culled;
 
-    // If `simplified_len` is now lower than the minimum number of indices needed, then don't
-    // perform the culling and return the original input.
+    // 如果`simplified_len`现在低于所需的最小索引数，则不进行剔除并返回原始输入。
     if new_length < INITIAL_MIN {
         return rdp_indices.to_owned();
     }
     *simplified_len = new_length;
 
-    // Cull indices between `first` and `last`.
+    // 剔除`first`和`last`之间的索引。
     vec![first, last]
 }
 
-/// Simplifies a geometry.
+/// 简化几何对象。
 ///
-/// The [Ramer–Douglas–Peucker
-/// algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) simplifies a
-/// linestring. Polygons are simplified by running the RDP algorithm on all their constituent
-/// rings. This may result in invalid Polygons, and has no guarantee of preserving topology.
+/// [Ramer-Douglas-Peucker
+/// 算法](https://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm)简化了一条线。
+/// 多边形通过在其所有组成环上运行RDP算法来简化。
+/// 这可能导致无效的多边形，且不保证保持拓扑。
 ///
-/// Multi* objects are simplified by simplifying all their constituent geometries individually.
+/// Multi*对象通过分别简化其所有组成几何体来简化。
 ///
-/// A larger `epsilon` means being more aggressive about removing points with less concern for
-/// maintaining the existing shape.
+/// 较大的`epsilon`意味着更积极地移除与保持现有形状的关注度较少的点。
 ///
-/// Specifically, points closer than `epsilon` distance from the simplified output may be
-/// discarded.
+/// 具体来说，与简化输出距离比`epsilon`更近的点可能会被丢弃。
 ///
-/// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
+/// 小于或等于零的`epsilon`将返回未更改的几何体版本。
 pub trait Simplify<T, Epsilon = T> {
-    /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    /// 使用[Ramer-Douglas-Peucker](https://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm)
+    /// 算法返回几何体的简化表示
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// use geo::Simplify;
@@ -199,22 +194,22 @@ pub trait Simplify<T, Epsilon = T> {
         T: GeoFloat;
 }
 
-/// Simplifies a geometry, returning the retained _indices_ of the input.
+/// 简化几何体，返回保留的输入索引。
 ///
-/// This operation uses the [Ramer–Douglas–Peucker algorithm](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm)
-/// and does not guarantee that the returned geometry is valid.
+/// 此操作使用[Ramer-Douglas-Peucker
+/// 算法](https://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm)
+/// 并不保证返回的几何体是有效的。
 ///
-/// A larger `epsilon` means being more aggressive about removing points with less concern for
-/// maintaining the existing shape.
+/// 较大的`epsilon`意味着更积极地移除与保持现有形状的关注度较少的点。
 ///
-/// Specifically, points closer than `epsilon` distance from the simplified output may be
-/// discarded.
+/// 具体来说，与简化输出距离比`epsilon`更近的点可能会被丢弃。
 ///
-/// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
+/// 小于或等于零的`epsilon`将返回未更改的几何体版本。
 pub trait SimplifyIdx<T, Epsilon = T> {
-    /// Returns the simplified indices of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
+    /// 使用[Ramer-Douglas-Peucker](https://en.wikipedia.org/wiki/Ramer-Douglas-Peucker_algorithm)
+    /// 算法返回几何体的简化索引
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// use geo::SimplifyIdx;
@@ -474,7 +469,7 @@ mod test {
         ];
         let epsilon: f64 = 3.46e-43;
 
-        // LineString result should be three coordinates
+        // 线串结果应该是三个坐标
         let result = ls.simplify(&epsilon);
         assert_eq!(
             line_string![
@@ -485,7 +480,7 @@ mod test {
             result
         );
 
-        // Polygon result should be five coordinates
+        // 多边形结果应该是五个坐标
         let result = Polygon::new(ls, vec![]).simplify(&epsilon);
         assert_eq!(
             polygon![

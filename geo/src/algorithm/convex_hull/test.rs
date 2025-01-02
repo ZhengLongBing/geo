@@ -4,6 +4,7 @@ use crate::{coord, line_string, polygon};
 
 #[test]
 fn test_zero_points() {
+    // 测试空点集
     let mut v: Vec<Coord<i64>> = vec![];
     let correct = vec![];
     let res = trivial_hull(&mut v, false);
@@ -12,6 +13,7 @@ fn test_zero_points() {
 
 #[test]
 fn test_zero_points_include_on_hull() {
+    // 测试空点集且包含在凸包中
     let mut v: Vec<Coord<i64>> = vec![];
     let correct = vec![];
     let res = trivial_hull(&mut v, true);
@@ -20,6 +22,7 @@ fn test_zero_points_include_on_hull() {
 
 #[test]
 fn test_one_point() {
+    // 测试单个点
     let mut v = vec![coord! { x: 0, y: 0 }];
     let correct = vec![coord! { x: 0, y: 0 }, coord! { x: 0, y: 0 }];
     let res = trivial_hull(&mut v, false);
@@ -28,6 +31,7 @@ fn test_one_point() {
 
 #[test]
 fn test_one_point_include_on_hull() {
+    // 测试单个点且包含在凸包中
     let mut v = vec![coord! { x: 0, y: 0 }];
     let correct = vec![coord! { x: 0, y: 0 }, coord! { x: 0, y: 0 }];
     let res = trivial_hull(&mut v, true);
@@ -36,6 +40,7 @@ fn test_one_point_include_on_hull() {
 
 #[test]
 fn test_two_points() {
+    // 测试两个点
     let mut v = vec![coord! { x: 0, y: 0 }, coord! { x: 1, y: 1 }];
     let correct = vec![
         coord! { x: 0, y: 0 },
@@ -48,6 +53,7 @@ fn test_two_points() {
 
 #[test]
 fn test_two_points_include_on_hull() {
+    // 测试两个点且包含在凸包中
     let mut v = vec![coord! { x: 0, y: 0 }, coord! { x: 1, y: 1 }];
     let correct = vec![
         coord! { x: 0, y: 0 },
@@ -60,6 +66,7 @@ fn test_two_points_include_on_hull() {
 
 #[test]
 fn test_two_points_duplicated() {
+    // 测试两个重复点
     let mut v = vec![coord! { x: 0, y: 0 }, coord! { x: 0, y: 0 }];
     let correct = vec![coord! { x: 0, y: 0 }, coord! { x: 0, y: 0 }];
     let res = trivial_hull(&mut v, false);
@@ -68,6 +75,7 @@ fn test_two_points_duplicated() {
 
 #[test]
 fn test_two_points_duplicated_include_on_hull() {
+    // 测试两个重复点且包含在凸包中
     let mut v = vec![coord! { x: 0, y: 0 }, coord! { x: 0, y: 0 }];
     let correct = vec![coord! { x: 0, y: 0 }, coord! { x: 0, y: 0 }];
     let res = trivial_hull(&mut v, true);
@@ -76,6 +84,7 @@ fn test_two_points_duplicated_include_on_hull() {
 
 #[test]
 fn test_three_points_ccw() {
+    // 测试三个点逆时针
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 1, y: 0 },
@@ -93,6 +102,7 @@ fn test_three_points_ccw() {
 
 #[test]
 fn test_three_points_cw() {
+    // 测试三个点顺时针
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 1, y: 1 },
@@ -110,6 +120,7 @@ fn test_three_points_cw() {
 
 #[test]
 fn test_three_points_two_duplicated() {
+    // 测试三个点有两个重复
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 1, y: 1 },
@@ -126,6 +137,7 @@ fn test_three_points_two_duplicated() {
 
 #[test]
 fn test_three_points_two_duplicated_include_on_hull() {
+    // 测试三个点有两个重复且包含在凸包中
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 1, y: 1 },
@@ -142,6 +154,7 @@ fn test_three_points_two_duplicated_include_on_hull() {
 
 #[test]
 fn test_three_points_duplicated() {
+    // 测试三个点全部重复
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 0, y: 0 },
@@ -154,6 +167,7 @@ fn test_three_points_duplicated() {
 
 #[test]
 fn test_three_points_duplicated_include_on_hull() {
+    // 测试三个点全部重复且包含在凸包中
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 0, y: 0 },
@@ -170,6 +184,7 @@ fn test_three_points_duplicated_include_on_hull() {
 
 #[test]
 fn test_three_collinear_points() {
+    // 测试三个共线点
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 1, y: 1 },
@@ -186,6 +201,7 @@ fn test_three_collinear_points() {
 
 #[test]
 fn test_three_collinear_points_include_on_hull() {
+    // 测试三个共线点且包含在凸包中
     let mut v = vec![
         coord! { x: 0, y: 0 },
         coord! { x: 1, y: 1 },
@@ -203,6 +219,7 @@ fn test_three_collinear_points_include_on_hull() {
 
 #[test]
 fn convex_hull_multipoint_test() {
+    // 测试多点的凸包
     let v = vec![
         Point::new(0, 10),
         Point::new(1, 1),
@@ -225,8 +242,10 @@ fn convex_hull_multipoint_test() {
     let res = mp.convex_hull();
     assert_eq!(res.exterior().0, correct);
 }
+
 #[test]
 fn convex_hull_linestring_test() {
+    // 测试线串的凸包
     let mp = line_string![
         (x: 0.0, y: 10.0),
         (x: 1.0, y: 1.0),
@@ -248,8 +267,10 @@ fn convex_hull_linestring_test() {
     let res = mp.convex_hull();
     assert_eq!(res.exterior().0, correct);
 }
+
 #[test]
 fn convex_hull_multilinestring_test() {
+    // 测试多线串的凸包
     let v1 = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0)];
     let v2 = line_string![(x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 3.0, y: 1.0)];
     let mls = MultiLineString::new(vec![v1, v2]);
@@ -263,8 +284,10 @@ fn convex_hull_multilinestring_test() {
     let res = mls.convex_hull();
     assert_eq!(res.exterior().0, correct);
 }
+
 #[test]
 fn convex_hull_multipolygon_test() {
+    // 测试多多边形的凸包
     let p1 = polygon![(x: 0.0, y: 0.0), (x: 1.0, y: 10.0), (x: 2.0, y: 0.0), (x: 0.0, y: 0.0)];
     let p2 = polygon![(x: 3.0, y: 0.0), (x: 4.0, y: 10.0), (x: 5.0, y: 0.0), (x: 3.0, y: 0.0)];
     let mp = MultiPolygon::new(vec![p1, p2]);
@@ -281,6 +304,7 @@ fn convex_hull_multipolygon_test() {
 
 #[test]
 fn collection() {
+    // 几何图形集合测试
     let collection = GeometryCollection(vec![
         Point::new(0.0, 0.0).into(),
         Triangle::new(

@@ -7,20 +7,18 @@ use approx::{AbsDiffEq, RelativeEq};
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
 
-/// A collection of [`Geometry`](enum.Geometry.html) types.
+/// [`Geometry`](enum.Geometry.html) 类型的集合。
 ///
-/// It can be created from a `Vec` of Geometries, or from an Iterator which yields Geometries.
+/// 它可以从一个 Geometries 的 `Vec` 创建，或者从一个产生 Geometries 的迭代器创建。
 ///
-/// Looping over this object yields its component **Geometry
-/// enum members** (_not_ the underlying geometry
-/// primitives), and it supports iteration and indexing as
-/// well as the various
+/// 遍历这个对象会产生其组成的 **Geometry
+/// 枚举成员**（_不是_ 底层的几何图元），
+/// 它支持迭代和索引，以及各种
 /// [`MapCoords`](algorithm/map_coords/index.html)
-/// functions, which _are_ directly applied to the
-/// underlying geometry primitives.
+/// 函数，这些函数 _直接_ 应用于底层的几何图元。
 ///
-/// # Examples
-/// ## Looping
+/// # 示例
+/// ## 循环
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -32,7 +30,7 @@ use core::ops::{Index, IndexMut};
 ///     println!("{:?}", Point::try_from(geom).unwrap().x());
 /// }
 /// ```
-/// ## Implements `iter()`
+/// ## 实现 `iter()`
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -43,7 +41,7 @@ use core::ops::{Index, IndexMut};
 /// gc.iter().for_each(|geom| println!("{:?}", geom));
 /// ```
 ///
-/// ## Mutable Iteration
+/// ## 可变迭代
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -60,7 +58,7 @@ use core::ops::{Index, IndexMut};
 /// assert_eq!(Point::try_from(updated).unwrap().x(), 0.2);
 /// ```
 ///
-/// ## Indexing
+/// ## 索引
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -75,8 +73,8 @@ use core::ops::{Index, IndexMut};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct GeometryCollection<T: CoordNum = f64>(pub Vec<Geometry<T>>);
 
-// Implementing Default by hand because T does not have Default restriction
-// todo: consider adding Default as a CoordNum requirement
+// 手动实现 Default，因为 T 没有 Default 限制
+// todo: 考虑将 Default 添加为 CoordNum 要求
 impl<T: CoordNum> Default for GeometryCollection<T> {
     fn default() -> Self {
         Self(Vec::new())
@@ -84,35 +82,35 @@ impl<T: CoordNum> Default for GeometryCollection<T> {
 }
 
 impl<T: CoordNum> GeometryCollection<T> {
-    /// Return an empty GeometryCollection
+    /// 返回一个空的 GeometryCollection
     #[deprecated(
-        note = "Will be replaced with a parametrized version in upcoming version. Use GeometryCollection::default() instead"
+        note = "将在即将发布的版本中被参数化版本替代。请使用 GeometryCollection::default() 代替"
     )]
     pub fn new() -> Self {
         GeometryCollection::default()
     }
 
-    /// DO NOT USE!
-    /// This fn will be renamed to `new` in the upcoming version.
-    /// This fn is not marked as deprecated because it would require extensive refactoring of the geo code.
+    /// 请勿使用！
+    /// 这个函数将在即将发布的版本中重命名为 `new`。
+    /// 这个函数没有标记为废弃，因为这样做需要对 geo 代码进行大量重构。
     pub fn new_from(value: Vec<Geometry<T>>) -> Self {
         Self(value)
     }
 
-    /// Number of geometries in this GeometryCollection
+    /// 此 GeometryCollection 中的几何图形数量
     pub fn len(&self) -> usize {
         self.0.len()
     }
 
-    /// Is this GeometryCollection empty
+    /// 此 GeometryCollection 是否为空
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
 }
 
-/// **DO NOT USE!** Deprecated since 0.7.5.
+/// **请勿使用！** 自 0.7.5 版本起已废弃。
 ///
-/// Use `GeometryCollection::from(vec![geom])` instead.
+/// 请使用 `GeometryCollection::from(vec![geom])` 代替。
 impl<T: CoordNum, IG: Into<Geometry<T>>> From<IG> for GeometryCollection<T> {
     fn from(x: IG) -> Self {
         Self(vec![x.into()])
@@ -126,7 +124,7 @@ impl<T: CoordNum, IG: Into<Geometry<T>>> From<Vec<IG>> for GeometryCollection<T>
     }
 }
 
-/// Collect Geometries (or what can be converted to a Geometry) into a GeometryCollection
+/// 将 Geometries（或可以转换为 Geometry 的对象）收集到 GeometryCollection 中
 impl<T: CoordNum, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection<T> {
     fn from_iter<I: IntoIterator<Item = IG>>(iter: I) -> Self {
         Self(iter.into_iter().map(|g| g.into()).collect())
@@ -147,19 +145,19 @@ impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
     }
 }
 
-// structure helper for consuming iterator
+// 消耗型迭代器的结构辅助
 #[derive(Debug)]
 pub struct IntoIteratorHelper<T: CoordNum> {
     iter: ::alloc::vec::IntoIter<Geometry<T>>,
 }
 
-// implement the IntoIterator trait for a consuming iterator. Iteration will
-// consume the GeometryCollection
+// 为消耗型迭代器实现 IntoIterator trait
+// 迭代将消耗 GeometryCollection
 impl<T: CoordNum> IntoIterator for GeometryCollection<T> {
     type Item = Geometry<T>;
     type IntoIter = IntoIteratorHelper<T>;
 
-    // note that into_iter() is consuming self
+    // 注意 into_iter() 正在消耗 self
     fn into_iter(self) -> Self::IntoIter {
         IntoIteratorHelper {
             iter: self.0.into_iter(),
@@ -167,29 +165,29 @@ impl<T: CoordNum> IntoIterator for GeometryCollection<T> {
     }
 }
 
-// implement Iterator trait for the helper struct, to be used by adapters
+// 为辅助结构实现 Iterator trait，以供适配器使用
 impl<T: CoordNum> Iterator for IntoIteratorHelper<T> {
     type Item = Geometry<T>;
 
-    // just return the reference
+    // 返回下一个几何图形
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
 }
 
-// structure helper for non-consuming iterator
+// 非消耗型迭代器的结构辅助
 #[derive(Debug)]
 pub struct IterHelper<'a, T: CoordNum> {
     iter: ::core::slice::Iter<'a, Geometry<T>>,
 }
 
-// implement the IntoIterator trait for a non-consuming iterator. Iteration will
-// borrow the GeometryCollection
+// 为非消耗型迭代器实现 IntoIterator trait
+// 迭代将借用 GeometryCollection
 impl<'a, T: CoordNum> IntoIterator for &'a GeometryCollection<T> {
     type Item = &'a Geometry<T>;
     type IntoIter = IterHelper<'a, T>;
 
-    // note that into_iter() is consuming self
+    // 注意 into_iter() 正在借用 self
     fn into_iter(self) -> Self::IntoIter {
         IterHelper {
             iter: self.0.iter(),
@@ -197,29 +195,29 @@ impl<'a, T: CoordNum> IntoIterator for &'a GeometryCollection<T> {
     }
 }
 
-// implement the Iterator trait for the helper struct, to be used by adapters
+// 为辅助结构实现 Iterator trait，以供适配器使用
 impl<'a, T: CoordNum> Iterator for IterHelper<'a, T> {
     type Item = &'a Geometry<T>;
 
-    // just return the str reference
+    // 返回下一个几何图形的引用
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
 }
 
-// structure helper for mutable non-consuming iterator
+// 可变非消耗型迭代器的结构辅助
 #[derive(Debug)]
 pub struct IterMutHelper<'a, T: CoordNum> {
     iter: ::core::slice::IterMut<'a, Geometry<T>>,
 }
 
-// implement the IntoIterator trait for a mutable non-consuming iterator. Iteration will
-// mutably borrow the GeometryCollection
+// 为可变非消耗型迭代器实现 IntoIterator trait
+// 迭代将可变借用 GeometryCollection
 impl<'a, T: CoordNum> IntoIterator for &'a mut GeometryCollection<T> {
     type Item = &'a mut Geometry<T>;
     type IntoIter = IterMutHelper<'a, T>;
 
-    // note that into_iter() is consuming self
+    // 注意 into_iter() 正在可变借用 self
     fn into_iter(self) -> Self::IntoIter {
         IterMutHelper {
             iter: self.0.iter_mut(),
@@ -227,21 +225,23 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut GeometryCollection<T> {
     }
 }
 
-// implement the Iterator trait for the helper struct, to be used by adapters
+// 为辅助结构实现 Iterator trait，以供适配器使用
 impl<'a, T: CoordNum> Iterator for IterMutHelper<'a, T> {
     type Item = &'a mut Geometry<T>;
 
-    // just return the str reference
+    // 返回下一个几何图形的可变引用
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next()
     }
 }
 
 impl<'a, T: CoordNum> GeometryCollection<T> {
+    // 返回非消耗型迭代器
     pub fn iter(&'a self) -> IterHelper<'a, T> {
         self.into_iter()
     }
 
+    // 返回可变非消耗型迭代器
     pub fn iter_mut(&'a mut self) -> IterMutHelper<'a, T> {
         self.into_iter()
     }
@@ -257,9 +257,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{GeometryCollection, point};
@@ -299,9 +299,9 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 带有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{GeometryCollection, point};

@@ -5,13 +5,12 @@ use crate::{
 };
 use num_traits::FromPrimitive;
 
-/// Creates a copy of the geometry with additional points inserted as necessary to ensure there
-/// is never more than `max_segment_length` between points.
+/// 创建一个几何图形的副本，根据需要插入附加点，以确保点与点之间的距离不超过 `max_segment_length`。
 ///
-/// ## Units
-/// - `max_segment_length` units depend on the implementing [metric space]. It must be greater than 0.
+/// ## 单位
+/// - `max_segment_length` 的单位取决于实现的[度量空间]。它必须大于0。
 ///
-/// # Examples
+/// # 示例
 /// ```
 /// # use approx::assert_relative_eq;
 /// use geo::{wkt, Densify};
@@ -19,8 +18,7 @@ use num_traits::FromPrimitive;
 ///
 /// let line_string = wkt!(LINESTRING(0.0 0.0,0.0 6.0,1.0 7.0));
 ///
-/// // For Euclidean calculations, the unit of distance is the same as the units
-/// // of your coordinates.
+/// // 对于欧几里得计算，距离的单位与坐标的单位相同。
 /// let max_dist = 2.0;
 /// let densified = line_string.densify::<Euclidean>(max_dist);
 /// let expected_output = wkt!(LINESTRING(
@@ -33,7 +31,7 @@ use num_traits::FromPrimitive;
 /// assert_relative_eq!(densified, expected_output);
 ///```
 ///
-/// For lng/lat geometries, consider using a different [metric space] like [`Haversine`](crate::Haversine) or [`Geodesic`](crate::Geodesic).
+/// 对于经度/纬度几何图形，考虑使用其他[度量空间]，如 [`Haversine`](crate::Haversine) 或 [`Geodesic`](crate::Geodesic)。
 ///
 /// ```
 /// # use approx::assert_relative_eq;
@@ -41,10 +39,10 @@ use num_traits::FromPrimitive;
 /// use geo::line_measures::Haversine;
 /// let line_string = wkt!(LINESTRING(0.0 0.0,0.0 6.0,1.0 7.0));
 ///
-/// // For Haversine, the unit of distance is in meters
+/// // 对于Haversine，距离单位是米
 /// let max_dist = 200_000.0;
 /// let densified = line_string.densify::<Haversine>(max_dist);
-/// // Haversine interprets coordinate points as lng/lat
+/// // Haversine 将坐标点解释为经度/纬度
 /// let expected_output = wkt!(LINESTRING(
 ///     0.0 0.0,
 ///     0.0 1.5,
@@ -55,7 +53,7 @@ use num_traits::FromPrimitive;
 /// ));
 /// assert_relative_eq!(densified, expected_output, epsilon = 1e-14);
 /// ```
-/// [metric space]: crate::line_measures::metric_spaces
+/// [度量空间]: crate::line_measures::metric_spaces
 pub trait Densify<F: CoordFloat> {
     type Output;
     fn densify<MetricSpace>(&self, max_segment_length: F) -> Self::Output
@@ -76,18 +74,17 @@ pub(crate) fn densify_between<F, MetricSpace>(
     let num_segments = (MetricSpace::distance(line_start, line_end) / max_segment_length)
         .ceil()
         .to_u64()
-        .expect("unreasonable number of segments");
+        .expect("段数不合理");
 
-    // distance "unit" for this line segment
+    // 此线段的距离“单位”
     let frac = F::one() / F::from(num_segments).unwrap();
 
     for segment_num in 1..num_segments {
         let ratio = frac * F::from(segment_num).unwrap();
 
-        // PERF TODO: We recompute "total_distance" every step of this loop.
-        // If we impl point_at_distance_between, we could compute it once and use it here.
-        // At that point, I think this function could be a good candidate to be *the single* basis
-        // for a unified generic of points_along_line for all metric spaces.
+        // 性能TODO：我们在循环的每一步都重新计算“total_distance”。
+        // 如果我们实现 point_at_distance_between，我们可以计算一次然后在这里使用。
+        // 就此而言，我认为这个函数可能是为所有度量空间统一通用points_along_line的*唯一*基础。
         let interpolated_point = MetricSpace::point_at_ratio_between(line_start, line_end, ratio);
         container.push(interpolated_point);
     }
@@ -134,11 +131,8 @@ impl<F: CoordFloat + FromPrimitive> Densify<F> for LineString<F> {
             )
         });
 
-        // we're done, push the last coordinate on to finish
-        let final_coord = *self
-            .0
-            .last()
-            .expect("we already asserted the line string is not empty");
+        // 完成后，推入最后一个坐标以结束
+        let final_coord = *self.0.last().expect("我们已经断言线字符串不为空");
         points.push(final_coord.into());
 
         LineString::from(points)
@@ -221,13 +215,13 @@ mod tests {
 
     #[test]
     fn densify_line() {
-        // London to Paris
+        // 伦敦到巴黎
         let line = Line::new(
             coord!(x: -0.1278f64, y: 51.5074),
             coord!(x: 2.3522, y: 48.8566),
         );
 
-        let densified_line = line.densify::<Geodesic>(100_000.0); // max segment length 100km
+        let densified_line = line.densify::<Geodesic>(100_000.0); // 最大线段长度100km
         assert!(densified_line.coords_count() > 2);
 
         let densified_rhumb = line.densify::<Rhumb>(100_000.0);
@@ -240,12 +234,12 @@ mod tests {
     #[test]
     fn densify_line_string() {
         let line_string = LineString::new(vec![
-            coord!(x: -58.3816f64, y: -34.6037), // Buenos Aires, Argentina
-            coord!(x: -77.0428, y: -12.0464),    // Lima, Peru
-            coord!(x: -47.9292, y: -15.7801),    // Brasília, Brazil
+            coord!(x: -58.3816f64, y: -34.6037), // 布宜诺斯艾利斯, 阿根廷
+            coord!(x: -77.0428, y: -12.0464),    // 利马, 秘鲁
+            coord!(x: -47.9292, y: -15.7801),    // 巴西利亚, 巴西
         ]);
 
-        let densified_ls = line_string.densify::<Geodesic>(500_000.0); // 500 km max segment length
+        let densified_ls = line_string.densify::<Geodesic>(500_000.0); // 最大线段长度500公里
         assert!(densified_ls.coords_count() > line_string.coords_count());
 
         let densified_rhumb_ls = line_string.densify::<Rhumb>(500_000.0);
@@ -258,16 +252,16 @@ mod tests {
     #[test]
     fn densify_polygon() {
         let polygon = polygon![
-            (x: -58.3816f64, y: -34.6037), // Buenos Aires
-            (x: -77.0428, y: -12.0464),    // Lima
-            (x: -47.9292, y: -15.7801),    // Brasília
+            (x: -58.3816f64, y: -34.6037), // 布宜诺斯艾利斯
+            (x: -77.0428, y: -12.0464),    // 利马
+            (x: -47.9292, y: -15.7801),    // 巴西利亚
         ];
 
-        let densified_polygon = polygon.densify::<Geodesic>(500_000.0); // 500 km max segment length
+        let densified_polygon = polygon.densify::<Geodesic>(500_000.0); // 最大线段长度500公里
         assert!(densified_polygon.exterior().coords_count() > polygon.exterior().coords_count());
     }
 
-    // ported from the old Deprecated trait, which only worked with Euclidean measures
+    // 从旧的已弃用trait移植，仅适用于欧几里得度量
     mod euclidean {
         use super::*;
 
@@ -328,7 +322,7 @@ mod tests {
         }
     }
 
-    // ported from the now deprecated DensifyHaversine
+    // 从现在废弃的DensifyHaversine移植
     mod lon_lat_tests {
         use super::*;
 

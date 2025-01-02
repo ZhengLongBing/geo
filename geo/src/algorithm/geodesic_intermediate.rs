@@ -1,18 +1,15 @@
 use crate::{CoordFloat, Geodesic, InterpolatePoint, Point};
 
-#[deprecated(
-    since = "0.29.0",
-    note = "Please use the `InterpolatePoint` trait instead"
-)]
-/// Returns a new Point along a route between two existing points on an ellipsoidal model of the earth
+#[deprecated(since = "0.29.0", note = "请改用 `InterpolatePoint` 特征")]
+/// 返回地球椭球体模型上两个现有点之间路线上的一个新点
 pub trait GeodesicIntermediate<T: CoordFloat> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Geodesic::point_at_ratio_between` from the `InterpolatePoint` trait instead"
+        note = "请改用 `InterpolatePoint` 特征中的 `Geodesic::point_at_ratio_between` 方法"
     )]
-    /// Returns a new Point along a route between two existing points on an ellipsoidal model of the earth
+    /// 返回地球椭球体模型上两个现有点之间路线上的一个新点
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -39,7 +36,7 @@ pub trait GeodesicIntermediate<T: CoordFloat> {
 
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Geodesic::points_along_line` from the `InterpolatePoint` trait instead"
+        note = "请改用 `InterpolatePoint` 特征中的 `Geodesic::points_along_line` 方法"
     )]
     fn geodesic_intermediate_fill(
         &self,
@@ -104,7 +101,7 @@ mod tests {
     fn should_add_i50_test() {
         let p1 = Point::new(30.0, 40.0);
         let p2 = Point::new(40.0, 50.0);
-        let max_dist = 1000000.0; // meters
+        let max_dist = 1000000.0; // 单位：米
         let include_ends = true;
         #[allow(deprecated)]
         let i50 = p1.geodesic_intermediate(&p2, 0.5);

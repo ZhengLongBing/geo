@@ -9,8 +9,8 @@ use crate::{GeoFloat, Geometry};
 use crate::geometry_cow::GeometryCow;
 use std::fmt;
 
-/// A [`Geometry`] is valid if its inner variant is valid.
-/// e.g. `Geometry::Polygon(polygon)` is valid if and only if `polygon` is valid.
+/// 如果[`Geometry`]的内部变体有效，则该[`Geometry`]有效。
+/// 例如，`Geometry::Polygon(polygon)` 是有效的，当且仅当 `polygon` 是有效的。
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidGeometry {
     InvalidPoint(InvalidPoint),
@@ -43,6 +43,7 @@ impl fmt::Display for InvalidGeometry {
 }
 
 impl std::error::Error for InvalidGeometry {
+    /// 返回错误的源。
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             InvalidGeometry::InvalidPoint(err) => Some(err),
@@ -62,6 +63,7 @@ impl std::error::Error for InvalidGeometry {
 impl<F: GeoFloat> Validation for Geometry<F> {
     type Error = InvalidGeometry;
 
+    /// 验证当前几何体是否有效。
     fn visit_validation<T>(
         &self,
         mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
@@ -105,6 +107,7 @@ impl<F: GeoFloat> Validation for Geometry<F> {
 impl<F: GeoFloat> Validation for GeometryCow<'_, F> {
     type Error = InvalidGeometry;
 
+    /// 验证当前几何Cow是否有效。
     fn visit_validation<T>(
         &self,
         mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,

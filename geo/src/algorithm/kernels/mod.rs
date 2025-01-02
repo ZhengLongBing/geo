@@ -5,13 +5,13 @@ use crate::{coord, Coord, CoordNum};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Orientation {
-    CounterClockwise,
-    Clockwise,
-    Collinear,
+    CounterClockwise, // 逆时针
+    Clockwise,        // 顺时针
+    Collinear,        // 共线
 }
 
 impl Orientation {
-    /// Helper to convert orientation-2d into an ordering.
+    /// 帮助将2D方向转换为排序。
     #[inline]
     pub(crate) fn as_ordering(&self) -> Ordering {
         match self {
@@ -22,11 +22,9 @@ impl Orientation {
     }
 }
 
-/// Kernel trait to provide predicates to operate on
-/// different scalar types.
+/// Kernel特性用于提供操作不同标量类型的谓词。
 pub trait Kernel<T: CoordNum> {
-    /// Gives the orientation of 3 2-dimensional points:
-    /// ccw, cw or collinear (None)
+    /// 给出三个二维点的方向：逆时针、顺时针或共线（None）
     fn orient2d(p: Coord<T>, q: Coord<T>, r: Coord<T>) -> Orientation {
         let res = (q.x - p.x) * (r.y - q.y) - (q.y - p.y) * (r.x - q.x);
         if res > Zero::zero() {
@@ -38,14 +36,14 @@ pub trait Kernel<T: CoordNum> {
         }
     }
 
+    /// 计算两个点之间的平方欧几里得距离
     fn square_euclidean_distance(p: Coord<T>, q: Coord<T>) -> T {
         (p.x - q.x) * (p.x - q.x) + (p.y - q.y) * (p.y - q.y)
     }
 
-    /// Compute the sign of the dot product of `u` and `v` using
-    /// robust predicates. The output is `CounterClockwise` if
-    /// the sign is positive, `Clockwise` if negative, and
-    /// `Collinear` if zero.
+    /// 使用鲁棒谓词计算向量`u`和`v`点积的符号。
+    /// 如果符号为正，则输出为`CounterClockwise`，
+    /// 如果为负，则为`Clockwise`，如果为零，则为`Collinear`。
     fn dot_product_sign(u: Coord<T>, v: Coord<T>) -> Orientation {
         let zero = Coord::zero();
         let vdash = coord! {
@@ -56,8 +54,8 @@ pub trait Kernel<T: CoordNum> {
     }
 }
 
-pub mod robust;
+pub mod robust; // 鲁棒模块
 pub use self::robust::RobustKernel;
 
-pub mod simple;
+pub mod simple; // 简单模块
 pub use self::simple::SimpleKernel;

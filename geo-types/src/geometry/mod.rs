@@ -10,7 +10,7 @@ pub(crate) mod polygon;
 pub(crate) mod rect;
 pub(crate) mod triangle;
 
-// re-export all the geometry variants:
+// 重新导出所有几何变体：
 #[allow(deprecated)]
 pub use coord::{Coord, Coordinate};
 pub use geometry_collection::GeometryCollection;
@@ -31,13 +31,12 @@ use approx::{AbsDiffEq, RelativeEq};
 use core::any::type_name;
 use core::convert::TryFrom;
 
-/// An enum representing any possible geometry type.
+/// 表示任何可能的几何类型的枚举。
 ///
-/// All geometry variants ([`Point`], [`LineString`], etc.) can be converted to a `Geometry` using
-/// [`Into::into`]. Conversely, [`TryFrom::try_from`] can be used to convert a [`Geometry`]
-/// _back_ to one of it's specific enum members.
+/// 所有几何变体（[`Point`]、[`LineString`]等）都可以使用[`Into::into`]转换为`Geometry`。
+/// 相反，[`TryFrom::try_from`]可以用于将[`Geometry`]转换回其特定的枚举成员。
 ///
-/// # Example
+/// # 示例
 ///
 /// ```
 /// use std::convert::TryFrom;
@@ -62,6 +61,7 @@ pub enum Geometry<T: CoordNum = f64> {
     Triangle(Triangle<T>),
 }
 
+// 为各种几何类型实现From trait
 impl<T: CoordNum> From<Point<T>> for Geometry<T> {
     fn from(x: Point<T>) -> Self {
         Self::Point(x)
@@ -98,7 +98,7 @@ impl<T: CoordNum> From<MultiPolygon<T>> for Geometry<T> {
     }
 }
 
-// Disabled until we remove the deprecated GeometryCollection::from(single_geom) impl.
+// 在移除已弃用的GeometryCollection::from(single_geom)实现之前禁用
 // impl<T: CoordNum> From<GeometryCollection<T>> for Geometry<T> {
 //     fn from(x: GeometryCollection<T>) -> Self {
 //         Self::GeometryCollection(x)
@@ -118,9 +118,9 @@ impl<T: CoordNum> From<Triangle<T>> for Geometry<T> {
 }
 
 impl<T: CoordNum> Geometry<T> {
-    /// If this Geometry is a Point, then return that, else None.
+    /// 如果这个Geometry是一个Point，则返回该Point，否则返回None。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::*;
@@ -130,9 +130,7 @@ impl<T: CoordNum> Geometry<T> {
     /// let p2: Point<f32> = g.try_into().unwrap();
     /// assert_eq!(p2, Point::new(0., 0.,));
     /// ```
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<Point>"
-    )]
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<Point>")]
     pub fn into_point(self) -> Option<Point<T>> {
         if let Geometry::Point(x) = self {
             Some(x)
@@ -141,10 +139,8 @@ impl<T: CoordNum> Geometry<T> {
         }
     }
 
-    /// If this Geometry is a LineString, then return that LineString, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<LineString>"
-    )]
+    /// 如果这个Geometry是一个LineString，则返回该LineString，否则返回None。
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<LineString>")]
     pub fn into_line_string(self) -> Option<LineString<T>> {
         if let Geometry::LineString(x) = self {
             Some(x)
@@ -153,10 +149,8 @@ impl<T: CoordNum> Geometry<T> {
         }
     }
 
-    /// If this Geometry is a Line, then return that Line, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<Line>"
-    )]
+    /// 如果这个Geometry是一个Line，则返回该Line，否则返回None。
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<Line>")]
     pub fn into_line(self) -> Option<Line<T>> {
         if let Geometry::Line(x) = self {
             Some(x)
@@ -165,10 +159,8 @@ impl<T: CoordNum> Geometry<T> {
         }
     }
 
-    /// If this Geometry is a Polygon, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<Polygon>"
-    )]
+    /// 如果这个Geometry是一个Polygon，则返回该Polygon，否则返回None。
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<Polygon>")]
     pub fn into_polygon(self) -> Option<Polygon<T>> {
         if let Geometry::Polygon(x) = self {
             Some(x)
@@ -177,10 +169,8 @@ impl<T: CoordNum> Geometry<T> {
         }
     }
 
-    /// If this Geometry is a MultiPoint, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<MultiPoint>"
-    )]
+    /// 如果这个Geometry是一个MultiPoint，则返回该MultiPoint，否则返回None。
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<MultiPoint>")]
     pub fn into_multi_point(self) -> Option<MultiPoint<T>> {
         if let Geometry::MultiPoint(x) = self {
             Some(x)
@@ -189,10 +179,8 @@ impl<T: CoordNum> Geometry<T> {
         }
     }
 
-    /// If this Geometry is a MultiLineString, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<MultiLineString>"
-    )]
+    /// 如果这个Geometry是一个MultiLineString，则返回该MultiLineString，否则返回None。
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<MultiLineString>")]
     pub fn into_multi_line_string(self) -> Option<MultiLineString<T>> {
         if let Geometry::MultiLineString(x) = self {
             Some(x)
@@ -201,10 +189,8 @@ impl<T: CoordNum> Geometry<T> {
         }
     }
 
-    /// If this Geometry is a MultiPolygon, then return that, else None.
-    #[deprecated(
-        note = "Will be removed in an upcoming version. Switch to std::convert::TryInto<MultiPolygon>"
-    )]
+    /// 如果这个Geometry是一个MultiPolygon，则返回该MultiPolygon，否则返回None。
+    #[deprecated(note = "将在未来版本中移除。请切换到std::convert::TryInto<MultiPolygon>")]
     pub fn into_multi_polygon(self) -> Option<MultiPolygon<T>> {
         if let Geometry::MultiPolygon(x) = self {
             Some(x)
@@ -217,9 +203,9 @@ impl<T: CoordNum> Geometry<T> {
 macro_rules! try_from_geometry_impl {
     ($($type: ident),+) => {
         $(
-        /// Convert a Geometry enum into its inner type.
+        /// 将Geometry枚举转换为其内部类型。
         ///
-        /// Fails if the enum case does not match the type you are trying to convert it to.
+        /// 如果枚举情况与您尝试转换的类型不匹配，则会失败。
         impl <T: CoordNum> TryFrom<Geometry<T>> for $type<T> {
             type Error = Error;
 
@@ -245,7 +231,7 @@ try_from_geometry_impl!(
     MultiPoint,
     MultiLineString,
     MultiPolygon,
-    // Disabled until we remove the deprecated GeometryCollection::from(single_geom) impl.
+    // 在移除已弃用的GeometryCollection::from(single_geom)实现之前禁用
     // GeometryCollection,
     Rect,
     Triangle
@@ -279,9 +265,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{Geometry, polygon};
@@ -338,9 +324,9 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Geometry<T> {
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 带有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{Geometry, polygon};

@@ -7,7 +7,7 @@ use num_traits::{Bounded, Float};
 use rstar::primitives::CachedEnvelope;
 use rstar::RTree;
 
-// Distance is a symmetric operation, so we can implement it once for both
+// 距离是一个对称操作，因此我们可以为两者实现一次
 macro_rules! symmetric_distance_impl {
     ($t:ident, $a:ty, $b:ty) => {
         impl<F> $crate::Distance<F, $a, $b> for Euclidean
@@ -22,7 +22,7 @@ macro_rules! symmetric_distance_impl {
 }
 
 // ┌───────────────────────────┐
-// │ Implementations for Coord │
+// │ Coord 的实现             │
 // └───────────────────────────┘
 
 impl<F: CoordFloat> Distance<F, Coord<F>, Coord<F>> for Euclidean {
@@ -38,31 +38,31 @@ impl<F: CoordFloat> Distance<F, Coord<F>, &Line<F>> for Euclidean {
 }
 
 // ┌───────────────────────────┐
-// │ Implementations for Point │
+// │ Point 的实现             │
 // └───────────────────────────┘
 
-/// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
+/// 计算两个点之间的欧几里得距离（即毕达哥拉斯距离）
 impl<F: CoordFloat> Distance<F, Point<F>, Point<F>> for Euclidean {
-    /// Calculate the Euclidean distance (a.k.a. pythagorean distance) between two Points
+    /// 计算两个点之间的欧几里得距离（即毕达哥拉斯距离）
     ///
-    /// # Units
-    /// - `origin`, `destination`: Point where the units of x/y represent non-angular units
-    ///    — e.g. meters or miles, not lon/lat. For lon/lat points, use the
-    ///    [`Haversine`] or [`Geodesic`] [metric spaces].
-    /// - returns: distance in the same units as the `origin` and `destination` points
+    /// # 单位
+    /// - `origin`, `destination`：点，x/y 的单位表示非角度单位
+    ///    — 例如米或英里，而不是经纬度。对于经纬度点，请使用
+    ///    [`Haversine`] 或 [`Geodesic`] [度量空间]。
+    /// - 返回值：与 `origin` 和 `destination` 点单位相同的距离
     ///
-    /// # Example
+    /// # 示例
     /// ```
     /// use geo::{Euclidean, Distance};
     /// use geo::Point;
-    /// // web mercator
+    /// // 网络墨卡托坐标
     /// let new_york_city = Point::new(-8238310.24, 4942194.78);
-    /// // web mercator
+    /// // 网络墨卡托坐标
     /// let london = Point::new(-14226.63, 6678077.70);
     /// let distance: f64 = Euclidean::distance(new_york_city, london);
     ///
     /// assert_eq!(
-    ///     8_405_286., // meters in web mercator
+    ///     8_405_286., // 网络墨卡托坐标下的米数
     ///     distance.round()
     /// );
     /// ```
@@ -95,12 +95,12 @@ impl<F: CoordFloat> Distance<F, &Point<F>, &LineString<F>> for Euclidean {
 
 impl<F: GeoFloat> Distance<F, &Point<F>, &Polygon<F>> for Euclidean {
     fn distance(point: &Point<F>, polygon: &Polygon<F>) -> F {
-        // No need to continue if the polygon intersects the point, or is zero-length
+        // 如果多边形与点相交或长度为零，则无需继续
         if polygon.exterior().0.is_empty() || polygon.intersects(point) {
             return F::zero();
         }
-        // fold the minimum interior ring distance if any, followed by the exterior
-        // shell distance, returning the minimum of the two distances
+        // 折叠最小的内部环距离（如果有），然后是外部
+        // 壳距离，返回两者之间的最小值
         polygon
             .interiors()
             .iter()
@@ -121,7 +121,7 @@ impl<F: GeoFloat> Distance<F, &Point<F>, &Polygon<F>> for Euclidean {
 }
 
 // ┌──────────────────────────┐
-// │ Implementations for Line │
+// │ Line 的实现              │
 // └──────────────────────────┘
 
 symmetric_distance_impl!(CoordFloat, &Line<F>, Coord<F>);
@@ -132,7 +132,7 @@ impl<F: GeoFloat> Distance<F, &Line<F>, &Line<F>> for Euclidean {
         if line_a.intersects(line_b) {
             return F::zero();
         }
-        // minimum of all Point-Line distances
+        // 所有点到线的最小距离
         Self::distance(&line_a.start_point(), line_b)
             .min(Self::distance(&line_a.end_point(), line_b))
             .min(Self::distance(&line_b.start_point(), line_a))
@@ -156,7 +156,7 @@ impl<F: GeoFloat> Distance<F, &Line<F>, &Polygon<F>> for Euclidean {
             return F::zero();
         }
 
-        // REVIEW: This impl changed slightly.
+        // 注意：该实现稍有变化。
         std::iter::once(polygon.exterior())
             .chain(polygon.interiors().iter())
             .fold(Bounded::max_value(), |acc, line_string| {
@@ -166,7 +166,7 @@ impl<F: GeoFloat> Distance<F, &Line<F>, &Polygon<F>> for Euclidean {
 }
 
 // ┌────────────────────────────────┐
-// │ Implementations for LineString │
+// │ LineString 的实现              │
 // └────────────────────────────────┘
 
 symmetric_distance_impl!(CoordFloat, &LineString<F>, &Point<F>);
@@ -187,10 +187,10 @@ impl<F: GeoFloat> Distance<F, &LineString<F>, &Polygon<F>> for Euclidean {
         if line_string.intersects(polygon) {
             F::zero()
         } else if !polygon.interiors().is_empty()
-            // FIXME: Explodes on empty line_string
+            // 注意：在空的 line_string 上会爆炸
             && ring_contains_coord(polygon.exterior(), line_string.0[0])
         {
-            // check each ring distance, returning the minimum
+            // 检查每个环的距离，返回最小值
             let mut mindist: F = Float::max_value();
             for ring in polygon.interiors() {
                 mindist = mindist.min(nearest_neighbour_distance(line_string, ring))
@@ -203,30 +203,31 @@ impl<F: GeoFloat> Distance<F, &LineString<F>, &Polygon<F>> for Euclidean {
 }
 
 // ┌─────────────────────────────┐
-// │ Implementations for Polygon │
+// │ Polygon 的实现              │
 // └─────────────────────────────┘
 
 symmetric_distance_impl!(GeoFloat, &Polygon<F>, &Point<F>);
 symmetric_distance_impl!(GeoFloat, &Polygon<F>, &Line<F>);
 symmetric_distance_impl!(GeoFloat, &Polygon<F>, &LineString<F>);
+
 impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
     fn distance(polygon_a: &Polygon<F>, polygon_b: &Polygon<F>) -> F {
         if polygon_a.intersects(polygon_b) {
             return F::zero();
         }
-        // FIXME: explodes when polygon_b.exterior() is empty
-        // Containment check
+        // 注意：polygon_b.exterior() 为空时会爆炸
+        // 包含检查
         if !polygon_a.interiors().is_empty()
             && ring_contains_coord(polygon_a.exterior(), polygon_b.exterior().0[0])
         {
-            // check each ring distance, returning the minimum
+            // 检查每个环的距离，返回最小值
             let mut mindist: F = Float::max_value();
             for ring in polygon_a.interiors() {
                 mindist = mindist.min(nearest_neighbour_distance(polygon_b.exterior(), ring))
             }
             return mindist;
         } else if !polygon_b.interiors().is_empty()
-            // FIXME: explodes when polygon_a.exterior() is empty
+            // 注意：polygon_a.exterior() 为空时会爆炸
             && ring_contains_coord(polygon_b.exterior(), polygon_a.exterior().0[0])
         {
             let mut mindist: F = Float::max_value();
@@ -240,38 +241,38 @@ impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
 }
 
 // ┌────────────────────────────────────────┐
-// │ Implementations for Rect and Triangle  │
+// │ Rect 和 Triangle 的实现                │
 // └────────────────────────────────────────┘
 
-/// Implements Euclidean distance for Triangles and Rects by converting them to polygons.
+/// 通过将三角形和矩形转换为多边形来实现欧几里得距离。
 macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
-  ($polygonlike:ty,  [$($geometry_b:ty),*]) => {
-      impl<F: GeoFloat> Distance<F, $polygonlike, $polygonlike> for Euclidean
-      {
-          fn distance(origin: $polygonlike, destination: $polygonlike) -> F {
-              Self::distance(&origin.to_polygon(), destination)
-          }
-      }
-      $(
-          impl<F: GeoFloat> Distance<F, $polygonlike, $geometry_b> for Euclidean
-          {
-              fn distance(polygonlike: $polygonlike, geometry_b: $geometry_b) -> F {
-                    Self::distance(&polygonlike.to_polygon(), geometry_b)
-              }
-          }
-          symmetric_distance_impl!(GeoFloat, $geometry_b, $polygonlike);
-      )*
-  };
+    ($polygonlike:ty,  [$($geometry_b:ty),*]) => {
+        impl<F: GeoFloat> Distance<F, $polygonlike, $polygonlike> for Euclidean
+        {
+            fn distance(origin: $polygonlike, destination: $polygonlike) -> F {
+                Self::distance(&origin.to_polygon(), destination)
+            }
+        }
+        $(
+            impl<F: GeoFloat> Distance<F, $polygonlike, $geometry_b> for Euclidean
+            {
+                fn distance(polygonlike: $polygonlike, geometry_b: $geometry_b) -> F {
+                      Self::distance(&polygonlike.to_polygon(), geometry_b)
+                }
+            }
+            symmetric_distance_impl!(GeoFloat, $geometry_b, $polygonlike);
+        )*
+    };
 }
 
 impl_euclidean_distance_for_polygonlike_geometry!(&Triangle<F>,  [&Point<F>, &Line<F>, &LineString<F>, &Polygon<F>, &Rect<F>]);
 impl_euclidean_distance_for_polygonlike_geometry!(&Rect<F>,      [&Point<F>, &Line<F>, &LineString<F>, &Polygon<F>]);
 
 // ┌───────────────────────────────────────────┐
-// │ Implementations for multi geometry types  │
+// │ 多种几何类型的实现                        │
 // └───────────────────────────────────────────┘
 
-/// Euclidean distance implementation for multi geometry types.
+/// 多种几何类型的欧几里得距离实现。
 macro_rules! impl_euclidean_distance_for_iter_geometry {
     ($iter_geometry:ty,  [$($to_geometry:ty),*]) => {
         impl<F: GeoFloat> Distance<F, $iter_geometry, $iter_geometry> for Euclidean {
@@ -281,7 +282,7 @@ macro_rules! impl_euclidean_distance_for_iter_geometry {
                     .fold(Bounded::max_value(), |accum: F, member| {
                         accum.min(Self::distance(member, destination))
                     })
-             }
+                }
         }
         $(
             impl<F: GeoFloat> Distance<F, $iter_geometry, $to_geometry> for Euclidean {
@@ -304,32 +305,32 @@ impl_euclidean_distance_for_iter_geometry!(&MultiPolygon<F>,       [&Point<F>, &
 impl_euclidean_distance_for_iter_geometry!(&GeometryCollection<F>, [&Point<F>, &Line<F>, &LineString<F>,                      &Polygon<F>,                                           &Rect<F>, &Triangle<F>]);
 
 // ┌──────────────────────────────┐
-// │ Implementation for Geometry  │
+// │ Geometry 的实现             │
 // └──────────────────────────────┘
 
-/// Euclidean distance implementation for every specific Geometry type to Geometry<T>.
+/// 为 Geometry<T> 的每个具体几何类型实现欧几里得距离。
 macro_rules! impl_euclidean_distance_for_geometry_and_variant {
-  ([$($target:ty),*]) => {
-      $(
-          impl<F: GeoFloat> Distance<F, $target, &Geometry<F>> for Euclidean {
-              fn distance(origin: $target, destination: &Geometry<F>) -> F {
-                  match destination {
-                      Geometry::Point(point) => Self::distance(origin, point),
-                      Geometry::Line(line) => Self::distance(origin, line),
-                      Geometry::LineString(line_string) => Self::distance(origin, line_string),
-                      Geometry::Polygon(polygon) => Self::distance(origin, polygon),
-                      Geometry::MultiPoint(multi_point) => Self::distance(origin, multi_point),
-                      Geometry::MultiLineString(multi_line_string) => Self::distance(origin, multi_line_string),
-                      Geometry::MultiPolygon(multi_polygon) => Self::distance(origin, multi_polygon),
-                      Geometry::GeometryCollection(geometry_collection) => Self::distance(origin, geometry_collection),
-                      Geometry::Rect(rect) => Self::distance(origin, rect),
-                      Geometry::Triangle(triangle) => Self::distance(origin, triangle),
-                  }
-              }
-          }
-          symmetric_distance_impl!(GeoFloat, &Geometry<F>, $target);
-      )*
-  };
+    ([$($target:ty),*]) => {
+        $(
+            impl<F: GeoFloat> Distance<F, $target, &Geometry<F>> for Euclidean {
+                fn distance(origin: $target, destination: &Geometry<F>) -> F {
+                    match destination {
+                        Geometry::Point(point) => Self::distance(origin, point),
+                        Geometry::Line(line) => Self::distance(origin, line),
+                        Geometry::LineString(line_string) => Self::distance(origin, line_string),
+                        Geometry::Polygon(polygon) => Self::distance(origin, polygon),
+                        Geometry::MultiPoint(multi_point) => Self::distance(origin, multi_point),
+                        Geometry::MultiLineString(multi_line_string) => Self::distance(origin, multi_line_string),
+                        Geometry::MultiPolygon(multi_polygon) => Self::distance(origin, multi_polygon),
+                        Geometry::GeometryCollection(geometry_collection) => Self::distance(origin, geometry_collection),
+                        Geometry::Rect(rect) => Self::distance(origin, rect),
+                        Geometry::Triangle(triangle) => Self::distance(origin, triangle),
+                    }
+                }
+            }
+            symmetric_distance_impl!(GeoFloat, &Geometry<F>, $target);
+        )*
+    };
 }
 
 impl_euclidean_distance_for_geometry_and_variant!([&Point<F>, &MultiPoint<F>, &Line<F>, &LineString<F>, &MultiLineString<F>, &Polygon<F>, &MultiPolygon<F>, &Triangle<F>, &Rect<F>, &GeometryCollection<F>]);
@@ -356,15 +357,15 @@ impl<F: GeoFloat> Distance<F, &Geometry<F>, &Geometry<F>> for Euclidean {
 }
 
 // ┌───────────────────────────┐
-// │ Implementations utilities │
+// │ 实现的工具               │
 // └───────────────────────────┘
 
-/// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
-// This is somewhat slow and memory-inefficient, but certainly better than quadratic time
+/// 使用 R* 树和最近邻查找计算最小距离
+// 这有点慢且内存效率低，但肯定比平方时间要好
 fn nearest_neighbour_distance<F: GeoFloat>(geom1: &LineString<F>, geom2: &LineString<F>) -> F {
     let tree_a = RTree::bulk_load(geom1.lines().map(CachedEnvelope::new).collect());
     let tree_b = RTree::bulk_load(geom2.lines().map(CachedEnvelope::new).collect());
-    // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
+    // 返回所有几何 a 点与几何 b 线，以及所有几何 b 点与几何 a 线之间的最小距离
     geom2
         .points()
         .fold(Bounded::max_value(), |acc: F, point| {
@@ -405,19 +406,19 @@ mod test {
         let dist2 = line_segment_distance(o2, p1, p2);
         let dist3 = line_segment_distance(o3, p1, p2);
         let dist4 = line_segment_distance(o4, p1, p2);
-        // Results agree with Shapely
+        // 结果与 Shapely 相符
         assert_relative_eq!(dist, 2.0485900789263356);
         assert_relative_eq!(dist2, 1.118033988749895);
-        assert_relative_eq!(dist3, std::f64::consts::SQRT_2); // workaround clippy::correctness error approx_constant (1.4142135623730951)
+        assert_relative_eq!(dist3, std::f64::consts::SQRT_2); // 解决 clippy::correctness 错误 approx_constant (1.4142135623730951)
         assert_relative_eq!(dist4, 1.5811388300841898);
-        // Point is on the line
+        // 点在直线上
         let zero_dist = line_segment_distance(p1, p1, p2);
         assert_relative_eq!(zero_dist, 0.0);
     }
     #[test]
-    // Point to Polygon, outside point
+    // 点到多边形，点在外部
     fn point_polygon_distance_outside_test() {
-        // an octagon
+        // 一个八边形
         let points = vec![
             (5., 1.),
             (4., 2.),
@@ -431,15 +432,15 @@ mod test {
         ];
         let ls = LineString::from(points);
         let poly = Polygon::new(ls, vec![]);
-        // A Random point outside the octagon
+        // 八边形外部的随机点
         let p = Point::new(2.5, 0.5);
         let dist = Euclidean::distance(&p, &poly);
         assert_relative_eq!(dist, 2.1213203435596424);
     }
     #[test]
-    // Point to Polygon, inside point
+    // 点到多边形，点在内部
     fn point_polygon_distance_inside_test() {
-        // an octagon
+        // 一个八边形
         let points = vec![
             (5., 1.),
             (4., 2.),
@@ -453,15 +454,15 @@ mod test {
         ];
         let ls = LineString::from(points);
         let poly = Polygon::new(ls, vec![]);
-        // A Random point inside the octagon
+        // 八边形内部的随机点
         let p = Point::new(5.5, 2.1);
         let dist = Euclidean::distance(&p, &poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
-    // Point to Polygon, on boundary
+    // 点到多边形，点在边界上
     fn point_polygon_distance_boundary_test() {
-        // an octagon
+        // 一个八边形
         let points = vec![
             (5., 1.),
             (4., 2.),
@@ -475,13 +476,13 @@ mod test {
         ];
         let ls = LineString::from(points);
         let poly = Polygon::new(ls, vec![]);
-        // A point on the octagon
+        // 八边形上的一个点
         let p = Point::new(5.0, 1.0);
         let dist = Euclidean::distance(&p, &poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
-    // Point to Polygon, on boundary
+    // 点到多边形，点在边界上
     fn point_polygon_boundary_test2() {
         let exterior = LineString::from(vec![
             (0., 0.),
@@ -496,21 +497,21 @@ mod test {
         assert_relative_eq!(Euclidean::distance(&poly, &bugged_point), 0.);
     }
     #[test]
-    // Point to Polygon, empty Polygon
+    // 点到多边形，空多边形
     fn point_polygon_empty_test() {
-        // an empty Polygon
+        // 一个空多边形
         let points = vec![];
         let ls = LineString::new(points);
         let poly = Polygon::new(ls, vec![]);
-        // A point on the octagon
+        // 八边形上的一个点
         let p = Point::new(2.5, 0.5);
         let dist = Euclidean::distance(&p, &poly);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
-    // Point to Polygon with an interior ring
+    // 点到多边形，有内部环
     fn point_polygon_interior_cutout_test() {
-        // an octagon
+        // 一个八边形
         let ext_points = vec![
             (4., 1.),
             (5., 2.),
@@ -522,24 +523,24 @@ mod test {
             (3., 1.),
             (4., 1.),
         ];
-        // cut out a triangle inside octagon
+        // 从八边形内切割出一个三角形
         let int_points = vec![(3.5, 3.5), (4.4, 1.5), (2.6, 1.5), (3.5, 3.5)];
         let ls_ext = LineString::from(ext_points);
         let ls_int = LineString::from(int_points);
         let poly = Polygon::new(ls_ext, vec![ls_int]);
-        // A point inside the cutout triangle
+        // 切割三角形内的一个点
         let p = Point::new(3.5, 2.5);
         let dist = Euclidean::distance(&p, &poly);
 
-        // 0.41036467732879783 <-- Shapely
+        // 0.41036467732879783 <-- 来自 Shapely
         assert_relative_eq!(dist, 0.41036467732879767);
     }
 
     #[test]
     fn line_distance_multipolygon_do_not_intersect_test() {
-        // checks that the distance from the multipolygon
-        // is equal to the distance from the closest polygon
-        // taken in isolation, whatever that distance is
+        // 检查来自多多边形的距离
+        // 等于从最近多边形来的距离
+        // 无论该距离是多少
         let ls1 = LineString::from(vec![
             (0.0, 0.0),
             (10.0, 0.0),
@@ -585,9 +586,9 @@ mod test {
         assert_relative_eq!(Euclidean::distance(&p, &mp), 60.959002616512684);
     }
     #[test]
-    // Point to LineString
+    // 点到线串
     fn point_linestring_distance_test() {
-        // like an octagon, but missing the lowest horizontal segment
+        // 类似八边形，但缺少最低的水平段
         let points = vec![
             (5., 1.),
             (4., 2.),
@@ -599,15 +600,15 @@ mod test {
             (6., 1.),
         ];
         let ls = LineString::from(points);
-        // A Random point "inside" the LineString
+        // 线串内部的随机点
         let p = Point::new(5.5, 2.1);
         let dist = Euclidean::distance(&p, &ls);
         assert_relative_eq!(dist, 1.1313708498984762);
     }
     #[test]
-    // Point to LineString, point lies on the LineString
+    // 点到线串，点位于线串上
     fn point_linestring_contains_test() {
-        // like an octagon, but missing the lowest horizontal segment
+        // 类似八边形，但缺少最低的水平段
         let points = vec![
             (5., 1.),
             (4., 2.),
@@ -619,13 +620,13 @@ mod test {
             (6., 1.),
         ];
         let ls = LineString::from(points);
-        // A point which lies on the LineString
+        // 位于线串上的点
         let p = Point::new(5.0, 4.0);
         let dist = Euclidean::distance(&p, &ls);
         assert_relative_eq!(dist, 0.0);
     }
     #[test]
-    // Point to LineString, closed triangle
+    // 点到线串，封闭三角形
     fn point_linestring_triangle_test() {
         let points = vec![(3.5, 3.5), (4.4, 2.0), (2.6, 2.0), (3.5, 3.5)];
         let ls = LineString::from(points);
@@ -634,7 +635,7 @@ mod test {
         assert_relative_eq!(dist, 0.5);
     }
     #[test]
-    // Point to LineString, empty LineString
+    // 点到线串，空线串
     fn point_linestring_empty_test() {
         let points = vec![];
         let ls = LineString::new(points);
@@ -703,7 +704,7 @@ mod test {
         assert_relative_eq!(Euclidean::distance(&line1, &line0), 1.);
     }
     #[test]
-    // See https://github.com/georust/geo/issues/476
+    // 参见 https://github.com/georust/geo/issues/476
     fn distance_line_polygon_test() {
         let line = Line::new(
             coord! {
@@ -736,7 +737,7 @@ mod test {
         assert_eq!(Euclidean::distance(&line, &poly), 0.18752558079168907);
     }
     #[test]
-    // test edge-vertex minimum distance
+    // 测试边-顶点最小距离
     fn test_minimum_polygon_distance() {
         let points_raw = [
             (126., 232.),
@@ -772,7 +773,7 @@ mod test {
         assert_relative_eq!(dist, 21.0);
     }
     #[test]
-    // test vertex-vertex minimum distance
+    // 测试顶点-顶点最小距离
     fn test_minimum_polygon_distance_2() {
         let points_raw = [
             (118., 200.),
@@ -803,7 +804,7 @@ mod test {
         assert_relative_eq!(dist, 29.274562336608895);
     }
     #[test]
-    // test edge-edge minimum distance
+    // 测试边-边最小距离
     fn test_minimum_polygon_distance_3() {
         let points_raw = [
             (182., 182.),
@@ -845,30 +846,29 @@ mod test {
         ];
         let poly2 = Polygon::new(vec2.into(), vec![]);
         let distance = Euclidean::distance(&poly1, &poly2);
-        // GEOS says 2.2864896295566055
+        // GEOS 的结果是 2.2864896295566055
         assert_relative_eq!(distance, 2.2864896295566055);
     }
     #[test]
-    // A polygon inside another polygon's ring; they're disjoint in the DE-9IM sense:
-    // FF2FF1212
+    // 一个多边形位于另一个多边形的环内；它们在 DE-9IM 意义上是独立的：FF2FF1212
     fn test_poly_in_ring() {
         let shell = geo_test_fixtures::shell::<f64>();
         let ring = geo_test_fixtures::ring::<f64>();
         let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
-        // inside is "inside" outside's ring, but they are disjoint
+        // 内部的多边形“在”外部环内，但它们是独立的
         let outside = Polygon::new(shell, vec![ring]);
         let inside = Polygon::new(poly_in_ring, vec![]);
         assert_relative_eq!(Euclidean::distance(&outside, &inside), 5.992772737231033);
     }
     #[test]
-    // two ring LineStrings; one encloses the other but they neither touch nor intersect
+    // 两条环形线串；一个包围另一个，但它们既不接触也不相交
     fn test_linestring_distance() {
         let ring = geo_test_fixtures::ring::<f64>();
         let poly_in_ring = geo_test_fixtures::poly_in_ring::<f64>();
         assert_relative_eq!(Euclidean::distance(&ring, &poly_in_ring), 5.992772737231033);
     }
     #[test]
-    // Line-Polygon test: closest point on Polygon is NOT nearest to a Line end-point
+    // 线到多边形测试：多边形上的最近点不是最接近线端点的点
     fn test_line_polygon_simple() {
         let line = Line::from([(0.0, 0.0), (0.0, 3.0)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
@@ -876,7 +876,7 @@ mod test {
         assert_relative_eq!(Euclidean::distance(&line, &poly), 0.25);
     }
     #[test]
-    // Line-Polygon test: Line intersects Polygon
+    // 线到多边形测试：线与多边形相交
     fn test_line_polygon_intersects() {
         let line = Line::from([(0.5, 0.0), (0.0, 3.0)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.5), (5.0, 1.0)];
@@ -884,7 +884,7 @@ mod test {
         assert_relative_eq!(Euclidean::distance(&line, &poly), 0.0);
     }
     #[test]
-    // Line-Polygon test: Line contained by interior ring
+    // 线到多边形测试：线位于内部环内
     fn test_line_polygon_inside_ring() {
         let line = Line::from([(4.4, 1.5), (4.45, 1.5)]);
         let v = vec![(5.0, 1.0), (5.0, 2.0), (0.25, 1.0), (5.0, 1.0)];
@@ -893,7 +893,7 @@ mod test {
         assert_relative_eq!(Euclidean::distance(&line, &poly), 0.04999999999999982);
     }
     #[test]
-    // LineString-Line test
+    // 线串到线的测试
     fn test_linestring_line_distance() {
         let line = Line::from([(0.0, 0.0), (0.0, 2.0)]);
         let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
@@ -901,7 +901,7 @@ mod test {
     }
 
     #[test]
-    // Triangle-Point test: point on vertex
+    // 三角形到点的测试：点在顶点上
     fn test_triangle_point_on_vertex_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(0.0, 0.0);
@@ -909,7 +909,7 @@ mod test {
     }
 
     #[test]
-    // Triangle-Point test: point on edge
+    // 三角形到点的测试：点在边上
     fn test_triangle_point_on_edge_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(1.5, 0.0);
@@ -917,7 +917,7 @@ mod test {
     }
 
     #[test]
-    // Triangle-Point test
+    // 三角形到点的测试
     fn test_triangle_point_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(2.0, 3.0);
@@ -925,7 +925,7 @@ mod test {
     }
 
     #[test]
-    // Triangle-Point test: point within triangle
+    // 三角形到点的测试：点在三角形内
     fn test_triangle_point_inside_distance() {
         let triangle = Triangle::from([(0.0, 0.0), (2.0, 0.0), (2.0, 2.0)]);
         let point = Point::new(1.0, 0.5);
@@ -960,7 +960,7 @@ mod test {
     }
     #[test]
     fn fast_path_regression() {
-        // this test will fail if the fast path algorithm is reintroduced without being fixed
+        // 如果未修复的情况下重新引入快速路径算法，该测试将失败
         let p1 = polygon!(
             (x: 0_f64, y: 0_f64),
             (x: 300_f64, y: 0_f64),

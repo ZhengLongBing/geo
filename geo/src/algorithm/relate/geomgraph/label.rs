@@ -2,17 +2,16 @@ use super::{CoordPos, Direction, TopologyPosition};
 
 use std::fmt;
 
-/// A GeometryGraph has components (nodes and edges) which are labeled with their topological
-/// relations to the geometries.
+/// GeometryGraph 包含被标记为拓扑关系的组件（节点和边）。
 ///
-/// More precisely, each `Label` holds a `TopologyPosition` for each geometry that states whether
-/// the node or edge being labeled occurs `Inside`, `Outside`, or `OnBoundary` of the geometry.
+/// 更准确地，每个 `Label` 为每个几何体保存一个 `TopologyPosition`，
+/// 说明被标记的节点或边出现在几何体的 `Inside`，`Outside` 或 `OnBoundary`。
 ///
-/// For lines and points, a `TopologyPosition` tracks only an `On` position,
-/// while areas have positions for `On`, `Left`, and `Right`.
+/// 对于线和点，一个 `TopologyPosition` 只跟踪一个 `On` 位置，
+/// 而区域则有 `On`，`Left` 和 `Right` 位置。
 ///
-/// If the component has *no* incidence with one of the geometries, than the `Label`'s
-/// `TopologyPosition` for that geometry is called `empty`.
+/// 如果组件与某一个几何体没有任何结合关系，那么这个几何体的 `Label` 的
+/// `TopologyPosition` 被称为 `empty`。
 #[derive(Clone, PartialEq)]
 pub(crate) struct Label {
     geometry_topologies: [TopologyPosition; 2],
@@ -33,7 +32,7 @@ impl Label {
         self.geometry_topologies.swap(0, 1)
     }
 
-    /// Construct an empty `Label` for relating a 1-D line or 0-D point to both geometries.
+    /// 构造一个空的 `Label` 用于将一个一维线或零维点与两个几何体进行关联。
     pub fn empty_line_or_point() -> Label {
         Label {
             geometry_topologies: [
@@ -43,7 +42,7 @@ impl Label {
         }
     }
 
-    /// Construct an empty `Label` for relating a 2-D area to both geometries.
+    /// 构造一个空的 `Label` 用于将一个二维区域与两个几何体进行关联。
     pub fn empty_area() -> Self {
         Self {
             geometry_topologies: [
@@ -53,10 +52,9 @@ impl Label {
         }
     }
 
-    /// Construct a `Label` initialized with `position` for the geometry specified by
-    /// `geom_index`.
+    /// 构造一个用 `position` 初始化的 `Label` 为指定的几何体 `geom_index`。
     ///
-    /// The label's position for the other geometry will be initialized as empty.
+    /// 标签在其他几何体的位置信息将被初始化为空。
     pub fn new(geom_index: usize, position: TopologyPosition) -> Self {
         let mut label = match position {
             TopologyPosition::LineOrPoint { .. } => Self::empty_line_or_point(),

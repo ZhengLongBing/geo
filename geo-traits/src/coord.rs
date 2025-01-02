@@ -5,25 +5,24 @@ use geo_types::{Coord, CoordNum};
 
 use crate::Dimensions;
 
-/// A trait for accessing data from a generic Coord.
+/// 用于从通用坐标访问数据的特征。
 ///
-/// Refer to [geo_types::Coord] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅 [geo_types::Coord]。
 pub trait CoordTrait {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// Dimensions of the coordinate tuple
+    /// 坐标元组的维度
     fn dim(&self) -> Dimensions;
 
-    /// Access the n'th (0-based) element of the CoordinateTuple.
-    /// Returns `None` if `n >= DIMENSION`.
+    /// 访问坐标元组的第n个（从0开始）元素。
+    /// 如果 `n >= DIMENSION`，则返回 `None`。
     ///
-    /// See also [`nth_or_panic()`](Self::nth_or_panic) and [`nth_unchecked()`](Self::nth_unchecked).
+    /// 另请参阅 [`nth_or_panic()`](Self::nth_or_panic) 和 [`nth_unchecked()`](Self::nth_unchecked)。
     ///
-    /// # Panics
+    /// # 可能的恐慌
     ///
-    /// This method may panic if [`dim()`](Self::dim) does not correspond to
-    /// the actual number of dimensions in this coordinate.
+    /// 如果 [`dim()`](Self::dim) 与此坐标中的实际维度数不对应，此方法可能会恐慌。
     fn nth(&self, n: usize) -> Option<Self::T> {
         if n < self.dim().size() {
             Some(self.nth_or_panic(n))
@@ -32,35 +31,33 @@ pub trait CoordTrait {
         }
     }
 
-    /// x component of this coord.
+    /// 此坐标的x分量。
     fn x(&self) -> Self::T;
 
-    /// y component of this coord.
+    /// 此坐标的y分量。
     fn y(&self) -> Self::T;
 
-    /// Returns a tuple that contains the x/horizontal & y/vertical component of the coord.
+    /// 返回包含坐标的x/水平和y/垂直分量的元组。
     fn x_y(&self) -> (Self::T, Self::T) {
         (self.x(), self.y())
     }
 
-    /// Access the n'th (0-based) element of the CoordinateTuple.
-    /// May panic if n >= DIMENSION.
-    /// See also [`nth()`](Self::nth).
+    /// 访问坐标元组的第n个（从0开始）元素。
+    /// 如果 n >= DIMENSION，可能会恐慌。
+    /// 另请参阅 [`nth()`](Self::nth)。
     fn nth_or_panic(&self, n: usize) -> Self::T;
 
-    /// Access the n'th (0-based) element of the CoordinateTuple.
-    /// May panic if n >= DIMENSION.
+    /// 访问坐标元组的第n个（从0开始）元素。
+    /// 如果 n >= DIMENSION，可能会恐慌。
     ///
-    /// See also [`nth()`](Self::nth), [`nth_or_panic()`](Self::nth_or_panic).
+    /// 另请参阅 [`nth()`](Self::nth), [`nth_or_panic()`](Self::nth_or_panic)。
     ///
-    /// You might want to override the default implementation of this method
-    /// if you can provide a more efficient implementation.
+    /// 如果您可以提供更高效的实现，可能需要覆盖此方法的默认实现。
     ///
-    /// # Safety
+    /// # 安全性
     ///
-    /// Though it may panic, the default implementation actually is safe. However, implementors
-    /// are allowed to implement this method themselves with an unsafe implementation. See the
-    /// individual implementations for more information on their own Safety considerations.
+    /// 虽然它可能会恐慌，但默认实现实际上是安全的。然而，实现者可以使用不安全的实现来实现此方法。
+    /// 有关各自的安全性考虑，请参阅各个实现。
     unsafe fn nth_unchecked(&self, n: usize) -> Self::T {
         self.nth_or_panic(n)
     }
@@ -74,7 +71,7 @@ impl<T: CoordNum> CoordTrait for Coord<T> {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!("Coord only supports 2 dimensions"),
+            _ => panic!("Coord 仅支持2个维度"),
         }
     }
 
@@ -99,7 +96,7 @@ impl<T: CoordNum> CoordTrait for &Coord<T> {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!("Coord only supports 2 dimensions"),
+            _ => panic!("Coord 仅支持2个维度"),
         }
     }
 
@@ -123,7 +120,7 @@ impl<T: Copy> CoordTrait for (T, T) {
         match n {
             0 => self.x(),
             1 => self.y(),
-            _ => panic!("(T, T) only supports 2 dimensions"),
+            _ => panic!("(T, T) 仅支持2个维度"),
         }
     }
 
@@ -140,10 +137,9 @@ impl<T: Copy> CoordTrait for (T, T) {
     }
 }
 
-/// An empty struct that implements [CoordTrait].
+/// 实现 [CoordTrait] 的空结构体。
 ///
-/// This can be used as the `CoordType` of the `GeometryTrait` by implementations that don't have a
-/// Coord concept
+/// 对于没有坐标概念的实现，可以将其用作 `GeometryTrait` 的 `CoordType`
 pub struct UnimplementedCoord<T>(PhantomData<T>);
 
 impl<T> CoordTrait for UnimplementedCoord<T> {

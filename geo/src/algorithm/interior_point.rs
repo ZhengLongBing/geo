@@ -14,31 +14,26 @@ use crate::geometry::*;
 use crate::sweep::{Intersections, SweepPoint};
 use crate::GeoFloat;
 
-/// Calculation of interior points.
+/// 计算内部点。
 ///
-/// An interior point is a point that's guaranteed to intersect a given geometry, and will be
-/// strictly on the interior of the geometry if possible, or on the edge if the geometry has zero
-/// area. A best effort will additionally be made to locate the point reasonably centrally.
+/// 内部点是一个保证与给定几何体相交的点，并且在可能的情况下将严格位于几何体的内部，
+/// 如果几何体没有面积，将在其边缘上。还将尽最大努力使该点尽可能位于几何体中央。
 ///
-/// For polygons, this point is located by drawing a line that approximately subdivides the
-/// bounding box around the polygon in half, intersecting it with the polygon, then calculating
-/// the midpoint of the longest line produced by the intersection. For lines, the non-endpoint
-/// vertex closest to the line's centroid is returned if the line has interior points, or an
-/// endpoint is returned otherwise.
+/// 对于多边形，此点通过绘制一条大致将多边形的边界框一分为二的直线，
+/// 再与多边形相交，并计算由此相交产生的最长线段的中点来确定。
+/// 对于线，如果线具有内部点，则返回最接近线的质心的非端点顶点，否则返回端点。
 ///
-/// For multi-geometries or collections, the interior points of the constituent components are
-/// calculated, and one of those is returned (for MultiPolygons, it's the point that's the midpoint
-/// of the longest intersection of the intersection lines of any of the constituent polygons, as
-/// described above; for all others, the interior point closest to the collection's centroid is
-/// used).
+/// 对于多几何体或组合，计算组成部分的内部点，并返回其中的一个
+/// （对于多多边形，它是上面描述的最长相交线段的中点；对于其他的，
+/// 使用距离集合的质心最近的内部点）。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::InteriorPoint;
 /// use geo::{point, polygon};
 ///
-/// // rhombus shaped polygon
+/// // 菱形状的多边形
 /// let polygon = polygon![
 ///     (x: -2., y: 1.),
 ///     (x: 1., y: 3.),
@@ -55,9 +50,9 @@ use crate::GeoFloat;
 pub trait InteriorPoint {
     type Output;
 
-    /// Calculates a representative point inside the `Geometry`
+    /// 计算几何图形内部的代表点
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::InteriorPoint;
@@ -84,8 +79,7 @@ where
     type Output = Point<T>;
 
     fn interior_point(&self) -> Self::Output {
-        // the midpoint of the line isn't guaranteed to actually have an `intersects()`
-        // relationship with the line due to floating point rounding, so just use the start point
+        // 线段的中点由于浮点数的舍入问题，并不能保证与线分段有 `intersects()` 关系，请直接使用起点
         self.start_point()
     }
 }
@@ -96,18 +90,14 @@ where
 {
     type Output = Option<Point<T>>;
 
-    // The interior point of a LineString the non-endpoint vertex closest to the centroid if any,
-    // or the start point if there are no non-endpoint vertices
+    // 如果有，则返回最接近质心的非端点顶点的LineString的内部点，否则返回起点
     fn interior_point(&self) -> Self::Output {
         match self.0.len() {
             0 => None,
-            // for linestrings of length 2, as with lines, the calculated midpoint might not lie
-            // on the line, so just use the start point
+            // 对于长度为2的LineString，计算的中点可能不在该线段上，故直接使用起点
             1 | 2 => Some(self.0[0].into()),
             _ => {
-                let centroid = self
-                    .centroid()
-                    .expect("expected centroid for non-empty linestring");
+                let centroid = self.centroid().expect("非空的LineString期望存在质心");
                 self.0[1..(self.0.len() - 1)]
                     .iter()
                     .map(|coord| {
@@ -127,8 +117,7 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The interior point of a MultiLineString is, of the interior points of all the constituent
-    /// LineStrings, the one closest to the centroid of the MultiLineString
+    /// MultiLineString中内部点是所有组成LineString的内部点中距离MultiLineString质心最近的一个
     fn interior_point(&self) -> Self::Output {
         if let Some(centroid) = self.centroid() {
             self.iter()
@@ -148,7 +137,7 @@ where
 fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     polygon: &Polygon<T>,
 ) -> Option<(Point<T>, T)> {
-    // special-case a one-point polygon since this algorithm won't otherwise support it
+    // 针对单个点的多边形的特殊情况，因为该算法无法支持这个情况
     if polygon.exterior().0.len() == 1 {
         return Some((polygon.exterior().0[0].into(), T::zero()));
     }
@@ -157,10 +146,8 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
 
     let bounds = polygon.bounding_rect()?;
 
-    // use the midpoint of the bounds to scan, unless that happens to match any vertices from
-    // polygon; if it does, perturb the line a bit by averaging with the Y coordinate of the
-    // next-closest-to-center vertex if possible, to reduce the likelihood of collinear
-    // intersections
+    // 使用边界的中点来扫描，除非它恰好与多边形上的某个顶点重合；
+    // 如果是，则通过与下一个最接近中心的顶点的Y坐标取平均的方法对线稍作扰动，以减少共线相交的可能
     let mut y_mid = (bounds.min().y + bounds.max().y) / two;
     if polygon.coords_iter().any(|coord| coord.y == y_mid) {
         let next_closest = polygon
@@ -218,8 +205,7 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
     segments.sort_by(|a, b| b.1.total_cmp(&a.1));
 
     for (midpoint, segment_length) in segments {
-        // some pairs of consecutive points traveling east-west will bound segments inside the
-        // polygon, and some outside; confirm that this is the former
+        // 东西方向相邻的点对将限定多边形内部的一些线段，和外部的一些线段；确认这是前者
         let relation = polygon.relate(&midpoint);
         if relation.is_intersects() {
             return Some((
@@ -227,16 +213,14 @@ fn polygon_interior_point_with_segment_length<T: GeoFloat>(
                 if relation.is_contains() {
                     segment_length
                 } else {
-                    // if our point is on the boundary, it must be because this is a zero-area
-                    // polygon, so if we're being called from a multipolygon context, we want this
-                    // option to be down-ranked as compared to other polygons that might have
-                    // non-zero area
+                    // 如果我们的点在边界上，必须是因为这是一个零面积的多边形
+                    // 所以如果我们是从多多边形上下文中调用的， 我们希望这个选项比其他可能有非零面积的多边形被降级
                     T::zero()
                 },
             ));
         }
     }
-    // if we've gotten this far with no luck, return any vertex point, if there are any
+    // 如果我们到这里仍然没有成功，返回任何一个顶点，如果有的话
     polygon
         .coords_iter()
         .next()
@@ -346,7 +330,7 @@ where
                     geom.interior_point().map(|pt| {
                         (
                             pt,
-                            // maximize dimensions, minimize distance
+                            // 增大维度，减小距离
                             (
                                 Reverse(geom.dimensions()),
                                 Euclidean::distance(pt, centroid),
@@ -381,17 +365,17 @@ mod test {
         coord, line_string, point, polygon,
     };
 
-    /// small helper to create a coordinate
+    /// 创建坐标的小工具
     fn c<T: GeoFloat>(x: T, y: T) -> Coord<T> {
         coord! { x: x, y: y }
     }
 
-    /// small helper to create a point
+    /// 创建点的小工具
     fn p<T: GeoFloat>(x: T, y: T) -> Point<T> {
         point! { x: x, y: y }
     }
 
-    // Tests: InteriorPoint of LineString
+    // 测试：LineString的内部点
     #[test]
     fn empty_linestring_test() {
         let linestring: LineString<f32> = line_string![];
@@ -429,7 +413,7 @@ mod test {
         let mls = MultiLineString::new(vec![l1, l2]);
         assert_eq!(mls.interior_point(), Some(p(1., 1.)));
     }
-    // Tests: InteriorPoint of MultiLineString
+    // 测试：MultiLineString的内部点
     #[test]
     fn empty_multilinestring_test() {
         let mls: MultiLineString = MultiLineString::new(vec![]);
@@ -476,7 +460,7 @@ mod test {
         let mls = MultiLineString::new(vec![v1, v2, v3]);
         assert_eq!(mls.interior_point().unwrap(), point![x: 0., y: 0.]);
     }
-    // Tests: InteriorPoint of Polygon
+    // 测试：Polygon的内部点
     #[test]
     fn empty_polygon_test() {
         let poly: Polygon<f32> = polygon![];
@@ -504,7 +488,7 @@ mod test {
     }
     #[test]
     fn polygon_hole_test() {
-        // hexagon
+        // 六边形
         let ls1 = LineString::from(vec![
             (5.0, 1.0),
             (4.0, 2.0),
@@ -536,8 +520,7 @@ mod test {
     }
     #[test]
     fn diagonal_flat_polygon_test() {
-        // the regular intersection approach happens to not produce a point that intersects the
-        // polygon given these particular start values, so this tests falling back to a vertex
+        // 常规的相交方法恰好不会产生与多边形相交的点，因此测试回退到顶点
         let start: Coord<f64> = Coord {
             x: 0.632690318327692,
             y: 0.08104532928154995,
@@ -609,9 +592,7 @@ mod test {
     }
     #[test]
     fn multi_poly_with_one_ring_and_one_real_poly() {
-        // if the multipolygon is composed of a 'normal' polygon (with an area not null)
-        // and a ring (a polygon with a null area)
-        // the interior_point of the multipolygon is the interior_point of the 'normal' polygon
+        // 如果多多边形是由一个“普通”多边形（面积不为零）和一个环（面积为零的多边形）组成，那么多多边形的内部点就是“普通”多边形的内部点。
         let normal = Polygon::new(
             LineString::from(vec![p(1., 1.), p(1., 3.), p(3., 1.), p(1., 1.)]),
             vec![],
@@ -650,12 +631,12 @@ mod test {
         let interior_point = poly.interior_point().unwrap();
         assert_eq!(&interior_point, &p(0.0, 0.5));
         assert!(poly.intersects(&interior_point));
-        assert!(!poly.contains(&interior_point)); // there's no interior so won't be "contains"
+        assert!(!poly.contains(&interior_point)); // 没有内部，因此不属于“包含”
     }
     #[test]
     fn polygon_cell_test() {
-        // test the interior_point of polygon with a null area
-        // this one a polygon with 2 interior polygon that makes a partition of the exterior
+        // 测试面积为零的多边形的interior_point
+        // 这是一个有2个内多边形的多边形，它使外部成为一个分区。
         let square = LineString::from(vec![p(0., 0.), p(0., 2.), p(2., 2.), p(2., 0.), p(0., 0.)]);
         let bottom = LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 1.), p(0., 1.), p(0., 0.)]);
         let top = LineString::from(vec![p(0., 1.), p(2., 1.), p(2., 2.), p(0., 2.), p(0., 1.)]);
@@ -664,7 +645,7 @@ mod test {
         assert!(poly.intersects(&interior_point));
         assert!(!poly.contains(&interior_point));
     }
-    // Tests: InteriorPoint of MultiPolygon
+    // 测试：MultiPolygon的内部点
     #[test]
     fn empty_multipolygon_polygon_test() {
         assert!(MultiPolygon::<f64>::new(Vec::new())
@@ -750,8 +731,7 @@ mod test {
         mixed_shapes.0.push(Point::new(5_f64, 0_f64).into());
         mixed_shapes.0.push(Point::new(5_f64, 1_f64).into());
 
-        // lower-dimensional shapes shouldn't affect interior point if higher-dimensional shapes
-        // are present, even if the low-d ones are closer to the centroid
+        // 如果存在较高维度的形状，较低维度的形状不应影响内部点，即使低维形状更接近质心。
         assert_eq!(
             high_dimension_shapes.interior_point().unwrap(),
             mixed_shapes.interior_point().unwrap()
@@ -759,31 +739,31 @@ mod test {
     }
     #[test]
     fn triangles() {
-        // boring triangle
+        // 普通三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 0.), c(1.5, 3.)).interior_point(),
             point!(x: 1.5, y: 1.0)
         );
 
-        // flat triangle
+        // 平坦三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 0.), c(1., 0.)).interior_point(),
             point!(x: 1.5, y: 0.0)
         );
 
-        // flat triangle that's not axis-aligned
+        // 非轴对齐的平坦三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 3.), c(1., 1.)).interior_point(),
             point!(x: 1.5, y: 1.5)
         );
 
-        // triangle with some repeated points
+        // 带有一些重复点的三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(0., 0.), c(1., 0.)).interior_point(),
             point!(x: 0.5, y: 0.0)
         );
 
-        // triangle with all repeated points
+        // 所有点重复的三角形
         assert_eq!(
             Triangle::new(c(0., 0.5), c(0., 0.5), c(0., 0.5)).interior_point(),
             point!(x: 0., y: 0.5)
@@ -802,9 +782,7 @@ mod test {
 
         let pt1 = g1.interior_point().unwrap();
         let pt2 = g2.interior_point().unwrap();
-        // triangle and polygon have differing interior-point implementations, so we won't get the
-        // same point with both approaches, but both should produce points that are interior to
-        // either representation
+        // 三角形和多边形具有不同的内部点实现，因此我们不会在这两种方法中获得相同的点，但都应该产生点，这些点是任何一种表示的内部点
         assert!(g1.intersects(&pt1));
         assert!(g1.intersects(&pt2));
         assert!(g2.intersects(&pt1));
@@ -825,31 +803,31 @@ mod test {
 
     #[test]
     fn rectangles() {
-        // boring rect
+        // 普通矩形
         assert_eq!(
             Rect::new(c(0., 0.), c(4., 4.)).interior_point(),
             point!(x: 2.0, y: 2.0)
         );
 
-        // flat rect
+        //平坦矩形
         assert_eq!(
             Rect::new(c(0., 0.), c(4., 0.)).interior_point(),
             point!(x: 2.0, y: 0.0)
         );
 
-        // rect with all repeated points
+        //所有点重复的矩形
         assert_eq!(
             Rect::new(c(4., 4.), c(4., 4.)).interior_point(),
             point!(x: 4., y: 4.)
         );
 
-        // collection with rect
+        // 含有矩形的集合
         let collection = GeometryCollection::new_from(vec![
             p(0., 0.).into(),
             p(6., 0.).into(),
             p(6., 6.).into(),
         ]);
-        // check collection
+        // 检查集合
         assert_eq!(collection.interior_point().unwrap(), point!(x: 6., y: 0.));
     }
 }

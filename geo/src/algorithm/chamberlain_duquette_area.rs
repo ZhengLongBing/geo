@@ -1,25 +1,25 @@
 use crate::geometry::*;
 use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 
-/// Calculate the signed approximate geodesic area of a `Geometry`.
+/// 计算 `Geometry` 的符号近似测地面积。
 ///
-/// # Units
+/// # 单位
 ///
-/// - return value: meters²
+/// - 返回值：平方米
 ///
-/// # References
+/// # 参考文献
 ///
-/// * Robert. G. Chamberlain and William H. Duquette, "Some Algorithms for Polygons on a Sphere",
+/// * Robert. G. Chamberlain 和 William H. Duquette, "Some Algorithms for Polygons on a Sphere",
 ///
-///   JPL Publication 07-03, Jet Propulsion Laboratory, Pasadena, CA, June 2007 <https://trs.jpl.nasa.gov/handle/2014/41271>
+///   JPL 出版物 07-03, Jet Propulsion Laboratory, Pasadena, CA, 2007 年 6 月 <https://trs.jpl.nasa.gov/handle/2014/41271>
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::{polygon, Polygon};
 /// use geo::chamberlain_duquette_area::ChamberlainDuquetteArea;
 ///
-/// // The O2 in London
+/// // 伦敦的 O2
 /// let mut polygon: Polygon<f64> = polygon![
 ///     (x: 0.00388383, y: 51.501574),
 ///     (x: 0.00538587, y: 51.502278),
@@ -33,7 +33,7 @@ use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 ///     (x: 0.00388383, y: 51.501574),
 /// ];
 ///
-/// // 78,478 meters²
+/// // 78,478 平方米
 /// assert_eq!(78_478., polygon.chamberlain_duquette_unsigned_area().round());
 /// assert_eq!(78_478., polygon.chamberlain_duquette_signed_area().round());
 ///
@@ -86,7 +86,7 @@ where
                 // i = N-1
                 (coords_len - 1, 0, 1)
             } else {
-                // i = 0 to N-3
+                // i = 0 到 N-3
                 (i, i + 1, i + 2)
             };
             let p1 = coords[lower_index];
@@ -103,7 +103,7 @@ where
     total
 }
 
-/// Generate a `ChamberlainDuquetteArea` implementation where the result is zero.
+/// 生成一个 `ChamberlainDuquetteArea` 的实现，其中结果为零。
 macro_rules! zero_impl {
     ($type:ident) => {
         impl<T> ChamberlainDuquetteArea<T> for $type<T>
@@ -121,8 +121,7 @@ macro_rules! zero_impl {
     };
 }
 
-/// Generate a `ChamberlainDuquetteArea` implementation which delegates to the `Polygon`
-/// implementation.
+/// 生成一个 `ChamberlainDuquetteArea` 的实现，该实现委托给 `Polygon` 实现。
 macro_rules! to_polygon_impl {
     ($type:ident) => {
         impl<T> ChamberlainDuquetteArea<T> for $type<T>
@@ -140,8 +139,7 @@ macro_rules! to_polygon_impl {
     };
 }
 
-/// Generate a `ChamberlainDuquetteArea` implementation which calculates the area for each of its
-/// sub-components and sums them up.
+/// 生成一个 `ChamberlainDuquetteArea` 的实现，该实现计算其每个子组件的面积并将它们相加。
 macro_rules! sum_impl {
     ($type:ident) => {
         impl<T> ChamberlainDuquetteArea<T> for $type<T>

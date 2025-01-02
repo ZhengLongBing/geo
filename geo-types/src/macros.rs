@@ -1,13 +1,13 @@
-/// Creates a [`Point`] from the given coordinates.
+/// 从给定的坐标创建一个 [`Point`]。
 ///
 /// ```txt
-/// point! { x: <number>, y: <number> }
-/// point!(<coordinate>)
+/// point! { x: <数字>, y: <数字> }
+/// point!(<坐标>)
 /// ```
 ///
-/// # Examples
+/// # 示例
 ///
-/// Creating a [`Point`], supplying x/y values:
+/// 创建一个 [`Point`]，提供 x/y 值：
 ///
 /// ```
 /// use geo_types::{point, coord};
@@ -34,15 +34,15 @@ macro_rules! point {
     };
 }
 
-/// Creates a [`Coord`] from the given scalars.
+/// 从给定的标量创建一个 [`Coord`]。
 ///
 /// ```txt
-/// coord! { x: <number>, y: <number> }
+/// coord! { x: <数字>, y: <数字> }
 /// ```
 ///
-/// # Examples
+/// # 示例
 ///
-/// Creating a [`Coord`], supplying x/y values:
+/// 创建一个 [`Coord`]，提供 x/y 值：
 ///
 /// ```
 /// use geo_types::coord;
@@ -60,15 +60,15 @@ macro_rules! coord {
     };
 }
 
-/// Creates a [`LineString`] containing the given coordinates.
+/// 创建一个包含给定坐标的 [`LineString`]。
 ///
 /// ```txt
-/// line_string![Coord OR (x: <number>, y: <number>), …]
+/// line_string![Coord 或 (x: <数字>, y: <数字>), …]
 /// ```
 ///
-/// # Examples
+/// # 示例
 ///
-/// Creating a [`LineString`], supplying x/y values:
+/// 创建一个 [`LineString`]，提供 x/y 值：
 ///
 /// ```
 /// use geo_types::line_string;
@@ -86,7 +86,7 @@ macro_rules! coord {
 /// });
 /// ```
 ///
-/// Creating a [`LineString`], supplying [`Coord`]s:
+/// 创建一个 [`LineString`]，提供 [`Coord`]s：
 ///
 /// ```
 /// use geo_types::line_string;
@@ -146,25 +146,25 @@ macro_rules! line_string {
     };
 }
 
-/// Creates a [`Polygon`] containing the given coordinates.
+/// 创建一个包含给定坐标的 [`Polygon`]。
 ///
 /// ```txt
-/// polygon![Coord OR (x: <number>, y: <number>), …]
+/// polygon![Coord 或 (x: <数字>, y: <数字>), …]
 ///
-/// // or
+/// // 或
 ///
 /// polygon!(
-///     exterior: [Coord OR (x: <number>, y: <number>), …],
+///     exterior: [Coord 或 (x: <数字>, y: <数字>), …],
 ///     interiors: [
-///         [Coord OR (x: <number>, y: <number>), …],
+///         [Coord 或 (x: <数字>, y: <数字>), …],
 ///         …
 ///     ],
 /// )
 /// ```
 ///
-/// # Examples
+/// # 示例
 ///
-/// Creating a [`Polygon`] without interior rings, supplying x/y values:
+/// 创建一个没有内部环的 [`Polygon`]，提供 x/y 值：
 ///
 /// ```
 /// use geo_types::polygon;
@@ -182,7 +182,7 @@ macro_rules! line_string {
 /// );
 /// ```
 ///
-/// Creating a [`Polygon`], supplying x/y values:
+/// 创建一个 [`Polygon`]，提供 x/y 值：
 ///
 /// ```
 /// use geo_types::polygon;

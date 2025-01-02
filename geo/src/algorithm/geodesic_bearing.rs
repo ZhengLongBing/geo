@@ -2,19 +2,19 @@ use crate::Point;
 use geo_types::CoordNum;
 use geographiclib_rs::{Geodesic, InverseGeodesic};
 
-/// Returns the bearing to another Point in degrees on a geodesic.
+/// 返回到另一个点的方位角，以度为单位，在测地线上。
 ///
-/// This uses the geodesic methods given by [Karney (2013)].
+/// 使用 [Karney (2013)] 提供的测地方法。
 ///
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicBearing<T: CoordNum> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use the `Geodesic::bearing` method from the `Bearing` trait instead"
+        note = "请改用 `Bearing` 特征中的 `Geodesic::bearing` 方法"
     )]
-    /// Returns the bearing to another Point in degrees, where North is 0° and East is 90°.
+    /// 返回到另一个点的方位角，以度为单位，其中北为 0°，东为 90°。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -30,14 +30,14 @@ pub trait GeodesicBearing<T: CoordNum> {
     /// ```
     fn geodesic_bearing(&self, point: Point<T>) -> T;
 
-    /// Returns the bearing and distance to another Point in a (bearing, distance) tuple.
+    /// 返回到另一个点的方位角和距离，以 (方位角, 距离) 元组的形式。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `bearing`: degrees, zero degrees is north. East is 90°.
-    /// - `distance`: meters
+    /// - `bearing`：度，零度为北，东为 90°。
+    /// - `distance`：米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;

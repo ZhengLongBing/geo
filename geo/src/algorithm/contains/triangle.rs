@@ -3,7 +3,7 @@ use crate::geometry::*;
 use crate::{kernels::Kernel, GeoFloat, GeoNum, Orientation};
 
 // ┌──────────────────────────────┐
-// │ Implementations for Triangle │
+// │ 三角形的实现部分            │
 // └──────────────────────────────┘
 
 impl<T> Contains<Coord<T>> for Triangle<T>
@@ -11,13 +11,13 @@ where
     T: GeoNum,
 {
     fn contains(&self, coord: &Coord<T>) -> bool {
-        // leverageing robust predicates
+        // 使用稳健的谓词
         self.to_lines()
             .map(|l| T::Ker::orient2d(l.start, l.end, *coord))
             .windows(2)
             .all(|win| win[0] == win[1] && win[0] != Orientation::Collinear)
 
-        // // neglecting robust prdicates, hence faster
+        // // 不使用稳健的谓词，因此速度更快
         // let p0x = self.0.x.to_f64().unwrap();
         // let p0y = self.0.y.to_f64().unwrap();
         // let p1x = self.1.x.to_f64().unwrap();

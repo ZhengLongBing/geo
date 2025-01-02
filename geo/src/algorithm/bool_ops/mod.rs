@@ -16,41 +16,30 @@ use i_overlay::float::overlay::FloatOverlay;
 use i_overlay::float::single::SingleFloatOverlay;
 use i_overlay::string::clip::ClipRule;
 
-/// Boolean Operations on geometry.
+/// 几何体上的布尔运算。
 ///
-/// Boolean operations are set operations on geometries considered as a subset
-/// of the 2-D plane. The operations supported are: intersection, union,
-/// symmetric difference (xor), and set-difference on pairs of 2-D geometries and
-/// clipping a 1-D geometry with self.
+/// 布尔运算是将几何体视为二维平面子集的集合运算。支持的运算有：交集、并集、对称差（异或），以及一对二维几何体的差集和自我剪裁一个一维几何体。
 ///
-/// These operations are implemented on [`Polygon`] and the [`MultiPolygon`]
-/// geometries.
+/// 这些操作是基于[`Polygon`]和[`MultiPolygon`]几何体实现的。
 ///
-/// # Validity
+/// # 有效性
 ///
-/// Note that the operations are strictly well-defined only on *valid*
-/// geometries. However, the implementation generally works well as long as the
-/// interiors of polygons are contained within their corresponding exteriors.
+/// 请注意，这些操作只有在*有效*几何体上才是严格定义的。然而，只要多边形的内部位于其对应的外部内，通常实现都可以正常工作。
 ///
-/// Degenerate 2-d geoms with 0 area are handled, and ignored by the algorithm.
-/// In particular, taking `union` with an empty geom should remove degeneracies
-/// and fix invalid polygons as long the interior-exterior requirement above is
-/// satisfied.
+/// 算法会处理并忽略面积为0的退化二维几何体。特别是，与一个空几何体的`并集`操作应能去除退化并修复无效的多边形，只要内外条件如上所述得以满足。
 ///
-/// # Performance
+/// # 性能
 ///
-/// For union operations on a large number of [`Polygon`]s or [`MultiPolygon`]s,
-/// using [`unary_union`] will yield far better performance.
+/// 对于大量[`Polygon`]或[`MultiPolygon`]的并集操作，使用[`unary_union`]将获得更好的性能。
 pub trait BooleanOps {
     type Scalar: BoolOpsNum;
 
-    /// The exterior and interior rings of the geometry.
+    /// 几何体的外部和内部环。
     ///
-    /// It doesn't particularly matter which order they are in, as the topology algorithm counts crossings
-    /// to determine the interior and exterior of the polygon.
+    /// 环的顺序并不重要，因为拓扑算法通过计数交叉点来确定多边形的内部和外部。
     ///
-    /// It is required that the rings are from valid geometries, that the rings not overlap.
-    /// In the case of a MultiPolygon, this requires that none of its polygon's interiors may overlap.
+    /// 要求环来自有效几何体，环之间不得重叠。
+    /// 对于MultiPolygon，这要求其任何多边形的内部不可以重叠。
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>>;
 
     fn boolean_op(
@@ -64,7 +53,7 @@ pub trait BooleanOps {
         multi_polygon_from_shapes(shapes)
     }
 
-    /// Returns the overlapping regions shared by both `self` and `other`.
+    /// 返回`self`和`other`共享的重叠区域。
     fn intersection(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
@@ -72,18 +61,17 @@ pub trait BooleanOps {
         self.boolean_op(other, OpType::Intersection)
     }
 
-    /// Combines the regions of both `self` and `other` into a single geometry, removing
-    /// overlaps and merging boundaries.
+    /// 将`self`和`other`的区域合并成一个单一的几何体，消除重叠并合并边界。
     fn union(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Union)
     }
 
-    /// The regions that are in either `self` or `other`, but not in both.
+    /// 位于`self`或`other`中但不在两个之中的区域。
     fn xor(&self, other: &impl BooleanOps<Scalar = Self::Scalar>) -> MultiPolygon<Self::Scalar> {
         self.boolean_op(other, OpType::Xor)
     }
 
-    /// The regions of `self` which are not in `other`.
+    /// `self`中不存在的区域。
     fn difference(
         &self,
         other: &impl BooleanOps<Scalar = Self::Scalar>,
@@ -91,10 +79,9 @@ pub trait BooleanOps {
         self.boolean_op(other, OpType::Difference)
     }
 
-    /// Clip a 1-D geometry with self.
+    /// 使用self剪裁一维几何体。
     ///
-    /// Returns the portion of `ls` that lies within `self` (known as the set-theoeretic
-    /// intersection) if `invert` is false, and the difference (`ls - self`) otherwise.
+    /// 如果`invert`为false，返回位于`self`内的`ls`部分（称为集合论交集），否则返回差异（`ls - self`）。
     fn clip(
         &self,
         multi_line_string: &MultiLineString<Self::Scalar>,
@@ -124,24 +111,23 @@ pub enum OpType {
     Xor,
 }
 
-/// Efficient [union](BooleanOps::union) of many adjacent / overlapping geometries
+/// 高效的合并多个相邻或重叠的几何体的[并集](BooleanOps::union)
 ///
-/// This is typically much faster than `union`ing a bunch of geometries together one at a time.
+/// 这通常比将一堆几何体一个一个地合并要快得多。
 ///
-/// Note: Geometries can be wound in either direction, but the winding order must be consistent,
-/// and each polygon's interior rings must be wound opposite to its exterior.
+/// 注意：几何体的方向可以是任意的，但顺序必须一致，而且每个多边形的内部环必须与其外部方向相反。
 ///
-/// See [Orient] for more information.
+/// 参见 [Orient] 获取更多信息。
 ///
 /// [Orient]: crate::algorithm::orient::Orient
 ///
-/// # Arguments
+/// # 参数
 ///
-/// `boppables`: A collection of `Polygon` or `MultiPolygons` to union together.
+/// `boppables`: 要合并在一起的`Polygon`或`MultiPolygons`的集合。
 ///
-/// returns the union of all the inputs.
+/// 返回所有输入的并集。
 ///
-/// # Examples
+/// # 例子
 ///
 /// ```
 /// use geo::algorithm::unary_union;
@@ -150,16 +136,16 @@ pub enum OpType {
 /// let right_piece = wkt!(POLYGON((4. 0.,4. 4.,8. 4.,8. 0.,4. 0.)));
 /// let left_piece = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0.,0. 0.)));
 ///
-/// // touches neither right nor left piece
+/// // 不接触左右两部分
 /// let separate_piece = wkt!(POLYGON((14. 10.,14. 14.,18. 14.,18. 10.,14. 10.)));
 ///
 /// let polygons = vec![left_piece, separate_piece, right_piece];
 /// let actual_output = unary_union(&polygons);
 ///
 /// let expected_output = wkt!(MULTIPOLYGON(
-///     // left and right piece have been combined
+///     // 左右部分已合并
 ///     ((0. 0., 0. 4., 8. 4., 8. 0.,  0. 0.)),
-///     // separate piece remains separate
+///     // 独立部分仍保持独立
 ///     ((14. 10., 14. 14., 18. 14.,18. 10., 14. 10.))
 /// ));
 /// assert_eq!(actual_output, expected_output);

@@ -13,12 +13,12 @@ type Result<T> = std::result::Result<T, Error>;
 /// ```
 pub fn assert_jts_tests_succeed(pattern: &str) {
     let mut runner = TestRunner::new().matching_filename_glob(pattern);
-    runner.run().expect("test cases failed");
+    runner.run().expect("测试用例运行失败");
 
-    // sanity check that *something* was run
+    // 健全检查 - 确保至少运行了一些测试
     assert!(
         runner.failures().len() + runner.successes().len() > 0,
-        "No tests were run."
+        "没有运行任何测试。"
     );
 
     if !runner.failures().is_empty() {
@@ -29,7 +29,7 @@ pub fn assert_jts_tests_succeed(pattern: &str) {
             .collect::<Vec<String>>()
             .join("\n");
         panic!(
-            "{} failures / {} successes in JTS test suite:\n{}",
+            "JTS测试套件中有{}个失败 / {}个成功：\n{}",
             runner.failures().len(),
             runner.successes().len(),
             failure_text
@@ -51,11 +51,11 @@ mod tests {
     }
 
     #[test]
-    // several of the ConvexHull tests are currently failing
+    // 目前有几个ConvexHull测试失败
     fn test_all_general() {
         init_logging();
         let mut runner = TestRunner::new();
-        runner.run().expect("test cases failed");
+        runner.run().expect("测试用例运行失败");
 
         if !runner.failures().is_empty() {
             let failure_text = runner
@@ -65,30 +65,29 @@ mod tests {
                 .collect::<Vec<String>>()
                 .join("\n");
             panic!(
-                "{} failures / {} successes in JTS test suite:\n{}",
+                "JTS测试套件中有{}个失败 / {}个成功：\n{}",
                 runner.failures().len(),
                 runner.successes().len(),
                 failure_text
             );
         }
 
-        // sanity check that the expected number of tests were run.
+        // 健全检查 - 确保运行了预期数量的测试。
         //
-        // We'll need to increase this number as more tests are added, but it should never be
-        // decreased.
+        // 随着更多测试的添加，我们需要增加这个数字，但它不应该减少。
         let expected_test_count: usize = 3775;
         let actual_test_count = runner.failures().len() + runner.successes().len();
         match actual_test_count.cmp(&expected_test_count) {
             Ordering::Less => {
                 panic!(
-                    "We're running {} less test cases than before. What happened to them?",
+                    "我们现在运行的测试用例比之前少了{}个。它们发生了什么？",
                     expected_test_count - actual_test_count
                 );
             }
             Ordering::Equal => {}
             Ordering::Greater => {
                 panic!(
-                    "Great, looks like we're running new tests. Just increase `expected_test_count` to {}",
+                    "很好，看起来我们正在运行新的测试。只需将`expected_test_count`增加到{}",
                     actual_test_count
                 );
             }

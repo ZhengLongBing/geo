@@ -4,10 +4,10 @@ use crate::GeoFloat;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-/// Computes the [`EdgeEnd`]s which arise from an [`Edge`] who has had its `edge_intersections`
-/// populated with self and proper [`EdgeIntersection`]s.
+/// 计算从具有`edge_intersections`的[`Edge`]中产生的[`EdgeEnd`]，
+/// 该Edge已经使用适当的自身和适当的[`EdgeIntersection`]进行了填充。
 ///
-/// Based on [JTS's EdgeEndBuilder as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/EdgeEndBuilder.java)
+/// 基于[JTS的EdgeEndBuilder，截至版本1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/EdgeEndBuilder.java)
 pub(crate) struct EdgeEndBuilder<F: GeoFloat> {
     _marker: std::marker::PhantomData<F>,
 }
@@ -27,8 +27,7 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
         list
     }
 
-    /// Creates stub edges for all the intersections in the [`Edge`] (if any) and inserts them into
-    /// the graph's `list`.
+    /// 为[`Edge`]中的所有交点（如果有的话）创建存根边并将其插入到图的`list`中。
     fn compute_ends_for_edge(&self, edge: &mut Edge<F>, list: &mut Vec<EdgeEnd<F>>) {
         edge.add_edge_intersection_list_endpoints();
 
@@ -55,10 +54,10 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
         }
     }
 
-    /// Adds a `EdgeEnd`, if any, to `list` for the edge before the intersection ei_curr.
+    /// 为交点ei_curr之前的边添加`EdgeEnd`（如果有的话）到`list`中。
     ///
-    /// The previous intersection is provided in case it is the endpoint for the stub edge.
-    /// Otherwise, the previous point from the parent edge will be the endpoint.
+    /// 提供上一个交点以防它是存根边的端点。
+    /// 否则，父边的上一个点将是端点。
     fn create_edge_end_for_prev(
         &self,
         edge: &Edge<F>,
@@ -68,7 +67,7 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
     ) {
         let mut i_prev = ei_curr.segment_index();
         if ei_curr.distance().is_zero() {
-            // if at the start of the edge there is no previous edge
+            // 如果在边的起始处，则没有上一个边
             if i_prev == 0 {
                 return;
             }
@@ -76,7 +75,7 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
         }
 
         let mut coord_prev = edge.coords()[i_prev];
-        // if prev intersection is past the previous vertex, use it instead
+        // 如果上一个交点超过了上一个顶点，则使用它
         if let Some(ei_prev) = ei_prev {
             if ei_prev.segment_index() >= i_prev {
                 coord_prev = ei_prev.coordinate();
@@ -84,17 +83,17 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
         }
 
         let mut label = edge.label().clone();
-        // since edgeStub is oriented opposite to its parent edge, have to flip sides for edge label
+        // 由于edgeStub的方向与其父边相反，因此需翻转边标签的侧面
         label.flip();
 
         let edge_end = EdgeEnd::new(ei_curr.coordinate(), coord_prev, label);
         list.push(edge_end);
     }
 
-    /// Adds a `EdgeEnd`, if any, to `list` for the edge after the intersection ei_curr.
+    /// 为交点ei_curr之后的边添加`EdgeEnd`（如果有的话）到`list`中。
     ///
-    /// The next intersection is provided in case it is the endpoint for the stub edge.
-    /// Otherwise, the next point from the parent edge will be the endpoint.
+    /// 提供下一个交点以防它是存根边的端点。
+    /// 否则，父边的下一个点将是端点。
     fn create_edge_end_for_next(
         &self,
         edge: &Edge<F>,
@@ -104,14 +103,14 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
     ) {
         let i_next = ei_curr.segment_index() + 1;
 
-        // if there is no next edge there is nothing to do
+        // 如果没有下一个边，则无事可做
         if i_next >= edge.coords().len() && ei_next.is_none() {
             return;
         }
 
         let mut coord_next = edge.coords()[i_next];
 
-        // if the next intersection is in the same segment as the current, use it as the endpoint
+        // 如果下一个交点在当前段中，则使用它作为端点
         if let Some(ei_next) = ei_next {
             if ei_next.segment_index() == ei_curr.segment_index() {
                 coord_next = ei_next.coordinate();

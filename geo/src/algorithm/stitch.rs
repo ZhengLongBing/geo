@@ -5,11 +5,11 @@ use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 use crate::winding_order::{triangle_winding_order, WindingOrder};
 use crate::{Contains, GeoFloat};
 
-// ========= Error Type ============
+// ========= 异常类型 ============
 
 #[derive(Debug)]
 pub enum LineStitchingError {
-    IncompleteRing(&'static str),
+    IncompleteRing(&'static str), // 环不完整
 }
 
 impl std::fmt::Display for LineStitchingError {
@@ -22,12 +22,11 @@ impl std::error::Error for LineStitchingError {}
 
 pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 
-// ========= Main Algo ============
+// ========= 主算法 ============
 
-/// Trait to stitch together split up triangles.
+/// 用于拼接分割三角形的特质。
 pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
-    /// This stitching only happens along identical edges which are located in two separate
-    /// geometries. Please read about the required pre conditions of the inputs!
+    /// 这个拼接只发生在位于两个独立几何体中的相同边缘上。请阅读输入的必要先决条件！
     ///
     /// ```text
     /// ┌─────x        ┌─────┐
@@ -39,14 +38,12 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// x─────┘        └─────┘
     /// ```
     ///
-    /// # Pre Conditions
+    /// # 前置条件
     ///
-    /// - The triangles in the input must not overlap! This also forbids identical triangles in the
-    ///   input set. If you want to do a union on overlapping triangles then c.f. `SpadeBoolops`.
-    /// - Input triangles should be valid polygons. For a definition of validity
-    ///   c.f. <https://www.postgis.net/workshops/postgis-intro/validity.html>
+    /// - 输入中的三角形不能重叠！这也禁止在输入集中存在相同的三角形。如果想对重叠三角形进行并集操作，请参阅 `SpadeBoolops`。
+    /// - 输入三角形应该是有效的多边形。关于有效性的定义请参阅 <https://www.postgis.net/workshops/postgis-intro/validity.html>
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```text
     /// use geo::StitchTriangles;
@@ -72,7 +69,7 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// assert_eq!(mp.0.len(), 1);
     ///
     /// let poly = mp.0[0].clone();
-    /// // 4 coords + 1 duplicate for closed-ness
+    /// // 4个坐标 + 1个用于闭合的重复坐标
     /// assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
     /// let expected = polygon![
@@ -85,12 +82,9 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// assert_eq!(poly, expected);
     /// ```
     ///
-    /// # Additional Notes
+    /// # 额外说明
     ///
-    /// Stitching triangles which result in a polygon with a hole which touches the outline
-    /// (mentioned here [banana polygon](https://postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity))
-    /// will result in a single polygon without interiors instead of a polygon with a single
-    /// interior
+    /// 当拼接三角形导致一个多边形的孔与外轮廓相接（如香蕉多边形中提到的 [banana polygon](https://postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity)），将导致一个没有内环的单一多边形，而不是一个带有单个内环的多边形。
     ///
     /// ```text
     /// ┌────────x────────┐
@@ -121,9 +115,7 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     ///
     /// ---
     ///
-    /// If you want to do something more general like a
-    /// [`Boolean Operation Union`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)
-    /// you should use the trait `BooleanOps` or `SpadeBoolops`.
+    /// 如果想进行更一般的操作，比如 [`布尔操作联合`](https://en.wikipedia.org/wiki/Boolean_operations_on_polygons)，你应该使用 `BooleanOps` 或 `SpadeBoolops` 特质。
     fn stitch_triangulation(&self) -> TriangleStitchingResult<MultiPolygon<T>>;
 }
 
@@ -149,7 +141,7 @@ where
     }
 }
 
-// main stitching algorithm
+// 主拼接算法
 fn stitch_triangles<'a, T, S>(triangles: S) -> TriangleStitchingResult<MultiPolygon<T>>
 where
     T: GeoFloat + 'a,
@@ -168,7 +160,7 @@ where
     Ok(MultiPolygon::new(polys))
 }
 
-/// returns the triangle's lines with ccw orientation
+/// 返回逆时针方向的三角形边
 fn ccw_lines<T: GeoFloat>(tri: &Triangle<T>) -> [Line<T>; 3] {
     match triangle_winding_order(tri) {
         Some(WindingOrder::CounterClockwise) => tri.to_lines(),
@@ -179,19 +171,16 @@ fn ccw_lines<T: GeoFloat>(tri: &Triangle<T>) -> [Line<T>; 3] {
     }
 }
 
-/// checks whether the two lines are equal or inverted forms of each other
+/// 检查两条线是否相等或互为倒置
 #[inline]
 fn same_line<T: GeoFloat>(l1: &Line<T>, l2: &Line<T>) -> bool {
     (l1.start == l2.start && l1.end == l2.end) || (l1.start == l2.end && l2.start == l1.end)
 }
 
-/// given a collection of lines from multiple polygons which partition an area we can have two
-/// kinds of lines:
+/// 给定一个由多个多边形分割区域线条的集合，我们可以有两种线条：
 ///
-/// - boundary lines: these are the unique lines on the boundary of the compound shape which is
-///   formed by the collection of polygons
-/// - inner lines: these are all non-boundary lines. They are not unique and have exactly one
-///   duplicate on one adjacent polygon in the collection (as long as the input is valid!)
+/// - 边界线：这是由一组多边形形成的复合形状边界的唯一线
+/// - 内部线：这是所有非边界线，它们不是唯一的，并且在集合中的一个相邻多边形上有一个完全相同的副本（只要输入有效！）
 fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
     lines.into_iter().fold(Vec::new(), |mut lines, new_line| {
         if let Some(idx) = lines.iter().position(|line| same_line(line, &new_line)) {
@@ -203,20 +192,20 @@ fn find_boundary_lines<T: GeoFloat>(lines: Vec<Line<T>>) -> Vec<Line<T>> {
     })
 }
 
-// Notes for future: This probably belongs into a `Validify` trait or something
-/// finds holes in polygon exterior and fixes them
+// 未来注意：这可能属于一个 `Validify` 特质或类似的东西
+/// 在多边形外部查找并修复孔洞
 ///
-/// This is important for scenarios like the banana polygon. Which is considered invalid
+/// 这对像香蕉多边形这样的场景很重要。这被认为是无效的
 /// https://www.postgis.net/workshops/postgis-intro/validity.html#repairing-invalidity
 fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<F> {
     fn detect_if_rings_closed_with_point<F: GeoFloat>(
         points: &mut Vec<Coord<F>>,
         p: Coord<F>,
     ) -> Option<Vec<Coord<F>>> {
-        // early return here if nothing was found
+        // 如果没有找到，则直接返回
         let pos = points.iter().position(|&c| c == p)?;
 
-        // create ring by collecting the points if something was found
+        // 如果找到，则通过收集点创建环
         let ring = points
             .drain(pos..)
             .chain(std::iter::once(p))
@@ -224,7 +213,7 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
         Some(ring)
     }
 
-    // find rings
+    // 查找环
     let rings = {
         let (points, mut rings) =
             poly.exterior()
@@ -235,21 +224,21 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
                     (points, rings)
                 });
 
-        // add leftover coords as last ring
+        // 将剩余的坐标作为最后一个环添加
         rings.push(points);
 
         rings
     };
 
-    // convert to polygons for containment checks
+    // 转换为多边形用于包含性检查
     let mut rings = rings
         .into_iter()
-        // filter out degenerate polygons which may be produced from the code above
+        // 过滤掉上面的代码可能产生的退化多边形
         .filter(|cs| cs.len() >= 3)
         .map(|cs| Polygon::new(LineString::new(cs), vec![]))
         .collect::<Vec<_>>();
 
-    // PERF: O(n^2) maybe someone can reduce this. Please benchmark!
+    // 性能： O(n^2) 也许有人可以减少这个。请进行基准测试！
     fn find_outmost_ring<F: GeoFloat>(rings: &[Polygon<F>]) -> Option<usize> {
         let enumerated_rings = || rings.iter().enumerate();
         enumerated_rings()
@@ -261,11 +250,11 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
             .map(|(i, _)| i)
     }
 
-    // if exterior ring exists that contains all other rings, recreate the poly with:
+    // 如果存在包含所有其他环的外部环，则重新创建多边形：
     //
-    // - exterior ring as exterior
-    // - other rings are counted to interiors
-    // - previously existing interiors are preserved
+    // - 外环作为外部环
+    // - 其他环计为内环
+    // - 先前存在的内环将被保留
     if let Some(outer_index) = find_outmost_ring(&rings) {
         let exterior = rings.remove(outer_index).exterior().clone();
         let interiors = poly
@@ -279,7 +268,7 @@ fn find_and_fix_holes_in_exterior<F: GeoFloat>(mut poly: Polygon<F>) -> Polygon<
     poly
 }
 
-/// Inputs to this function is a unordered set of lines that must form a valid multipolygon
+/// 该函数的输入是必须形成一个有效多边形的无序线条集合
 fn stitch_multipolygon_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
 ) -> TriangleStitchingResult<MultiPolygon<F>> {
@@ -302,7 +291,7 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
             .collect()
     }
 
-    // Associates every ring with its parents (the rings that contain it)
+    // 关联每个环与其父级（包含它们的环）
     let parents_of: HashMap<usize, Vec<usize>> = rings
         .iter()
         .enumerate()
@@ -312,10 +301,10 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
         })
         .collect();
 
-    // Associates outer rings with their inner rings
+    // 关联外环和其内部环
     let mut polygons_idxs: HashMap<usize, Vec<usize>> = HashMap::default();
 
-    // the direct parent is the parent ring which has itself the most parent rings
+    // 直接父级是自身具有最多父级环的父级环
     fn find_direct_parent(
         parent_rings: &[usize],
         parents_of: &HashMap<usize, Vec<usize>>,
@@ -332,35 +321,28 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
             .copied()
     }
 
-    // For each ring, we check how many parents it has  otherwise it's an outer ring
+    // 对于每个环，我们检查它有多少个父级，否则它就是一个外部环
     //
-    // This is important in the scenarios of "donuts" where you have an outer donut shaped
-    // polygon which completely contains a smaller polygon inside its hole
+    // 在“甜甜圈”场景中这点很重要，因为外部甜甜圈形状的多边形完全包含了其孔内的较小多边形。
     for (ring_index, parent_idxs) in parents_of.iter() {
         let parent_count = parent_idxs.len();
 
-        // if it has an even number of parents, it's an outer ring so we can just add it if it's
-        // missing
+        // 如果有偶数个父级，则它是一个外部环，因此如果它缺失，我们就可以直接添加
         if parent_count % 2 == 0 {
             polygons_idxs.entry(*ring_index).or_default();
             continue;
         }
 
-        // if it has an odd number of parents, it's an inner ring
+        // 如果有奇数个父级，那它是一个内部环
 
-        // to find the specific outer ring it is related to, we search for the direct parent.
+        // 为了找到与之相关的特定外部环，我们搜索直接父级。
         let maybe_direct_parent = find_direct_parent(parent_idxs, &parents_of);
 
-        // As stated above the amount of parents here is odd, so it's at least one.
-        // Since every ring is registered in the `parents` hashmap, we find at least one element
-        // while iterating. Hence the `max_by_key` will always return `Some` since the iterator
-        // is never empty
-        debug_assert!(
-            maybe_direct_parent.is_some(),
-            "A direct parent has to exist"
-        );
+        // 如上所述，这里的父级数量是奇数，因此至少为一。
+        // 由于每个环都在 `parents` 哈希表中注册，因此在迭代时我们至少会找到一个元素。因此 `max_by_key` 永远不会返回空，而是返回 `Some` 。
+        debug_assert!(maybe_direct_parent.is_some(), "一个直接的父级必须存在");
 
-        // I'm not unwrapping here since I'm scared of panics
+        // 我没有直接解引用，因为我担心出现恐慌
         if let Some(direct_parent) = maybe_direct_parent {
             polygons_idxs
                 .entry(direct_parent)
@@ -369,11 +351,11 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
         }
     }
 
-    // lookup rings by index and create polygons
+    // 根据索引查找环并创建多边形
     let polygons = polygons_idxs
         .into_iter()
         .map(|(parent_idx, children_idxs)| {
-            // PERF: extensive cloning here, maybe someone can improve this. Please benchmark!
+            // 性能：这里有过多的克隆操作，也许有人能改进这个。请进行基准测试！
             let exterior = rings[parent_idx].clone();
             let interiors = children_idxs
                 .into_iter()
@@ -386,20 +368,19 @@ fn stitch_multipolygon_from_lines<F: GeoFloat>(
     Ok(polygons.collect())
 }
 
-// ============== Helpers ================
+// ============== 帮助函数 ================
 
 fn stitch_rings_from_lines<F: GeoFloat>(
     lines: Vec<Line<F>>,
 ) -> TriangleStitchingResult<Vec<LineString<F>>> {
-    // initial ring parts are just lines which will be stitch together progressively
+    // 初始的环部分只是线段，它们将被逐步拼接在一起
     let mut ring_parts: Vec<Vec<Coord<F>>> = lines
         .iter()
         .map(|line| vec![line.start, line.end])
         .collect();
 
     let mut rings: Vec<LineString<F>> = vec![];
-    // terminates since every loop we'll merge two elements into one so the total number of
-    // elements decreases each loop by at least one (two in the case of completing a ring)
+    // 循环终止条件是每轮循环我们将把两个元素合并成一个，因此每次循环元素总数减少至少一个（在完成一个环的情况下是两个）
     while let Some(last_part) = ring_parts.pop() {
         let (j, compound_part) = ring_parts
             .iter()
@@ -408,7 +389,9 @@ fn stitch_rings_from_lines<F: GeoFloat>(
                 let new_part = try_stitch(&last_part, other_part)?;
                 Some((j, new_part))
             })
-            .ok_or(LineStitchingError::IncompleteRing("Couldn't reconstruct polygons from the inputs. Please check them for invalidities."))?;
+            .ok_or(LineStitchingError::IncompleteRing(
+                "无法从输入中重构多边形。请检查它们的有效性。",
+            ))?;
         ring_parts.remove(j);
 
         let is_ring = compound_part.first() == compound_part.last() && !compound_part.is_empty();
@@ -440,7 +423,7 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
         .or_else(|| (a_first == b_last).then(|| b().chain(a().skip(1)).cloned().collect()))
 }
 
-// ============= Tests ===========
+// ============= 测试 ===========
 
 #[cfg(test)]
 mod polygon_stitching_tests {

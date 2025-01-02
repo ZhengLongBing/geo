@@ -3,10 +3,10 @@ use crate::{GeoFloat, GeometryCollection};
 
 use std::fmt;
 
-/// A [`GeometryCollection`] is valid if all its elements are valid.
+/// 只有当所有元素均有效时，[`GeometryCollection`] 才是有效的。
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidGeometryCollection {
-    /// Which element is invalid, and what was invalid about it.
+    /// 哪个元素无效，以及无效的原因。
     InvalidGeometry(GeometryIndex, Box<InvalidGeometry>),
 }
 
@@ -16,7 +16,7 @@ impl fmt::Display for InvalidGeometryCollection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InvalidGeometryCollection::InvalidGeometry(idx, err) => {
-                write!(f, "geometry at index {} is invalid: {}", idx.0, err)
+                write!(f, "索引为 {} 的几何体无效：{}", idx.0, err)
             }
         }
     }
@@ -29,8 +29,8 @@ impl<F: GeoFloat> Validation for GeometryCollection<F> {
         &self,
         mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
     ) -> Result<(), T> {
-        // Loop over all the geometries, collect the reasons of invalidity
-        // and change the ProblemPosition to reflect the GeometryCollection
+        // 遍历所有几何体，收集无效原因
+        // 并更改问题位置以反映 GeometryCollection
         for (i, geometry) in self.0.iter().enumerate() {
             geometry.visit_validation(Box::new(&mut |geometry_err| {
                 let err = InvalidGeometryCollection::InvalidGeometry(

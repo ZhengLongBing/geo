@@ -1,10 +1,10 @@
 use crate::algorithm::Contains;
 
-/// Tests if a geometry is completely within another geometry.
+/// 测试一个几何图形是否完全在另一个几何图形内。
 ///
-/// In other words, the [DE-9IM] intersection matrix for (Self, Rhs) is `[T*F**F***]`
+/// 换句话说，(Self, Rhs) 的 [DE-9IM] 交集矩阵是 `[T*F**F***]`。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::{point, line_string};
@@ -14,12 +14,12 @@ use crate::algorithm::Contains;
 ///
 /// assert!(point!(x: 1.0, y: 2.0).is_within(&line_string));
 ///
-/// // Note that a geometry on only the *boundary* of another geometry is not considered to
-/// // be _within_ that geometry. See [`Relate`] for more information.
+/// // 注意：仅位于另一个几何图形*边界*上的几何图形不被认为在该几何图形的内部。
+/// // 更多信息参见 [`Relate`]。
 /// assert!(! point!(x: 0.0, y: 0.0).is_within(&line_string));
 /// ```
 ///
-/// `Within` is equivalent to [`Contains`] with the arguments swapped.
+/// `Within` 等价于参数交换后的 [`Contains`]。
 ///
 /// ```
 /// use geo::{point, line_string};
@@ -28,14 +28,14 @@ use crate::algorithm::Contains;
 /// let line_string = line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 4.0)];
 /// let point = point!(x: 1.0, y: 2.0);
 ///
-/// // These two comparisons are completely equivalent
+/// // 这两种比较是完全等价的
 /// assert!(point.is_within(&line_string));
 /// assert!(line_string.contains(&point));
 /// ```
 ///
 /// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
 pub trait Within<Other> {
-    fn is_within(&self, b: &Other) -> bool;
+    fn is_within(&self, b: &Other) -> bool; // 判断当前几何图形是否在另一个几何图形内
 }
 
 impl<G1, G2> Within<G2> for G1
@@ -43,7 +43,7 @@ where
     G2: Contains<G1>,
 {
     fn is_within(&self, b: &G2) -> bool {
-        b.contains(self)
+        b.contains(self) // 使用Contains trait来实现is_within方法
     }
 }
 
@@ -51,8 +51,10 @@ where
 mod tests {
     use super::*;
     use crate::{point, Rect};
+
     #[test]
     fn basic() {
+        // 测试点和多边形之间的包含关系
         let a = point!(x: 1.0, y: 2.0);
         let b = Rect::new((0.0, 0.0), (3.0, 3.0)).to_polygon();
         assert!(a.is_within(&b));

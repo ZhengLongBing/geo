@@ -5,7 +5,7 @@ use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects};
 use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
-// │ Implementations for Rect │
+// │ Rect 的实现部分           │
 // └──────────────────────────┘
 
 impl<T> Contains<Coord<T>> for Rect<T>
@@ -34,8 +34,8 @@ where
     T: CoordNum,
 {
     fn contains(&self, other: &Rect<T>) -> bool {
-        // TODO: check for degenerate rectangle (which is a line or a point)
-        // All points of LineString must be in the polygon ?
+        // TODO: 检查退化矩形（即线或点）
+        // LineString 的所有点必须在多边形内？
         self.min().x <= other.min().x
             && self.max().x >= other.max().x
             && self.min().y <= other.min().y
@@ -48,12 +48,12 @@ where
     T: CoordFloat,
 {
     fn contains(&self, rhs: &Polygon<T>) -> bool {
-        // the polygon must not be empty
+        // 多边形不能是空的
         if rhs.is_empty() {
             return false;
         }
 
-        // none of the polygon's points may lie outside the rectangle
+        // 多边形的点不能在矩形之外
         let mut points_inside = 0;
         for c in rhs.exterior_coords_iter() {
             if !self.intersects(&c) {
@@ -64,13 +64,12 @@ where
             }
         }
 
-        // The polygon must not lie completely inside the rectangle's boundary.
-        // In other words: at least one point of the interior of the polygon
-        // must lie in the interior of the rectangle. Since we know that the
-        // rectangle is convex, we just need make sure that either at least
-        // one point of the polygon lies inside the rectangle's interior or
-        // that the polygon's interior is not empty, in which case it will
-        // definitely intersect with the rectangle's interior.
+        // 多边形不能完全位于矩形的边界内。
+        // 换句话说：多边形内部至少有一个点位于矩形的内部。
+        // 由于我们知道矩形是凸的，我们只需确保
+        // 多边形内部至少有一个点位于矩形内部，
+        // 或者多边形内部不为空，这种情况下它肯定会与
+        // 矩形的内部相交。
         if points_inside == 0 && rhs.signed_area().is_zero() {
             return false;
         }

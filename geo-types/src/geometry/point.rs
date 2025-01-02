@@ -5,20 +5,20 @@ use approx::{AbsDiffEq, RelativeEq};
 
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-/// A single point in 2D space.
+/// 二维空间中的单个点。
 ///
-/// Points can be created using the [`Point::new`] constructor,
-/// the [`point!`] macro, or from a `Coord`, two-element
-/// tuples, or arrays – see the `From` impl section for a
-/// complete list.
+/// 点可以使用 [`Point::new`] 构造函数创建，
+/// 使用 [`point!`] 宏创建，或者从 `Coord`、两元素
+/// 元组或数组创建 – 请参阅 `From` 实现部分以获取
+/// 完整列表。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// The _interior_ of the point is itself (a singleton set),
-/// and its _boundary_ is empty. A point is _valid_ if and
-/// only if the `Coord` is valid.
+/// 点的 _内部_ 是其自身（一个单例集合），
+/// 其 _边界_ 为空。当且仅当 `Coord` 有效时，
+/// 点才是 _有效的_。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::{coord, Point};
@@ -61,9 +61,9 @@ impl<T: CoordNum> From<Point<T>> for [T; 2] {
 }
 
 impl<T: CoordNum> Point<T> {
-    /// Creates a new point.
+    /// 创建一个新点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -77,9 +77,9 @@ impl<T: CoordNum> Point<T> {
         point! { x: x, y: y }
     }
 
-    /// Returns the x/horizontal component of the point.
+    /// 返回点的 x/水平 分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -92,9 +92,9 @@ impl<T: CoordNum> Point<T> {
         self.0.x
     }
 
-    /// Sets the x/horizontal component of the point.
+    /// 设置点的 x/水平 分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -109,9 +109,9 @@ impl<T: CoordNum> Point<T> {
         self
     }
 
-    /// Returns a mutable reference to the x/horizontal component of the point
+    /// 返回点的 x/水平 分量的可变引用
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use approx::assert_relative_eq;
@@ -124,9 +124,9 @@ impl<T: CoordNum> Point<T> {
     pub fn x_mut(&mut self) -> &mut T {
         &mut self.0.x
     }
-    /// Returns the y/vertical component of the point.
+    /// 返回点的 y/垂直 分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -139,9 +139,9 @@ impl<T: CoordNum> Point<T> {
         self.0.y
     }
 
-    /// Sets the y/vertical component of the point.
+    /// 设置点的 y/垂直 分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -156,9 +156,9 @@ impl<T: CoordNum> Point<T> {
         self
     }
 
-    /// Returns a mutable reference to the x/horizontal component of the point
+    /// 返回点的 y/垂直 分量的可变引用
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use approx::assert_relative_eq;
@@ -172,9 +172,9 @@ impl<T: CoordNum> Point<T> {
         &mut self.0.y
     }
 
-    /// Returns a tuple that contains the x/horizontal & y/vertical component of the point.
+    /// 返回包含点的 x/水平 和 y/垂直 分量的元组。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -188,9 +188,9 @@ impl<T: CoordNum> Point<T> {
     pub fn x_y(self) -> (T, T) {
         (self.0.x, self.0.y)
     }
-    /// Returns the longitude/horizontal component of the point.
+    /// 返回点的经度/水平分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -199,14 +199,14 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(p.x(), 1.234);
     /// ```
-    #[deprecated = "use `Point::x` instead, it's less ambiguous"]
+    #[deprecated = "使用 `Point::x` 代替，它更不容易混淆"]
     pub fn lng(self) -> T {
         self.x()
     }
 
-    /// Sets the longitude/horizontal component of the point.
+    /// 设置点的经度/水平分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -217,14 +217,14 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(p.x(), 9.876);
     /// ```
-    #[deprecated = "use `Point::set_x` instead, it's less ambiguous"]
+    #[deprecated = "使用 `Point::set_x` 代替，它更不容易混淆"]
     pub fn set_lng(&mut self, lng: T) -> &mut Self {
         self.set_x(lng)
     }
 
-    /// Returns the latitude/vertical component of the point.
+    /// 返回点的纬度/垂直分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -233,13 +233,13 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(p.y(), 2.345);
     /// ```
-    #[deprecated = "use `Point::y` instead, it's less ambiguous"]
+    #[deprecated = "使用 `Point::y` 代替，它更不容易混淆"]
     pub fn lat(self) -> T {
         self.y()
     }
-    /// Sets the latitude/vertical component of the point.
+    /// 设置点的纬度/垂直分量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -250,17 +250,17 @@ impl<T: CoordNum> Point<T> {
     ///
     /// assert_eq!(p.y(), 9.876);
     /// ```
-    #[deprecated = "use `Point::set_y` instead, it's less ambiguous"]
+    #[deprecated = "使用 `Point::set_y` 代替，它更不容易混淆"]
     pub fn set_lat(&mut self, lat: T) -> &mut Self {
         self.set_y(lat)
     }
 }
 
 impl<T: CoordNum> Point<T> {
-    /// Returns the dot product of the two points:
+    /// 返回两点的点积：
     /// `dot = x1 * x2 + y1 * y2`
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{point, Point};
@@ -274,19 +274,18 @@ impl<T: CoordNum> Point<T> {
         self.x() * other.x() + self.y() * other.y()
     }
 
-    /// Returns the cross product of 3 points. A positive value implies
-    /// `self` → `point_b` → `point_c` is counter-clockwise, negative implies
-    /// clockwise.
+    /// 返回3个点的叉积。正值表示
+    /// `self` → `point_b` → `point_c` 是逆时针方向，负值表示
+    /// 顺时针方向。
     ///
-    /// # Note on Robustness
+    /// # 关于稳健性的注意事项
     ///
-    /// This function is **not** robust against floating-point errors.
-    /// The [`geo`](https://docs.rs/geo) crate
-    /// offers robust predicates for standard numeric types using the
-    /// [`Kernel`](https://docs.rs/geo/algorithm/kernels/trait.Kernel.html)
-    /// trait, and these should be preferred if possible.
+    /// 此函数对浮点误差 **不** 稳健。
+    /// [`geo`](https://docs.rs/geo) crate
+    /// 使用 [`Kernel`](https://docs.rs/geo/algorithm/kernels/trait.Kernel.html)
+    /// trait 为标准数值类型提供稳健的谓词，如果可能的话应该优先使用这些。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::point;
@@ -306,9 +305,9 @@ impl<T: CoordNum> Point<T> {
 }
 
 impl<T: CoordFloat> Point<T> {
-    /// Converts the (x,y) components of Point to degrees
+    /// 将 Point 的 (x,y) 分量转换为度
     ///
-    /// # Example
+    /// # 示例
     /// ```
     /// use geo_types::Point;
     ///
@@ -324,9 +323,9 @@ impl<T: CoordFloat> Point<T> {
         Point::new(x, y)
     }
 
-    /// Converts the (x,y) components of Point to radians
+    /// 将 Point 的 (x,y) 分量转换为弧度
     ///
-    /// # Example
+    /// # 示例
     /// ```
     /// use geo_types::Point;
     ///
@@ -349,9 +348,9 @@ where
 {
     type Output = Self;
 
-    /// Returns a point with the x and y components negated.
+    /// 返回 x 和 y 分量取反的点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -369,9 +368,9 @@ where
 impl<T: CoordNum> Add for Point<T> {
     type Output = Self;
 
-    /// Add a point to the given point.
+    /// 将一个点加到给定的点上。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;
@@ -387,9 +386,9 @@ impl<T: CoordNum> Add for Point<T> {
 }
 
 impl<T: CoordNum> AddAssign for Point<T> {
-    /// Add a point to the given point and assign it to the original point.
+    /// 将一个点加到给定的点上并赋值给原始点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Point;

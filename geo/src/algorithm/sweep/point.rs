@@ -4,15 +4,14 @@ use geo_types::Coord;
 
 use crate::GeoNum;
 
-/// A lexicographically ordered point.
+/// 词典序排序的点。
 ///
-/// A wrapper around [`Coord`] to order the point by `x`, and then by `y`.
-/// Implements `Ord` and `Eq`, allowing usage in ordered collections such as
-/// `BinaryHeap`.
+/// [`Coord`] 的包裹，用于按 `x` 排序点，然后是 `y`。
+/// 实现了 `Ord` 和 `Eq`，允许在有序集合中使用，
+/// 例如 `BinaryHeap`。
 ///
-/// Note that the scalar type `T` is only required to implement `PartialOrd`.
-/// Thus, it is a logical error to construct this struct unless the coords are
-/// guaranteed to be orderable.
+/// 注意，标量类型 `T` 只需要实现 `PartialOrd`。
+/// 因此，除非坐标保证可排序，否则构建这个结构体是逻辑错误的。
 #[derive(PartialEq, Clone, Copy)]
 pub struct SweepPoint<T: GeoNum>(Coord<T>);
 
@@ -25,15 +24,14 @@ impl<T: GeoNum> std::fmt::Debug for SweepPoint<T> {
     }
 }
 
-/// Implement lexicographic ordering by `x` and then by `y`
-/// coordinate.
+/// 实现按 `x` 然后按 `y` 坐标的词典序排序。
 impl<T: GeoNum> PartialOrd for SweepPoint<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-/// Derive `Ord` from `PartialOrd` and expect to not fail.
+/// 从 `PartialOrd` 派生 `Ord` 并期望不会失败。
 impl<T: GeoNum> Ord for SweepPoint<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.0.x.total_cmp(&other.0.x) {
@@ -43,10 +41,10 @@ impl<T: GeoNum> Ord for SweepPoint<T> {
     }
 }
 
-/// We derive `Eq` manually to not require `T: Eq`.
+/// 我们手动派生 `Eq` 以不要求 `T: Eq`。
 impl<T: GeoNum> Eq for SweepPoint<T> {}
 
-/// Conversion from type that can be converted to a `Coord`.
+/// 从可以转换为 `Coord` 的类型进行转换。
 impl<T: GeoNum, X: Into<Coord<T>>> From<X> for SweepPoint<T> {
     fn from(pt: X) -> Self {
         SweepPoint(pt.into())
@@ -61,7 +59,7 @@ impl<T: GeoNum> Deref for SweepPoint<T> {
     }
 }
 
-// Note: We keep it immutable for now, for better hygiene.
+// 注意：为了更好的洁净性，我们目前保持它为不可变的。
 // impl<T: GeoNum> DerefMut for SweepPoint<T> {
 //     fn deref_mut(&mut self) -> &mut Self::Target {
 //         &mut self.0

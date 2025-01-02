@@ -1,4 +1,4 @@
-//! Convert structs that implement geo-traits to [geo-types] objects.
+//! 将实现geo-traits的结构体转换为[geo-types]对象。
 
 use geo_types::{
     Coord, CoordNum, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
@@ -11,11 +11,11 @@ use crate::{
     TriangleTrait,
 };
 
-/// Convert any coordinate to a [`Coord`].
+/// 将任何坐标转换为[`Coord`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoCoord<T: CoordNum> {
-    /// Convert to a geo_types [`Coord`].
+    /// 转换为geo_types [`Coord`]。
     fn to_coord(&self) -> Coord<T>;
 }
 
@@ -28,23 +28,22 @@ impl<T: CoordNum, G: CoordTrait<T = T>> ToGeoCoord<T> for G {
     }
 }
 
-/// Convert any Point to a [`Point`].
+/// 将任何点转换为[`Point`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoPoint<T: CoordNum> {
-    /// Convert to a geo_types [`Point`].
+    /// 转换为geo_types [`Point`]。
     ///
-    /// # Panics
+    /// # 可能的崩溃
     ///
-    /// This will panic on an empty point.
+    /// 空点将导致崩溃。
     fn to_point(&self) -> Point<T> {
-        self.try_to_point()
-            .expect("geo-types does not support empty points.")
+        self.try_to_point().expect("geo-types 不支持空点。")
     }
 
-    /// Convert to a geo_types [`Point`].
+    /// 转换为geo_types [`Point`]。
     ///
-    /// Empty points will return `None`.
+    /// 空点将返回`None`。
     fn try_to_point(&self) -> Option<Point<T>>;
 }
 
@@ -54,11 +53,11 @@ impl<T: CoordNum, G: PointTrait<T = T>> ToGeoPoint<T> for G {
     }
 }
 
-/// Convert any LineString to a [`LineString`].
+/// 将任何线串转换为[`LineString`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoLineString<T: CoordNum> {
-    /// Convert to a geo_types [`LineString`].
+    /// 转换为geo_types [`LineString`]。
     fn to_line_string(&self) -> LineString<T>;
 }
 
@@ -68,11 +67,11 @@ impl<T: CoordNum, G: LineStringTrait<T = T>> ToGeoLineString<T> for G {
     }
 }
 
-/// Convert any Polygon to a [`Polygon`].
+/// 将任何多边形转换为[`Polygon`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoPolygon<T: CoordNum> {
-    /// Convert to a geo_types [`Polygon`].
+    /// 转换为geo_types [`Polygon`]。
     fn to_polygon(&self) -> Polygon<T>;
 }
 
@@ -91,23 +90,23 @@ impl<T: CoordNum, G: PolygonTrait<T = T>> ToGeoPolygon<T> for G {
     }
 }
 
-/// Convert any MultiPoint to a [`MultiPoint`].
+/// 将任何多点转换为[`MultiPoint`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoMultiPoint<T: CoordNum> {
-    /// Convert to a geo_types [`MultiPoint`].
+    /// 转换为geo_types [`MultiPoint`]。
     ///
-    /// # Panics
+    /// # 可能的崩溃
     ///
-    /// This will panic if any of the points contained in the MultiPoint are empty.
+    /// 如果任何包含的点为空，将导致崩溃。
     fn to_multi_point(&self) -> MultiPoint<T> {
         self.try_to_multi_point()
-            .expect("geo-types does not support MultiPoint containing empty points.")
+            .expect("geo-types 不支持包含空点的MultiPoint。")
     }
 
-    /// Convert to a geo_types [`MultiPoint`].
+    /// 转换为geo_types [`MultiPoint`]。
     ///
-    /// `None` will be returned if any of the points contained in the MultiPoint are empty.
+    /// 如果任何包含的点为空，将返回`None`。
     fn try_to_multi_point(&self) -> Option<MultiPoint<T>>;
 }
 
@@ -118,7 +117,7 @@ impl<T: CoordNum, G: MultiPointTrait<T = T>> ToGeoMultiPoint<T> for G {
             if let Some(geo_point) = point.try_to_point() {
                 geo_points.push(geo_point);
             } else {
-                // Return None if any points are empty
+                // 如果任何点为空，则返回None
                 return None;
             }
         }
@@ -126,11 +125,11 @@ impl<T: CoordNum, G: MultiPointTrait<T = T>> ToGeoMultiPoint<T> for G {
     }
 }
 
-/// Convert any MultiLineString to a [`MultiLineString`].
+/// 将任何多线串转换为[`MultiLineString`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoMultiLineString<T: CoordNum> {
-    /// Convert to a geo_types [`MultiLineString`].
+    /// 转换为geo_types [`MultiLineString`]。
     fn to_multi_line_string(&self) -> MultiLineString<T>;
 }
 
@@ -144,11 +143,11 @@ impl<T: CoordNum, G: MultiLineStringTrait<T = T>> ToGeoMultiLineString<T> for G 
     }
 }
 
-/// Convert any MultiPolygon to a [`MultiPolygon`].
+/// 将任何多边形转换为[`MultiPolygon`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoMultiPolygon<T: CoordNum> {
-    /// Convert to a geo_types [`MultiPolygon`].
+    /// 转换为geo_types [`MultiPolygon`]。
     fn to_multi_polygon(&self) -> MultiPolygon<T>;
 }
 
@@ -162,11 +161,11 @@ impl<T: CoordNum, G: MultiPolygonTrait<T = T>> ToGeoMultiPolygon<T> for G {
     }
 }
 
-/// Convert any Rect to a [`Rect`].
+/// 将任何矩形转换为[`Rect`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoRect<T: CoordNum> {
-    /// Convert to a geo_types [`Rect`].
+    /// 转换为geo_types [`Rect`]。
     fn to_rect(&self) -> Rect<T>;
 }
 
@@ -178,11 +177,11 @@ impl<T: CoordNum, G: RectTrait<T = T>> ToGeoRect<T> for G {
     }
 }
 
-/// Convert any Line to a [`Line`].
+/// 将任何线段转换为[`Line`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoLine<T: CoordNum> {
-    /// Convert to a geo_types [`Line`].
+    /// 转换为geo_types [`Line`]。
     fn to_line(&self) -> Line<T>;
 }
 
@@ -194,11 +193,11 @@ impl<T: CoordNum, G: LineTrait<T = T>> ToGeoLine<T> for G {
     }
 }
 
-/// Convert any Triangle to a [`Triangle`].
+/// 将任何三角形转换为[`Triangle`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoTriangle<T: CoordNum> {
-    /// Convert to a geo_types [`Triangle`].
+    /// 转换为geo_types [`Triangle`]。
     fn to_triangle(&self) -> Triangle<T>;
 }
 
@@ -211,24 +210,23 @@ impl<T: CoordNum, G: TriangleTrait<T = T>> ToGeoTriangle<T> for G {
     }
 }
 
-/// Convert any Geometry to a [`Geometry`].
+/// 将任何几何体转换为[`Geometry`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoGeometry<T: CoordNum> {
-    /// Convert to a geo_types [`Geometry`].
+    /// 转换为geo_types [`Geometry`]。
     ///
-    /// # Panics
+    /// # 可能的崩溃
     ///
-    /// This will panic on an empty point or a MultiPoint containing empty points.
+    /// 空点或包含空点的MultiPoint将导致崩溃。
     fn to_geometry(&self) -> Geometry<T> {
-        self.try_to_geometry().expect(
-            "geo-types does not support empty point or a MultiPoint containing empty points.",
-        )
+        self.try_to_geometry()
+            .expect("geo-types 不支持空点或包含空点的MultiPoint。")
     }
 
-    /// Convert to a geo_types [`Geometry`].
+    /// 转换为geo_types [`Geometry`]。
     ///
-    /// Empty Geometrys will return `None`.
+    /// 空几何体将返回`None`。
     fn try_to_geometry(&self) -> Option<Geometry<T>>;
 }
 
@@ -253,23 +251,23 @@ impl<T: CoordNum, G: GeometryTrait<T = T>> ToGeoGeometry<T> for G {
     }
 }
 
-/// Convert any GeometryCollection to a [`GeometryCollection`].
+/// 将任何几何体集合转换为[`GeometryCollection`]。
 ///
-/// Only the first two dimensions will be kept.
+/// 仅保留前两个维度。
 pub trait ToGeoGeometryCollection<T: CoordNum> {
-    /// Convert to a geo_types [`GeometryCollection`].
+    /// 转换为geo_types [`GeometryCollection`]。
     ///
-    /// # Panics
+    /// # 可能的崩溃
     ///
-    /// This will panic on an empty point or a MultiPoint containing empty points.
+    /// 空点或包含空点的MultiPoint将导致崩溃。
     fn to_geometry_collection(&self) -> GeometryCollection<T> {
         self.try_to_geometry_collection()
-            .expect("geo-types does not support empty GeometryCollections.")
+            .expect("geo-types 不支持空GeometryCollections。")
     }
 
-    /// Convert to a geo_types [`GeometryCollection`].
+    /// 转换为geo_types [`GeometryCollection`]。
     ///
-    /// This will return `None` for an empty point or a MultiPoint containing empty points.
+    /// 空点或包含空点的MultiPoint将返回`None`。
     fn try_to_geometry_collection(&self) -> Option<GeometryCollection<T>>;
 }
 
@@ -280,7 +278,7 @@ impl<T: CoordNum, G: GeometryCollectionTrait<T = T>> ToGeoGeometryCollection<T> 
             if let Some(geo_geom) = geom.try_to_geometry() {
                 geo_geometries.push(geo_geom);
             } else {
-                // Return None if any points are empty
+                // 如果任何点为空，则返回None
                 return None;
             }
         }

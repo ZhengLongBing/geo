@@ -5,7 +5,7 @@ use crate::{CoordNum, GeoFloat, GeoNum, LineString, Point};
 use geo_types::{PointsIter, Triangle};
 use std::iter::Rev;
 
-/// Iterates through a list of `Point`s
+/// 迭代 `Point` 列表
 #[allow(missing_debug_implementations)]
 pub struct Points<'a, T>(pub(crate) EitherIter<PointsIter<'a, T>, Rev<PointsIter<'a, T>>>)
 where
@@ -38,11 +38,11 @@ where
     }
 }
 
-/// How a linestring is wound, clockwise or counter-clockwise
+/// 线字符串的绕行顺序，顺时针或逆时针
 #[derive(PartialEq, Clone, Debug, Eq, Copy)]
 pub enum WindingOrder {
-    Clockwise,
-    CounterClockwise,
+    Clockwise,        // 顺时针
+    CounterClockwise, // 逆时针
 }
 
 impl WindingOrder {
@@ -55,48 +55,43 @@ impl WindingOrder {
     }
 }
 
-/// Determine and operate on how a [`LineString`] is
-/// wound. This functionality, and our implementation is
-/// based on [CGAL's Polygon_2::orientation].
+/// 确定并操作 [`LineString`] 的绕行顺序。
+/// 此功能和我们的实现基于 [CGAL's Polygon_2::orientation].
 ///
 /// [CGAL's Polygon_2::orientation]: //doc.cgal.org/latest/Polygon/classCGAL_1_1Polygon__2.html#a4ce8b4b8395406243ac16c2a120ffc15
 pub trait Winding {
     type Scalar: CoordNum;
 
-    /// Return the winding order of this object if it
-    /// contains at least three distinct coordinates, and
-    /// `None` otherwise.
+    /// 返回此对象的绕行顺序，如果包含至少三个不同坐标，则返回相应绕行顺序，反之返回 `None`。
     fn winding_order(&self) -> Option<WindingOrder>;
 
-    /// True iff this is wound clockwise
+    /// 若绕行顺序为顺时针，则返回 true
     fn is_cw(&self) -> bool {
         self.winding_order() == Some(WindingOrder::Clockwise)
     }
 
-    /// True iff this is wound counterclockwise
+    /// 若绕行顺序为逆时针，则返回 true
     fn is_ccw(&self) -> bool {
         self.winding_order() == Some(WindingOrder::CounterClockwise)
     }
 
-    /// Iterate over the points in a clockwise order
+    /// 按顺时针顺序迭代点
     ///
-    /// The object isn't changed, and the points are returned either in order, or in reverse
-    /// order, so that the resultant order makes it appear clockwise
+    /// 对象不变，点返回的顺序或逆序，使得结果顺序看起来为顺时针
     fn points_cw(&self) -> Points<Self::Scalar>;
 
-    /// Iterate over the points in a counter-clockwise order
+    /// 按逆时针顺序迭代点
     ///
-    /// The object isn't changed, and the points are returned either in order, or in reverse
-    /// order, so that the resultant order makes it appear counter-clockwise
+    /// 对象不变，点返回的顺序或逆序，使得结果顺序看起来为逆时针
     fn points_ccw(&self) -> Points<Self::Scalar>;
 
-    /// Change this object's points so they are in clockwise winding order
+    /// 改变此对象的点顺序为顺时针绕行顺序
     fn make_cw_winding(&mut self);
 
-    /// Change this line's points so they are in counterclockwise winding order
+    /// 改变此线的点顺序为逆时针绕行顺序
     fn make_ccw_winding(&mut self);
 
-    /// Return a clone of this object, but in the specified winding order
+    /// 返回此对象的克隆，以指定的绕行顺序
     fn clone_to_winding_order(&self, winding_order: WindingOrder) -> Self
     where
         Self: Sized + Clone,
@@ -106,7 +101,7 @@ pub trait Winding {
         new
     }
 
-    /// Change the winding order so that it is in this winding order
+    /// 改变绕行顺序以设置为指定的绕行顺序
     fn make_winding_order(&mut self, winding_order: WindingOrder) {
         match winding_order {
             WindingOrder::Clockwise => self.make_cw_winding(),
@@ -123,9 +118,7 @@ where
     type Scalar = T;
 
     fn winding_order(&self) -> Option<WindingOrder> {
-        // If linestring has at most 3 coords, it is either
-        // not closed, or is at most two distinct points.
-        // Either way, the WindingOrder is unspecified.
+        // 如果 linestring 的坐标数不超过3，它要么未闭合，要么最多两个不同点。无论哪种方式，绕行顺序未指定。
         if self.coords_count() < 4 || !self.is_closed() {
             return None;
         }
@@ -152,8 +145,7 @@ where
         increment(&mut next);
         while self.0[next] == self.0[i] {
             if next == i {
-                // We've looped too much. There aren't
-                // enough unique coords to compute orientation.
+                // 我们循环得太多了。 没有足够唯一坐标来计算方向。
                 return None;
             }
             increment(&mut next);
@@ -162,9 +154,7 @@ where
         let mut prev = i;
         decrement(&mut prev);
         while self.0[prev] == self.0[i] {
-            // Note: we don't need to check if prev == i as
-            // the previous loop succeeded, and so we have
-            // at least two distinct elements in the list
+            // 注意：我们不需要检查 prev == i，因为前一个循环成功，所以列表中至少有两个不同的元素
             decrement(&mut prev);
         }
 
@@ -175,10 +165,9 @@ where
         }
     }
 
-    /// Iterate over the points in a clockwise order
+    /// 按顺时针顺序迭代点
     ///
-    /// The Linestring isn't changed, and the points are returned either in order, or in reverse
-    /// order, so that the resultant order makes it appear clockwise
+    /// Linestring 不变，点返回的顺序或逆序，使得结果顺序看起来为顺时针
     fn points_cw(&self) -> Points<Self::Scalar> {
         match self.winding_order() {
             Some(WindingOrder::CounterClockwise) => Points(EitherIter::B(self.points().rev())),
@@ -186,10 +175,9 @@ where
         }
     }
 
-    /// Iterate over the points in a counter-clockwise order
+    /// 按逆时针顺序迭代点
     ///
-    /// The Linestring isn't changed, and the points are returned either in order, or in reverse
-    /// order, so that the resultant order makes it appear counter-clockwise
+    /// Linestring 不变，点返回的顺序或逆序，使得结果顺序看起来为逆时针
     fn points_ccw(&self) -> Points<Self::Scalar> {
         match self.winding_order() {
             Some(WindingOrder::Clockwise) => Points(EitherIter::B(self.points().rev())),
@@ -197,14 +185,14 @@ where
         }
     }
 
-    /// Change this line's points so they are in clockwise winding order
+    /// 改变此线的点顺序为顺时针绕行顺序
     fn make_cw_winding(&mut self) {
         if let Some(WindingOrder::CounterClockwise) = self.winding_order() {
             self.0.reverse();
         }
     }
 
-    /// Change this line's points so they are in counterclockwise winding order
+    /// 改变此线的点顺序为逆时针绕行顺序
     fn make_ccw_winding(&mut self) {
         if let Some(WindingOrder::Clockwise) = self.winding_order() {
             self.0.reverse();
@@ -212,9 +200,8 @@ where
     }
 }
 
-// This function can probably be converted into a trait implementation with a small refactoring of
-// the trait but this is not in scope of the PR it is added for.
-/// special cased algorithm for finding the winding of a triangle
+// 此函数可能通过小重构特质实现转换为特质实现，但不在本次 PR 的范围内添加.
+/// 用于寻找三角形绕行顺序的特殊算法
 pub fn triangle_winding_order<T: GeoFloat>(tri: &Triangle<T>) -> Option<WindingOrder> {
     let [a, b, c] = tri.to_array();
     let ab = b - a;
@@ -236,12 +223,12 @@ mod test {
 
     #[test]
     fn robust_winding_float() {
-        // 3 points forming a triangle
+        // 三个点构成一个三角形
         let a = Point::new(0., 0.);
         let b = Point::new(2., 0.);
         let c = Point::new(1., 2.);
 
-        // Verify open linestrings return None
+        // 验证未闭合的线字符串返回 None
         let mut ls = LineString::from(vec![a.0, b.0, c.0]);
         assert!(ls.winding_order().is_none());
 
@@ -254,12 +241,12 @@ mod test {
 
     #[test]
     fn robust_winding_integer() {
-        // 3 points forming a triangle
+        // 三个点构成一个三角形
         let a = Point::new(0i64, 0);
         let b = Point::new(2, 0);
         let c = Point::new(1, 2);
 
-        // Verify open linestrings return None
+        // 验证未闭合的线字符串返回 None
         let mut ls = LineString::from(vec![a.0, b.0, c.0]);
         assert!(ls.winding_order().is_none());
 

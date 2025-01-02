@@ -4,13 +4,12 @@ use crate::{
     algorithm::{centroid::Centroid, rotate::Rotate, BoundingRect, CoordsIter},
     Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, LinesIter, Polygon,
 };
-/// Return the minimum bounding rectangle(MBR) of geometry
-/// reference: <https://en.wikipedia.org/wiki/Minimum_bounding_box>
-/// minimum rotated rect is the rectangle that can enclose all points given
-/// and have smallest area of all enclosing rectangles
-/// the rect can be any-oriented, not only axis-aligned.
+/// 返回几何体的最小边界矩形(MBR)
+/// 参考资料: <https://en.wikipedia.org/wiki/Minimum_bounding_box>
+/// 最小旋转矩形是可以包含给定所有点且面积最小的矩形
+/// 该矩形可以是任意方向的，而不仅仅是轴对齐的。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::{line_string, polygon, LineString, Polygon};
@@ -41,23 +40,35 @@ where
     type Scalar = T;
 
     fn minimum_rotated_rect(&self) -> Option<Polygon<Self::Scalar>> {
+        // 计算凸包
         let convex_poly = ConvexHull::convex_hull(self);
+        // 初始化最小面积为最大浮点值
         let mut min_area: T = Float::max_value();
+        // 初始化最小角度为零
         let mut min_angle: T = T::zero();
+        // 初始矩形多边形为None
         let mut rect_poly: Option<Polygon<T>> = None;
+        // 获取旋转的参考点（质心）
         let rotate_point = convex_poly.centroid();
         for line in convex_poly.exterior().lines_iter() {
+            // 获取线段的两个点
             let (ci, cii) = line.points();
+            // 计算旋转角度
             let angle = (cii.y() - ci.y()).atan2(cii.x() - ci.x()).to_degrees();
+            // 逆时针旋转多边形
             let rotated_poly = Rotate::rotate_around_point(&convex_poly, -angle, rotate_point?);
+            // 获取旋转后的边界矩形并转化为多边形
             let tmp_poly = rotated_poly.bounding_rect()?.to_polygon();
+            // 计算面积
             let area = tmp_poly.unsigned_area();
+            // 如果面积小于记录的最小面积，则更新最小面积和所使用的角度
             if area < min_area {
                 min_area = area;
                 min_angle = angle;
                 rect_poly = Some(tmp_poly);
             }
         }
+        // 使用最小角度对最终的矩形多边形进行旋转校正
         Some(rect_poly?.rotate_around_point(min_angle, rotate_point?))
     }
 }
@@ -70,6 +81,7 @@ mod test {
 
     #[test]
     fn returns_polygon_mbr() {
+        // 测试返回多边形的MBR
         let poly: Polygon<f64> = polygon![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0),(x:3.3,y:30.4)];
         let mbr = MinimumRotatedRect::minimum_rotated_rect(&poly).unwrap();
         assert_eq!(
@@ -85,6 +97,7 @@ mod test {
     }
     #[test]
     fn returns_linestring_mbr() {
+        // 测试返回线串的MBR
         let poly: LineString<f64> = line_string![(x: 3.3, y: 30.4), (x: 1.7, y: 24.6), (x: 13.4, y: 25.1), (x: 14.4, y: 31.0)];
         let mbr = MinimumRotatedRect::minimum_rotated_rect(&poly).unwrap();
         assert_eq!(

@@ -1,10 +1,10 @@
 use super::{CoordPos, Direction, Edge, EdgeEnd, GeometryGraph, IntersectionMatrix, Label};
 use crate::{Coord, GeoFloat};
 
-/// A collection of [`EdgeEnds`](EdgeEnd) which obey the following invariant:
-/// They originate at the same node and have the same direction.
+/// 一个遵循以下不变量的 [`EdgeEnds`](EdgeEnd) 集合：
+/// 它们来自同一节点并且具有相同的方向。
 ///
-/// This is based on [JTS's `EdgeEndBundle` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/EdgeEndBundle.java)
+/// 基于 [JTS 的 `EdgeEndBundle` 版本 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/EdgeEndBundle.java)
 #[derive(Clone, Debug)]
 pub(crate) struct EdgeEndBundle<F>
 where
@@ -62,25 +62,20 @@ where
         }
     }
 
-    /// Compute the overall ON position for the list of EdgeEnds.
-    /// (This is essentially equivalent to computing the self-overlay of a single Geometry)
+    /// 计算 EdgeEnds 列表的整体 ON 位置。
+    /// （这本质上等同于计算单个几何体的自叠加）
     ///
-    /// EdgeEnds can be either on the boundary (e.g. Polygon edge)
-    /// OR in the interior (e.g. segment of a LineString)
-    /// of their parent Geometry.
+    /// EdgeEnds 可以位于父几何体的边界（例如多边形边）或者内部（例如 LineString 的段）。
     ///
-    /// In addition, GeometryCollections use a boundary node rule to determine whether a segment is
-    /// on the boundary or not.
+    /// 此外，GeometryCollections 使用边界节点规则来确定段是否在边界上。
     ///
-    /// Finally, in GeometryCollections it can occur that an edge is both
-    /// on the boundary and in the interior (e.g. a LineString segment lying on
-    /// top of a Polygon edge.) In this case the Boundary is given precedence.
+    /// 最后，在 GeometryCollections 中可能会出现边同时在边界和内部的情况（例如，LineString 段位于多边形边之上）。在这种情况下，优先考虑边界。
     ///
-    /// These observations result in the following rules for computing the ON location:
-    /// - if there are an odd number of Bdy edges, the attribute is Bdy
-    /// - if there are an even number >= 2 of Bdy edges, the attribute is Int
-    /// - if there are any Int edges, the attribute is Int
-    /// - otherwise, the attribute is None
+    /// 这些观察结果导致了以下计算 ON 位置的规则：
+    /// - 如果有奇数个边界边，则属性为边界
+    /// - 如果有偶数个 >= 2 的边界边，则属性为内部
+    /// - 如果有任何内部边，则属性为内部
+    /// - 否则，属性为 None
     ///
     fn compute_label_on(&mut self, label: &mut Label, geom_index: usize) {
         let mut boundary_count = 0;
@@ -110,29 +105,29 @@ where
         if let Some(location) = position {
             label.set_on_position(geom_index, location);
         } else {
-            // This is technically a diversion from JTS, but I don't think we'd ever
-            // get here, unless `l.on_location` was *already* None, in which cases this is a
-            // no-op, so assert that assumption.
-            // If this assert is rightfully triggered, we may need to add a method like
-            // `l.clear_on_location(geom_index)`
+            // 这在技术上与 JTS 有所不同，但我认为我们永远不会
+            // 到达这里，除非 `l.on_location` 已经是 None，在这种情况下这是一个
+            // 无操作，因此要断言该假设。
+            // 如果此断言被正确触发，我们可能需要添加类似
+            // `l.clear_on_location(geom_index)` 的方法
             debug_assert!(
                 label.on_position(geom_index).is_none(),
-                "diverging from JTS, which would have replaced the existing Location with None"
+                "与 JTS 不同，它会将现有位置替换为 None"
             );
         }
     }
 
-    /// To compute the summary label for a side, the algorithm is:
-    ///     FOR all edges
-    ///       IF any edge's location is INTERIOR for the side, side location = INTERIOR
-    ///       ELSE IF there is at least one EXTERIOR attribute, side location = EXTERIOR
-    ///       ELSE  side location = NULL
-    /// Note that it is possible for two sides to have apparently contradictory information
-    /// i.e. one edge side may indicate that it is in the interior of a geometry, while
-    /// another edge side may indicate the exterior of the same geometry.  This is
-    /// not an incompatibility - GeometryCollections may contain two Polygons that touch
-    /// along an edge.  This is the reason for Interior-primacy rule above - it
-    /// results in the summary label having the Geometry interior on _both_ sides.
+    /// 为一侧计算汇总标签的算法是：
+    ///     对于所有边
+    ///       如果任何边的位置是 INTERIOR，则边位置 = INTERIOR
+    ///       否则如果至少有一个 EXTERIOR 属性，则边位置 = EXTERIOR
+    ///       否则 边位置 = NULL
+    /// 请注意，两个边可能具有明显矛盾的信息
+    /// 即一条边可能表明它在几何体的内部，而
+    /// 另一条边可能表明同一几何体的外部。这不是不兼容性
+    /// - GeometryCollections 可能包含沿边缘相接的两个多边形。
+    /// 上述内部优先规则的原因是
+    /// 使汇总标签在两侧都具有几何内部。
     fn compute_label_side(&mut self, label: &mut Label, geom_index: usize, side: Direction) {
         let mut position = None;
         for edge_end in self.edge_ends_iter_mut() {
@@ -156,10 +151,10 @@ where
     }
 }
 
-/// An [`EdgeEndBundle`] whose topological relationships have been aggregated into a single
-/// [`Label`].
+/// 一个 [`EdgeEndBundle`]，其拓扑关系已聚合为单个
+/// [`Label`]。
 ///
-/// `update_intersection_matrix` applies this aggregated topology to an `IntersectionMatrix`.
+/// `update_intersection_matrix` 将此聚合的拓扑应用于 `IntersectionMatrix`。
 #[derive(Clone, Debug)]
 pub(crate) struct LabeledEdgeEndBundle<F>
 where

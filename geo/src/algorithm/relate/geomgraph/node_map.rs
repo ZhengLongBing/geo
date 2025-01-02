@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::marker::PhantomData;
 
-/// A map of nodes, indexed by the coordinate of the node
+/// 节点的映射，根据节点的坐标进行索引
 #[derive(Clone, PartialEq)]
 pub(crate) struct NodeMap<F, NF>
 where
@@ -16,7 +16,7 @@ where
     _node_factory: PhantomData<NF>,
 }
 
-/// Creates the node stored in `NodeMap`
+/// 创建存储在 `NodeMap` 中的节点
 pub(crate) trait NodeFactory<F: GeoFloat>: PartialEq {
     type Node;
     fn create_node(coordinate: Coord<F>) -> Self::Node;
@@ -76,36 +76,33 @@ where
             _node_factory: PhantomData,
         }
     }
-    /// Adds a `NF::Node` with the given `Coord`.
+    /// 添加具有给定 `Coord` 的 `NF::Node`。
     ///
-    /// Note: Coords must be non-NaN.
+    /// 注意：坐标必须是非 NaN 的。
     pub fn insert_node_with_coordinate(&mut self, coord: Coord<F>) -> &mut NF::Node {
-        debug_assert!(
-            !coord.x.is_nan() && !coord.y.is_nan(),
-            "NaN coordinates are not supported"
-        );
+        debug_assert!(!coord.x.is_nan() && !coord.y.is_nan(), "不支持 NaN 坐标");
         let key = NodeKey(coord);
         self.map
             .entry(key)
             .or_insert_with(|| NF::create_node(coord))
     }
 
-    /// returns the `NF::Node`, if any, matching `coord`
+    /// 返回匹配 `coord` 的 `NF::Node`，如果有的话
     pub fn find(&self, coord: Coord<F>) -> Option<&NF::Node> {
         self.map.get(&NodeKey(coord))
     }
 
-    /// Iterates across `NF::Node`s in lexical order of their `Coord`
+    /// 按照 `Coord` 的词典顺序迭代 `NF::Node`
     pub fn iter(&self) -> impl Iterator<Item = &NF::Node> {
         self.map.values()
     }
 
-    /// Iterates across `NF::Node`s in lexical order of their `Coord`
+    /// 按照 `Coord` 的词典顺序迭代 `NF::Node`
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut NF::Node> {
         self.map.values_mut()
     }
 
-    /// Iterates across `NF::Node`s in lexical order of their `Coord`
+    /// 按照 `Coord` 的词典顺序迭代 `NF::Node`
     pub fn into_iter(self) -> impl Iterator<Item = NF::Node> {
         self.map.into_values()
     }

@@ -6,10 +6,9 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Coord<T>) -> bool {
-        // First we check if the point is collinear with the line.
+        // 首先检查点是否与线共线。
         T::Ker::orient2d(self.start, self.end, *rhs) == Orientation::Collinear
-        // In addition, the point must have _both_ coordinates
-        // within the start and end bounds.
+        // 此外，该点必须在 start 和 end 的边界内具有这两个坐标。
             && point_in_rect(*rhs, self.start, self.end)
     }
 }
@@ -21,43 +20,33 @@ where
     T: GeoNum,
 {
     fn intersects(&self, line: &Line<T>) -> bool {
-        // Special case: self is equiv. to a point.
+        // 特殊情况：self 相当于一个点。
         if self.start == self.end {
             return line.intersects(&self.start);
         }
 
-        // Precondition: start and end are distinct.
+        // 前提条件：start 和 end 是不同的。
 
-        // Check if orientation of rhs.{start,end} are different
-        // with respect to self.{start,end}.
+        // 检查 rhs.{start,end} 的方向相对于 self.{start,end} 是否不同。
         let check_1_1 = T::Ker::orient2d(self.start, self.end, line.start);
         let check_1_2 = T::Ker::orient2d(self.start, self.end, line.end);
 
         if check_1_1 != check_1_2 {
-            // Since the checks are different,
-            // rhs.{start,end} are distinct, and rhs is not
-            // collinear with self. Thus, there is exactly
-            // one point on the infinite extensions of rhs,
-            // that is collinear with self.
+            // 由于检查结果不同，rhs.{start,end} 是不同的，并且 rhs 不与 self 共线。
+            // 因此在 rhs 的无限延伸线上有确切的一个点与 self 共线。
 
-            // By continuity, this point is not on the
-            // exterior of rhs. Now, check the same with
-            // self, rhs swapped.
+            // 连续性表明，这个点不在 rhs 的外部。现在，交换 self 和 rhs 进行相同的检查。
 
             let check_2_1 = T::Ker::orient2d(line.start, line.end, self.start);
             let check_2_2 = T::Ker::orient2d(line.start, line.end, self.end);
 
-            // By similar argument, there is (exactly) one
-            // point on self, collinear with rhs. Thus,
-            // those two have to be same, and lies (interior
-            // or boundary, but not exterior) on both lines.
+            // 通过类似的论证，在 self 上有确切的一个点与 rhs 共线。
+            // 因此，这两个必须是相同的，并且位于（内部或边界，但不在外部）在两条线中。
             check_2_1 != check_2_2
         } else if check_1_1 == Orientation::Collinear {
-            // Special case: collinear line segments.
+            // 特殊情况：共线的线段。
 
-            // Equivalent to 4 point-line intersection
-            // checks, but removes the calls to the kernel
-            // predicates.
+            // 相当于 4 个点线相交检查，但移除对核谓词的调用。
             point_in_rect(line.start, self.start, self.end)
                 || point_in_rect(line.end, self.start, self.end)
                 || point_in_rect(self.end, line.start, line.end)

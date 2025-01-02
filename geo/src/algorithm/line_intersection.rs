@@ -6,26 +6,21 @@ use crate::Intersects;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum LineIntersection<F: GeoFloat> {
-    /// Lines intersect in a single point
+    /// 直线在单个点上相交
     SinglePoint {
         intersection: Coord<F>,
-        /// For Lines which intersect in a single point, that point may be either an endpoint
-        /// or in the interior of each Line.
-        /// If the point lies in the interior of both Lines, we call it a _proper_ intersection.
+        /// 对于在单个点上相交的直线，该点可以是任一点或每条直线的内部。
+        /// 如果该点位于两条直线的内部，我们称之为“适当”的交点。
         ///
-        /// # Note
+        /// # 注意
         ///
-        /// Due to the limited precision of most float data-types, the
-        /// calculated intersection point may be snapped to one of the
-        /// end-points even though all the end-points of the two
-        /// lines are distinct points. In such cases, this field is
-        /// still set to `true`. Please refer test_case:
-        /// `test_central_endpoint_heuristic_failure_1` for such an
-        /// example.
+        /// 由于大多数浮点数据类型的有限精度，即使两条直线的所有端点都是不同点，
+        /// 计算出的交点可能会被固定到其中一个端点上。在这种情况下，此字段仍然设置为 `true`。
+        /// 请参阅测试案例： `test_central_endpoint_heuristic_failure_1` 以了解此类示例。
         is_proper: bool,
     },
 
-    /// Overlapping Lines intersect in a line segment
+    /// 重叠的直线在一个线段上相交
     Collinear { intersection: Line<F> },
 }
 
@@ -38,12 +33,11 @@ impl<F: GeoFloat> LineIntersection<F> {
     }
 }
 
-/// Returns the intersection between two [`Lines`](Line).
+/// 返回两个 [`Lines`](Line) 之间的交点。
 ///
-/// Lines can intersect in a Point or, for Collinear lines, in a Line. See [`LineIntersection`]
-/// for more details about the result.
+/// 直线可以在一个点上相交，或对于重合的直线，在一个直线上相交。有关结果的更多详细信息，请参阅 [`LineIntersection`]。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::coord;
@@ -69,7 +63,7 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// let expected = LineIntersection::Collinear { intersection: Line::new(coord! { x: 3.0, y: 3.0 }, coord! { x: 5.0, y: 5.0 })};
 /// assert_eq!(line_intersection(line_1, line_2), Some(expected));
 /// ```
-/// Strongly inspired by, and meant to produce the same results as, [JTS's RobustLineIntersector](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/algorithm/RobustLineIntersector.java#L26).
+/// 强烈受启发于并旨在产生与 [JTS的 RobustLineIntersector](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/algorithm/RobustLineIntersector.java#L26) 相同的结果。
 pub fn line_intersection<F>(p: Line<F>, q: Line<F>) -> Option<LineIntersection<F>>
 where
     F: GeoFloat,
@@ -104,37 +98,33 @@ where
         return collinear_intersection(p, q);
     }
 
-    // At this point we know that there is a single intersection point (since the lines are not
-    // collinear).
+    // 此时我们知道只有一个交点（因为两条线不共线）。
     //
-    // Check if the intersection is an endpoint. If it is, copy the endpoint as the
-    // intersection point. Copying the point rather than computing it ensures the point has the
-    // exact value, which is important for robustness. It is sufficient to simply check for an
-    // endpoint which is on the other line, since at this point we know that the inputLines
-    // must intersect.
+    // 检查两个终点是否相交。如果是，则复制终点作为交点。
+    // 复制该点而不是计算它可确保该点具有精确值，这对于稳健性很重要。
+    // 只需检查其他线段上的端点即可，因为此时我们知道输入直线必须相交。
     if p_q1 == Collinear || p_q2 == Collinear || q_p1 == Collinear || q_p2 == Collinear {
-        // Check for two equal endpoints.
-        // This is done explicitly rather than by the orientation tests below in order to improve
-        // robustness.
+        // 检查两个相等的端点。
+        // 这不是通过下面的方位测试进行的，而是为了提高稳健性。
         //
-        // [An example where the orientation tests fail to be consistent is the following (where
-        // the true intersection is at the shared endpoint
-        // POINT (19.850257749638203 46.29709338043669)
+        // [方位测试不一致的示例如下（其中
+        // 真正的交点在共享端点
+        // 点 (19.850257749638203 46.29709338043669)
         //
-        // LINESTRING ( 19.850257749638203 46.29709338043669, 20.31970698357233 46.76654261437082 )
-        // and
-        // LINESTRING ( -48.51001596420236 -22.063180333403878, 19.850257749638203 46.29709338043669 )
+        // 线段 ( 19.850257749638203 46.29709338043669, 20.31970698357233 46.76654261437082 )
+        // 和
+        // 线段 ( -48.51001596420236 -22.063180333403878, 19.850257749638203 46.29709338043669 )
         //
-        // which used to produce the INCORRECT result: (20.31970698357233, 46.76654261437082, NaN)
+        // 此前产生错误结果： (20.31970698357233, 46.76654261437082, NaN)
 
         let intersection: Coord<F>;
-        // false positives for this overzealous clippy https://github.com/rust-lang/rust-clippy/issues/6747
+        // 对于这个过度古板的 Clippy 提高的假阳性警告 https://github.com/rust-lang/rust-clippy/issues/6747
         #[allow(clippy::suspicious_operation_groupings)]
         if p.start == q.start || p.start == q.end {
             intersection = p.start;
         } else if p.end == q.start || p.end == q.end {
             intersection = p.end;
-            // Now check to see if any endpoint lies on the interior of the other segment.
+            // 现在检查是否有任一端点位于另一线段内部。
         } else if p_q1 == Collinear {
             intersection = q.start;
         } else if p_q2 == Collinear {
@@ -194,16 +184,13 @@ fn collinear_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<LineInt
     )
 }
 
-/// Finds the endpoint of the segments P and Q which is closest to the other segment.  This is
-/// a reasonable surrogate for the true intersection points in ill-conditioned cases (e.g.
-/// where two segments are nearly coincident, or where the endpoint of one segment lies almost
-/// on the other segment).
+/// 找到线段 P 和 Q 的端点，它最接近另一个线段。
+/// 这是在条件不佳的情况下（如两条线段几乎重合，或一条线段的端点几乎在另一条线段上）合理的真交点替代。
 ///
-/// This replaces the older CentralEndpoint heuristic, which chose the wrong endpoint in some
-/// cases where the segments had very distinct slopes and one endpoint lay almost on the other
-/// segment.
+/// 这替代了较旧的 CentralEndpoint 启发式方法，该方法在某些情况下选择了错误的端点，
+/// 这些情况下，线段的斜率非常不同且一个端点几乎位于另一线段上。
 ///
-/// `returns` the nearest endpoint to the other segment
+/// `returns`离另一个线段最近的端点
 fn nearest_endpoint<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
     use geo_types::private_utils::point_line_euclidean_distance;
 
@@ -247,7 +234,7 @@ fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coord<F>
     let mid_x = (int_min_x + int_max_x) / two;
     let mid_y = (int_min_y + int_max_y) / two;
 
-    // condition ordinate values by subtracting midpoint
+    // 通过减去中点调节纵坐标值
     let p1x = p.start.x - mid_x;
     let p1y = p.start.y - mid_y;
     let p2x = p.end.x - mid_x;
@@ -257,7 +244,7 @@ fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coord<F>
     let q2x = q.end.x - mid_x;
     let q2y = q.end.y - mid_y;
 
-    // unrolled computation using homogeneous coordinates eqn
+    // 利用齐次坐标公式展开计算
     let px = p1y - p2y;
     let py = p2x - p1x;
     let pw = p1x * p2y - p2x * p1y;
@@ -273,11 +260,11 @@ fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coord<F>
     let x_int = xw / w;
     let y_int = yw / w;
 
-    // check for parallel lines
+    // 检查平行直线
     if (x_int.is_nan() || x_int.is_infinite()) || (y_int.is_nan() || y_int.is_infinite()) {
         None
     } else {
-        // de-condition intersection point
+        // 去调节交点
         Some(coord! {
             x: x_int + mid_x,
             y: y_int + mid_y,
@@ -285,25 +272,22 @@ fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coord<F>
     }
 }
 
-/// This method computes the actual value of the intersection point.
-/// To obtain the maximum precision from the intersection calculation,
-/// the coordinates are normalized by subtracting the minimum
-/// ordinate values (in absolute value).  This has the effect of
-/// removing common significant digits from the calculation to
-/// maintain more bits of precision.
+/// 此方法计算交点的实际值。
+/// 为了从交叉计算中获得最大精度，坐标通过减去最小纵坐标值（绝对值）来归一化。
+/// 这具有从计算中删除共同有效数字以保持更多精度位的效果。
 fn proper_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
-    // Computes a segment intersection using homogeneous coordinates.
-    // Round-off error can cause the raw computation to fail,
-    // (usually due to the segments being approximately parallel).
-    // If this happens, a reasonable approximation is computed instead.
+    // 使用齐次坐标计算线段交点。
+    // 圆误可能导致原始计算失败，
+    // （通常是因为线段近似平行）。
+    // 若发生这种情况，则计算一个合理的近似值。
     let mut int_pt = raw_line_intersection(p, q).unwrap_or_else(|| nearest_endpoint(p, q));
 
-    // NOTE: At this point, JTS does a `Envelope::contains(coord)` check, but confusingly,
-    // Envelope::contains(coord) in JTS is actually an *intersection* check, not a true SFS
-    // `contains`, because it includes the boundary of the rect.
+    // 注意：此时，JTS 确实进行了 `Envelope::contains(coord)` 检查，但令人困惑的是，
+    // JTS 中的 Envelope::contains(coord) 实际上是 *交叉* 检查，而不是真正的 SFS
+    // `contains`，因为它包括矩形的边界。
     if !(p.bounding_rect().intersects(&int_pt) && q.bounding_rect().intersects(&int_pt)) {
-        // compute a safer result
-        // copy the coordinate, since it may be rounded later
+        // 计算一个更安全的结果
+        // 复制坐标，因为它可能会在稍后进行舍入
         int_pt = nearest_endpoint(p, q);
     }
     int_pt
@@ -314,14 +298,14 @@ mod test {
     use super::*;
     use geo_types::coord;
 
-    /// Based on JTS test `testCentralEndpointHeuristicFailure`
-    /// > Following cases were failures when using the CentralEndpointIntersector heuristic.
-    /// > This is because one segment lies at a significant angle to the other,
-    /// > with only one endpoint is close to the other segment.
-    /// > The CE heuristic chose the wrong endpoint to return.
-    /// > The fix is to use a new heuristic which out of the 4 endpoints
-    /// > chooses the one which is closest to the other segment.
-    /// > This works in all known failure cases.
+    /// 基于 JTS 测试 `testCentralEndpointHeuristicFailure`
+    /// > 以下案例在使用 CentralEndpointIntersector 启发式方法时失败。
+    /// > 这是因为一个线段相对于另一个具有显著角度，
+    /// > 仅有一个端点接近于另一线段。
+    /// > CE 启发式选择了错误的端点返回。
+    /// > 修复方法是使用一种新的启发式方法，从 4 个端点中
+    /// > 选择最接近另一线段的一个。
+    /// > 这种方法在所有已知故障情况下有效。
     #[test]
     fn test_central_endpoint_heuristic_failure_1() {
         let line_1 = Line::new(
@@ -355,11 +339,11 @@ mod test {
         assert_eq!(actual, Some(expected));
     }
 
-    /// Based on JTS test `testCentralEndpointHeuristicFailure2`
-    /// > Test from Tomas Fa - JTS list 6/13/2012
+    /// 基于 JTS 测试 `testCentralEndpointHeuristicFailure2`
+    /// > Tomas Fa 的测试 - JTS 列表 6/13/2012
     /// >
-    /// > Fails using original JTS DeVillers determine orientation test.
-    /// > Succeeds using DD and Shewchuk orientation
+    /// > 使用原始 JTS DeVillers 定位测试失败。
+    /// > 使用 DD 和 Shewchuk 方向测试成功
     #[test]
     fn test_central_endpoint_heuristic_failure_2() {
         let line_1 = Line::new(
@@ -393,11 +377,11 @@ mod test {
         assert_eq!(actual, Some(expected));
     }
 
-    /// Based on JTS test `testTomasFa_1`
-    /// > Test from Tomas Fa - JTS list 6/13/2012
+    /// 基于 JTS 测试 `testTomasFa_1`
+    /// > Tomas Fa 的测试 - JTS 列表 6/13/2012
     /// >
-    /// > Fails using original JTS DeVillers determine orientation test.
-    /// > Succeeds using DD and Shewchuk orientation
+    /// > 使用原始 JTS DeVillers 定位测试失败。
+    /// > 使用 DD 和 Shewchuk 方向测试成功
     #[test]
     fn test_tomas_fa_1() {
         let line_1 = Line::new(coord! { x: -42.0, y: 163.2 }, coord! { x: 21.2, y: 265.2 });
@@ -407,11 +391,11 @@ mod test {
         assert_eq!(actual, expected);
     }
 
-    /// Based on JTS test `testTomasFa_2`
+    /// 基于 JTS 测试 `testTomasFa_2`
     ///
-    /// > Test from Tomas Fa - JTS list 6/13/2012
+    /// > Tomas Fa 的测试 - JTS 列表 6/13/2012
     /// >
-    /// > Fails using original JTS DeVillers determine orientation test.
+    /// > 使用原始 JTS DeVillers 定位测试失败。
     #[test]
     fn test_tomas_fa_2() {
         let line_1 = Line::new(coord! { x: -5.9, y: 163.1 }, coord! { x: 76.1, y: 250.7 });
@@ -421,10 +405,10 @@ mod test {
         assert_eq!(actual, expected);
     }
 
-    /// Based on JTS test `testLeduc_1`
+    /// 基于 JTS 测试 `testLeduc_1`
     ///
-    /// > Test involving two non-almost-parallel lines.
-    /// > Does not seem to cause problems with basic line intersection algorithm.
+    /// > 涉及两条非几乎平行线的测试。
+    /// > 似乎不会导致基本直线交叉算法出现问题。
     #[test]
     fn test_leduc_1() {
         let line_1 = Line::new(
@@ -458,9 +442,9 @@ mod test {
         assert_eq!(actual, Some(expected));
     }
 
-    /// Based on JTS test `testGEOS_1()`
+    /// 基于 JTS 测试 `testGEOS_1()`
     ///
-    /// > Test from strk which is bad in GEOS (2009-04-14).
+    /// > 来自 strk 的测试，在 GEOS 中不良（2009-04-14）。
     #[test]
     fn test_geos_1() {
         let line_1 = Line::new(
@@ -494,9 +478,9 @@ mod test {
         assert_eq!(actual, Some(expected));
     }
 
-    /// Based on JTS test `testGEOS_2()`
+    /// 基于 JTS 测试 `testGEOS_2()`
     ///
-    /// > Test from strk which is bad in GEOS (2009-04-14).
+    /// > 来自 strk 的测试，在 GEOS 中不良（2009-04-14）。
     #[test]
     fn test_geos_2() {
         let line_1 = Line::new(
@@ -530,10 +514,10 @@ mod test {
         assert_eq!(actual, Some(expected));
     }
 
-    /// Based on JTS test `testDaveSkeaCase()`
+    /// 基于 JTS 测试 `testDaveSkeaCase()`
     ///
-    /// > This used to be a failure case (exception), but apparently works now.
-    /// > Possibly normalization has fixed this?
+    /// > 这曾经是个故障案例（异常），但现在似乎已修复。
+    /// > 可能是规范化修复了该问题？
     #[test]
     fn test_dave_skea_case() {
         let line_1 = Line::new(
@@ -567,9 +551,9 @@ mod test {
         assert_eq!(actual, Some(expected));
     }
 
-    /// Based on JTS test `testCmp5CaseWKT()`
+    /// 基于 JTS 测试 `testCmp5CaseWKT()`
     ///
-    /// > Outside envelope using HCoordinate method.
+    /// > 使用 HCoordinate 方法在包络之外。
     #[test]
     fn test_cmp_5_cask_wkt() {
         let line_1 = Line::new(

@@ -6,7 +6,7 @@ use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
 use crate::{GeoNum, GeometryCow};
 
-/// The position of a `Coord` relative to a `Geometry`
+/// `Coord` 相对于 `Geometry` 的位置
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CoordPos {
     OnBoundary,
@@ -14,9 +14,9 @@ pub enum CoordPos {
     Outside,
 }
 
-/// Determine whether a `Coord` lies inside, outside, or on the boundary of a geometry.
+/// 确定一个 `Coord` 是否在几何体内部、外部或者在边界上。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```rust
 /// use geo::{polygon, coord};
@@ -36,16 +36,16 @@ pub enum CoordPos {
 pub trait CoordinatePosition {
     type Scalar: GeoNum;
     fn coordinate_position(&self, coord: &Coord<Self::Scalar>) -> CoordPos {
+        // 初始化内部状态和边界计数
         let mut is_inside = false;
         let mut boundary_count = 0;
 
         self.calculate_coordinate_position(coord, &mut is_inside, &mut boundary_count);
 
-        // “The boundary of an arbitrary collection of geometries whose interiors are disjoint
-        // consists of geometries drawn from the boundaries of the element geometries by
-        // application of the ‘mod 2’ union rule”
+        // “一个任意集合的几何体的边界（其内部互不相交）
+        //  由通过 Mod 2 合并规则从元素几何体的边界构成”
         //
-        // ― OpenGIS Simple Feature Access § 6.1.15.1
+        // ― OpenGIS 简单功能访问 § 6.1.15.1
         if boundary_count % 2 == 1 {
             CoordPos::OnBoundary
         } else if is_inside {
@@ -55,9 +55,9 @@ pub trait CoordinatePosition {
         }
     }
 
-    // impls of this trait must:
-    //  1. set `is_inside = true` if `coord` is contained within the Interior of any component.
-    //  2. increment `boundary_count` for each component whose Boundary contains `coord`.
+    // 该特性的实现必须：
+    //  1. 如果 `coord` 在任意组件的内部，则设置 `is_inside = true`。
+    //  2. 对于每个包含 `coord` 的边界，增加 `boundary_count`。
     fn calculate_coordinate_position(
         &self,
         coord: &Coord<Self::Scalar>,
@@ -111,7 +111,7 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        // degenerate line is a point
+        // 退化线就是一个点
         if self.start == self.end {
             self.start
                 .calculate_coordinate_position(coord, is_inside, boundary_count);
@@ -138,12 +138,12 @@ where
         boundary_count: &mut usize,
     ) {
         if self.0.len() < 2 {
-            debug_assert!(false, "invalid line string with less than 2 coords");
+            debug_assert!(false, "具有少于 2 个坐标的无效线字符串");
             return;
         }
 
         if self.0.len() == 2 {
-            // line string with two coords is just a line
+            // 具有两个坐标的线字符串就是一条线
             Line::new(self.0[0], self.0[1]).calculate_coordinate_position(
                 coord,
                 is_inside,
@@ -152,15 +152,15 @@ where
             return;
         }
 
-        // optimization: return early if there's no chance of an intersection
-        // since self.0 is non-empty, safe to `unwrap`
+        // 优化：如果没有相交的可能性，则尽早返回
+        // 因为 self.0 是非空的，可以安全地 `unwrap`
         if !self.bounding_rect().unwrap().intersects(coord) {
             return;
         }
 
-        // A closed linestring has no boundary, per SFS
+        // 根据 SFS，封闭的线字符串没有边界
         if !self.is_closed() {
-            // since self.0 is non-empty, safe to `unwrap`
+            // 因为 self.0 是非空的，可以安全地 `unwrap`
             if coord == self.0.first().unwrap() || coord == self.0.last().unwrap() {
                 *boundary_count += 1;
                 return;
@@ -168,8 +168,7 @@ where
         }
 
         if self.intersects(coord) {
-            // We've already checked for "Boundary" condition, so if there's an intersection at
-            // this point, coord must be on the interior
+            // 我们已经检查了“边界”条件，所以如果在这点上有相交，coord 必须在内部
             *is_inside = true
         }
     }
@@ -300,7 +299,7 @@ where
                         }
                     }
                 }
-                // the coord is *outside* the interior holes, so it's *inside* the polygon
+                // coord 在内部孔的外部，所以它在多边形内部
                 *is_inside = true;
             }
         }
@@ -383,21 +382,20 @@ impl<T: GeoNum> CoordinatePosition for GeometryCow<'_, T> {
     }
 }
 
-/// Calculate the position of a `Coord` relative to a
-/// closed `LineString`.
+/// 计算 `Coord` 相对于封闭 `LineString` 的位置。
 pub fn coord_pos_relative_to_ring<T>(coord: Coord<T>, linestring: &LineString<T>) -> CoordPos
 where
     T: GeoNum,
 {
     debug_assert!(linestring.is_closed());
 
-    // LineString without points
+    // 没有点的 LineString
     if linestring.0.is_empty() {
         return CoordPos::Outside;
     }
     if linestring.0.len() == 1 {
-        // If LineString has one point, it will not generate
-        // any lines.  So, we handle this edge case separately.
+        // 如果 LineString 只有一个点，则不会生成任何线。
+        // 因此，我们需要单独处理这种边缘情况。
         return if coord == linestring.0[0] {
             CoordPos::OnBoundary
         } else {
@@ -405,15 +403,15 @@ where
         };
     }
 
-    // Use winding number algorithm with on boundary short-cicuit
-    // See: https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
+    // 使用卷绕数算法并在边界进行短路
+    // 参见：https://en.wikipedia.org/wiki/Point_in_polygon#Winding_number_algorithm
     let mut winding_number = 0;
     for line in linestring.lines() {
-        // Edge Crossing Rules:
-        //   1. an upward edge includes its starting endpoint, and excludes its final endpoint;
-        //   2. a downward edge excludes its starting endpoint, and includes its final endpoint;
-        //   3. horizontal edges are excluded
-        //   4. the edge-ray intersection point must be strictly right of the coord.
+        // 边交叉规则：
+        //   1. 向上的边包括其起始端点，排除其结束端点；
+        //   2. 向下的边排除其起始端点，包括其结束端点；
+        //   3. 水平边被排除
+        //   4. 边光线相交点必须严格位于 coord 的右边。
         if line.start.y <= coord.y {
             if line.end.y >= coord.y {
                 let o = T::Ker::orient2d(line.start, line.end, coord);
@@ -618,10 +616,10 @@ mod test {
     fn test_closed_line_string() {
         let line_string = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 0.0), (x: 3.0, y: 2.0), (x: 0.0, y: 2.0), (x: 0.0, y: 0.0)];
 
-        // sanity check
+        // 检查封闭性
         assert!(line_string.is_closed());
 
-        // closed line strings have no boundary
+        // 封闭的线字符串没有边界
         let start = Coord::zero();
         assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
@@ -635,13 +633,12 @@ mod test {
     #[test]
     fn test_boundary_rule() {
         let multi_line_string = MultiLineString::new(vec![
-            // first two lines have same start point but different end point
+            // 第一和第二条线有相同的起点但不同的终点
             line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0)],
             line_string![(x: 0.0, y: 0.0), (x: -1.0, y: -1.0)],
-            // third line has its own start point, but it's end touches the middle of first line
+            // 第三条线有自己的起点，但终点接触到第一条线的中间
             line_string![(x: 0.0, y: 1.0), (x: 0.5, y: 0.5)],
-            // fourth and fifth have independent start points, but both end at the middle of the
-            // second line
+            // 第四条和第五条线有独立的起点，但都在第二条线的中间终结
             line_string![(x: 0.0, y: -1.0), (x: -0.5, y: -0.5)],
             line_string![(x: 0.0, y: -2.0), (x: -0.5, y: -0.5)],
         ]);
@@ -658,21 +655,21 @@ mod test {
             CoordPos::OnBoundary
         );
 
-        // in boundary of first and second, so considered *not* in the boundary by mod 2 rule
+        // 第一条和第二条线的边界中，所以根据 mod 2 规则不被认为在边界中
         let shared_start = Coord::zero();
         assert_eq!(
             multi_line_string.coordinate_position(&shared_start),
             CoordPos::Outside
         );
 
-        // *in* the first line, on the boundary of the third line
+        // 在第一条线*中*，在第三条线的边界上
         let one_end_plus_midpoint = coord! { x: 0.5, y: 0.5 };
         assert_eq!(
             multi_line_string.coordinate_position(&one_end_plus_midpoint),
             CoordPos::OnBoundary
         );
 
-        // *in* the first line, on the *boundary* of the fourth and fifth line
+        // 在第一条线*中*，在第四条和第五条线的*边界上*
         let two_ends_plus_midpoint = coord! { x: -0.5, y: -0.5 };
         assert_eq!(
             multi_line_string.coordinate_position(&two_ends_plus_midpoint),
@@ -720,25 +717,25 @@ mod test {
         let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
         let collection = GeometryCollection::new_from(vec![triangle.into(), rect.into()]);
 
-        //  outside of both
+        // 在两个几何体的外部
         assert_eq!(
             collection.coordinate_position(&coord! { x: 15.0, y: 15.0 }),
             CoordPos::Outside
         );
 
-        // inside both
+        // 在两个几何体的内部
         assert_eq!(
             collection.coordinate_position(&coord! { x: 5.0, y: 5.0 }),
             CoordPos::Inside
         );
 
-        // inside one, boundary of other
+        // 在一个几何体的内部，在另一个几何体的边界上
         assert_eq!(
             collection.coordinate_position(&coord! { x: 2.5, y: 5.0 }),
             CoordPos::OnBoundary
         );
 
-        //  boundary of both
+        // 在两个几何体的边界上
         assert_eq!(
             collection.coordinate_position(&coord! { x: 5.0, y: 10.0 }),
             CoordPos::Outside

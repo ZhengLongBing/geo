@@ -6,35 +6,35 @@ use crate::{Dimensions, LineStringTrait};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, LineString, MultiLineString};
 
-/// A trait for accessing data from a generic MultiLineString.
+/// 用于从通用MultiLineString访问数据的特征。
 ///
-/// A MultiLineString is a collection of [`LineString`s][LineStringTrait].
+/// MultiLineString是[`LineString`s][LineStringTrait]的集合。
 ///
-/// Refer to [geo_types::MultiLineString] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅[geo_types::MultiLineString]。
 pub trait MultiLineStringTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying LineString, which implements [LineStringTrait]
+    /// 每个底层LineString的类型，实现[LineStringTrait]
     type LineStringType<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// An iterator over the LineStrings in this MultiLineString
+    /// 此MultiLineString中LineString的迭代器
     fn line_strings(
         &self,
     ) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::LineStringType<'_>> {
         MultiLineStringIterator::new(self, 0, self.num_line_strings())
     }
 
-    /// The number of line_strings in this MultiLineString
+    /// 此MultiLineString中line_string的数量
     fn num_line_strings(&self) -> usize;
 
-    /// Access to a specified line_string in this MultiLineString
-    /// Will return None if the provided index is out of bounds
+    /// 访问此MultiLineString中指定的line_string
+    /// 如果提供的索引超出范围，将返回None
     fn line_string(&self, i: usize) -> Option<Self::LineStringType<'_>> {
         if i >= self.num_line_strings() {
             None
@@ -43,11 +43,11 @@ pub trait MultiLineStringTrait: Sized {
         }
     }
 
-    /// Access to a specified line_string in this MultiLineString
+    /// 访问此MultiLineString中指定的line_string
     ///
-    /// # Safety
+    /// # 安全性
     ///
-    /// Accessing an index out of bounds is UB.
+    /// 访问超出范围的索引是未定义行为。
     unsafe fn line_string_unchecked(&self, i: usize) -> Self::LineStringType<'_>;
 }
 
@@ -93,10 +93,9 @@ impl<'a, T: CoordNum> MultiLineStringTrait for &'a MultiLineString<T> {
     }
 }
 
-/// An empty struct that implements [MultiLineStringTrait].
+/// 实现[MultiLineStringTrait]的空结构体。
 ///
-/// This can be used as the `MultiLineStringType` of the `GeometryTrait` by implementations that
-/// don't have a MultiLineString concept
+/// 这可以被没有MultiLineString概念的实现用作`GeometryTrait`的`MultiLineStringType`
 pub struct UnimplementedMultiLineString<T>(PhantomData<T>);
 
 impl<T> MultiLineStringTrait for UnimplementedMultiLineString<T> {

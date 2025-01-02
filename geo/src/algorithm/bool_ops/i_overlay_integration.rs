@@ -3,12 +3,11 @@ use crate::GeoNum;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
 
-/// A geometry coordinate scalar suitable for performing geometric boolean operations.
+/// 适用于执行几何布尔运算的几何坐标标量。
 pub trait BoolOpsNum: GeoNum + FloatNumber {}
 impl<T: GeoNum + FloatNumber> BoolOpsNum for T {}
 
-/// New type for `Coord` that implements `FloatPointCompatible` for `BoolOpsNum` to
-/// circumvent orphan rule, since Coord is defined in geo_types.
+/// `Coord`的新类型，为`BoolOpsNum`实现`FloatPointCompatible`，以绕过孤儿规则，因为Coord是在geo_types中定义的。
 #[derive(Copy, Clone, Debug)]
 pub struct BoolOpsCoord<T: BoolOpsNum>(pub(crate) Coord<T>);
 
@@ -62,8 +61,8 @@ pub(super) mod convert {
         if line_string.0.is_empty() {
             return vec![];
         }
-        // In geo, Polygon rings are explicitly closed LineStrings — their final coordinate is the same as their first coordinate,
-        // however in i_overlay, shape paths are implicitly closed, so we skip the last coordinate.
+        // 在geo中，多边形环是显式闭合的LineStrings - 它们的最终坐标与第一个坐标相同，
+        // 然而在i_overlay中，形状路径是隐式闭合的，因此我们跳过最后一个坐标。
         let coords = &line_string.0[..line_string.0.len() - 1];
         coords.iter().copied().map(BoolOpsCoord).collect()
     }

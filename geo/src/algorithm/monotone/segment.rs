@@ -4,9 +4,9 @@ use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 use crate::sweep::{Event, EventType, LineOrPoint, SweepPoint};
 use crate::GeoNum;
 
-/// A segment in the sweep line algorithm.
+/// 扫描线算法中的一个线段。
 ///
-/// Consists of a line and a payload.
+/// 包含一条线和一个负载。
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Segment<T: GeoNum, P> {
     line: LineOrPoint<T>,
@@ -50,7 +50,7 @@ impl<T: GeoNum, P> Clone for RcSegment<T, P> {
 
 impl<T: GeoNum, P: Clone + Debug> RcSegment<T, P> {
     pub(crate) fn split_at(&self, pt: SweepPoint<T>) -> Self {
-        debug!("Splitting segment {:?} at {:?}", self, pt);
+        debug!("在点 {:?} 处分割线段 {:?}", self, pt);
         let mut borrow = RefCell::borrow_mut(&self.0);
         let right = borrow.line.right();
         borrow.line = LineOrPoint::from((borrow.line.left(), pt));
@@ -70,6 +70,7 @@ impl<T: GeoNum, P> RcSegment<T, P> {
         RefCell::borrow(&self.0).line
     }
 
+    /// 创建并返回事件数组
     #[inline]
     pub fn events(&self) -> [Event<T, RcSegment<T, P>>; 2] {
         let geom = RefCell::borrow(&self.0).line;
@@ -104,7 +105,7 @@ impl<T: GeoNum, P> From<Segment<T, P>> for RcSegment<T, P> {
     }
 }
 
-// Implement partial eq, partial ord, and eq for RcSegment
+// 为 RcSegment 实现部分相等性和部分顺序性
 impl<T: GeoNum, P> PartialEq for RcSegment<T, P> {
     fn eq(&self, other: &Self) -> bool {
         self.0.eq(&other.0)

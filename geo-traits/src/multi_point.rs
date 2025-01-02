@@ -5,33 +5,33 @@ use crate::{Dimensions, PointTrait, UnimplementedPoint};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, MultiPoint, Point};
 
-/// A trait for accessing data from a generic MultiPoint.
+/// 用于从通用MultiPoint访问数据的特征。
 ///
-/// A MultiPoint is a collection of [`Point`s][PointTrait].
+/// MultiPoint是[`Point`s][PointTrait]的集合。
 ///
-/// Refer to [geo_types::MultiPoint] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅[geo_types::MultiPoint]。
 pub trait MultiPointTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying Point, which implements [PointTrait]
+    /// 每个底层Point的类型，实现[PointTrait]
     type PointType<'a>: 'a + PointTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// An iterator over the points in this MultiPoint
+    /// 此MultiPoint中点的迭代器
     fn points(&self) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::PointType<'_>> {
         MultiPointIterator::new(self, 0, self.num_points())
     }
 
-    /// The number of points in this MultiPoint
+    /// 此MultiPoint中点的数量
     fn num_points(&self) -> usize;
 
-    /// Access to a specified point in this MultiPoint
-    /// Will return None if the provided index is out of bounds
+    /// 访问此MultiPoint中指定的点
+    /// 如果提供的索引超出范围，将返回None
     fn point(&self, i: usize) -> Option<Self::PointType<'_>> {
         if i >= self.num_points() {
             None
@@ -40,11 +40,11 @@ pub trait MultiPointTrait: Sized {
         }
     }
 
-    /// Access to a specified point in this MultiPoint
+    /// 访问此MultiPoint中指定的点
     ///
-    /// # Safety
+    /// # 安全性
     ///
-    /// Accessing an index out of bounds is UB.
+    /// 访问超出范围的索引是未定义行为。
     unsafe fn point_unchecked(&self, i: usize) -> Self::PointType<'_>;
 }
 
@@ -90,10 +90,9 @@ impl<'a, T: CoordNum> MultiPointTrait for &'a MultiPoint<T> {
     }
 }
 
-/// An empty struct that implements [MultiPointTrait].
+/// 实现[MultiPointTrait]的空结构体。
 ///
-/// This can be used as the `MultiPointType` of the `GeometryTrait` by implementations that don't
-/// have a MultiPoint concept
+/// 这可以被没有MultiPoint概念的实现用作`GeometryTrait`的`MultiPointType`
 pub struct UnimplementedMultiPoint<T>(PhantomData<T>);
 
 impl<T> MultiPointTrait for UnimplementedMultiPoint<T> {

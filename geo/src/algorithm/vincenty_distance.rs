@@ -1,4 +1,4 @@
-// A few resources:
+// 一些参考资源：
 //
 // - http://www.movable-type.co.uk/scripts/latlong-vincenty.html
 // - https://nathanrooy.github.io/posts/2016-12-18/vincenty-formula-with-python/
@@ -8,38 +8,37 @@ use crate::{CoordFloat, Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_
 use num_traits::FromPrimitive;
 use std::{error, fmt};
 
-/// Determine the distance between two geometries using [Vincenty’s formulae].
+/// 使用 [Vincenty公式] 计算两个几何体之间的距离。
 ///
-/// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
+/// [Vincenty的公式]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
 pub trait VincentyDistance<T, Rhs = Self> {
-    /// Determine the distance between two geometries using [Vincenty’s
-    /// formulae].
+    /// 使用 [Vincenty公式] 计算两个几何体之间的距离。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meters
+    /// - 返回值：米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::prelude::*;
     /// use geo::point;
     ///
-    /// // New York City
+    /// // 纽约市
     /// let p1 = point!(x: -74.006f64, y: 40.7128f64);
     ///
-    /// // London
+    /// // 伦敦
     /// let p2 = point!(x: -0.1278f64, y: 51.5074f64);
     ///
     /// let distance = p1.vincenty_distance(&p2).unwrap();
     ///
     /// assert_eq!(
-    ///     5_585_234., // meters
+    ///     5_585_234., // 米
     ///     distance.round()
     /// );
     /// ```
     ///
-    /// [Vincenty’s formulae]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
+    /// [Vincenty的公式]: https://en.wikipedia.org/wiki/Vincenty%27s_formulae
     fn vincenty_distance(&self, rhs: &Rhs) -> Result<T, FailedToConvergeError>;
 }
 
@@ -69,11 +68,11 @@ where
         let a = T::from(EQUATORIAL_EARTH_RADIUS).unwrap();
         let b = T::from(POLAR_EARTH_RADIUS).unwrap();
         let f = T::from(EARTH_FLATTENING).unwrap();
-        // Difference in longitude
+        // 经度差
         let L = (rhs.x() - self.x()).to_radians();
-        // Reduced latitude (latitude on the auxiliary sphere)
+        // 缩小的纬度（辅助球体上的纬度）
         let U1 = ((t_1 - f) * self.y().to_radians().tan()).atan();
-        // Reduced latitude (latitude on the auxiliary sphere)
+        // 缩小的纬度（辅助球体上的纬度）
         let U2 = ((t_1 - f) * rhs.y().to_radians().tan()).atan();
         let (sinU1, cosU1) = U1.sin_cos();
         let (sinU2, cosU2) = U2.sin_cos();
@@ -82,11 +81,12 @@ where
         let mut cos2SigmaM;
         let mut cosSigma;
         let mut sigma;
-        // Longitude of the points on the auxiliary sphere
+        // 辅助球体上点的经度
         let mut lambda = L;
         let mut lambdaP;
         let mut iterLimit = 100;
 
+        // 使用迭代方法逼近 λ
         loop {
             let (sinLambda, cosLambda) = lambda.sin_cos();
             sinSigma = ((cosU2 * sinLambda) * (cosU2 * sinLambda)
@@ -96,10 +96,10 @@ where
 
             if sinSigma.is_zero() {
                 return if self == rhs {
-                    // coincident points
+                    // 重合点
                     Ok(T::zero())
                 } else {
-                    // antipodal points, for which vincenty does not converge
+                    // 对跖点，Vincenty算法无法收敛
                     Err(FailedToConvergeError)
                 };
             }
@@ -110,13 +110,14 @@ where
             cosSqAlpha = t_1 - sinAlpha * sinAlpha;
 
             if cosSqAlpha.is_zero() {
-                // equatorial geodesics require special handling
-                // per [Algorithms for geodesics, Charles F. F. Karney](https://arxiv.org/pdf/1109.4448.pdf)
+                // 赤道上的测地线需要特殊处理
+                // 参考 [地理线算法, Charles F. F. Karney](https://arxiv.org/pdf/1109.4448.pdf)
                 cos2SigmaM = T::zero()
             } else {
                 cos2SigmaM = cosSigma - t_2 * sinU1 * sinU2 / cosSqAlpha;
             }
 
+            // 计算修正因子C
             let C = f / t_16 * cosSqAlpha * (t_4 + f * (t_4 - t_3 * cosSqAlpha));
             lambdaP = lambda;
             lambda = L
@@ -142,10 +143,12 @@ where
             return Err(FailedToConvergeError);
         }
 
+        // 计算测地线长度
         let uSq = cosSqAlpha * (a * a - b * b) / (b * b);
         let A = t_1 + uSq / t_16384 * (t_4096 + uSq * (-t_768 + uSq * (t_320 - t_175 * uSq)));
         let B = uSq / t_1024 * (t_256 + uSq * (-t_128 + uSq * (t_74 - t_47 * uSq)));
 
+        // 计算终点矢量在单位球上对应的真实距离
         let deltaSigma = B
             * sinSigma
             * (cos2SigmaM
@@ -167,13 +170,13 @@ pub struct FailedToConvergeError;
 
 impl fmt::Display for FailedToConvergeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vincenty algorithm failed to converge")
+        write!(f, "Vincenty算法未能收敛")
     }
 }
 
 impl error::Error for FailedToConvergeError {
     fn description(&self) -> &str {
-        "Vincenty algorithm failed to converge"
+        "Vincenty算法未能收敛"
     }
 }
 

@@ -1,7 +1,7 @@
 use num_traits::FromPrimitive;
 
 use crate::line_measures::Haversine;
-// Densify will soon be deprecated too, so let's just allow deprecated for now
+// Densify 很快将被废弃，所以现在暂时允许使用已废弃的功能
 #[allow(deprecated)]
 use crate::HaversineLength;
 use crate::{
@@ -10,27 +10,26 @@ use crate::{
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.densify::<Haversine>()` via the `Densify` trait instead."
+    note = "请使用 `Densify` 特征中的 `line.densify::<Haversine>()` 代替。"
 )]
-/// Returns a new spherical geometry containing both existing and new interpolated coordinates with
-/// a maximum distance of `max_distance` between them.
+/// 返回一个新的球面几何对象，该对象包含现有的和新的插值坐标，插值坐标之间的最大距离为 `max_distance`。
 ///
-/// Note: `max_distance` must be greater than 0.
+/// 注意：`max_distance` 必须大于 0。
 ///
-/// ## Units
+/// ## 单位
 ///
-/// - `max_distance`: meters
+/// - `max_distance`：米
 ///
-/// # Examples
+/// # 示例
 /// ```
 /// use geo::{coord, Line, LineString};
 /// #[allow(deprecated)]
 /// use geo::DensifyHaversine;
 ///
 /// let line = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 1.0 });
-/// // known output
+/// // 已知输出
 /// let output: LineString = vec![[0.0, 0.0], [0.0, 0.5], [0.0, 1.0]].into();
-/// // densify
+/// // 进行插值
 /// let dense = line.densify_haversine(100000.0);
 /// assert_eq!(dense, output);
 ///```

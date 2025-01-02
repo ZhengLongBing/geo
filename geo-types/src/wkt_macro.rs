@@ -1,10 +1,8 @@
-/// Creates a [`crate::geometry`] from a
-/// [WKT](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry) literal.
+/// 从[WKT](https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry)字面量创建一个[`crate::geometry`]。
 ///
-/// This is evaluated at compile time, so you don't need to worry about runtime errors from invalid
-/// WKT syntax.
+/// 这在编译时进行评估，因此您无需担心无效WKT语法导致的运行时错误。
 ///
-/// Note that `POINT EMPTY` is not accepted because it is not representable as a `geo_types::Point`.
+/// 注意，不接受`POINT EMPTY`，因为它无法表示为`geo_types::Point`。
 ///
 /// ```
 /// use geo_types::wkt;
@@ -23,7 +21,7 @@
 /// ```
 #[macro_export]
 macro_rules! wkt {
-    // Hide distracting implementation details from the generated rustdoc.
+    // 在生成的rustdoc中隐藏分散注意力的实现细节。
     ($($wkt:tt)+) => {
         {
             $crate::wkt_internal!($($wkt)+)
@@ -35,13 +33,13 @@ macro_rules! wkt {
 #[doc(hidden)]
 macro_rules! wkt_internal {
     (POINT EMPTY) => {
-        compile_error!("EMPTY points are not supported in geo-types")
+        compile_error!("geo-types不支持EMPTY点")
     };
     (POINT($x: literal $y: literal)) => {
         $crate::point!(x: $x, y: $y)
     };
     (POINT $($tail: tt)*) => {
-        compile_error!("Invalid POINT wkt");
+        compile_error!("无效的POINT wkt");
     };
     (LINESTRING EMPTY) => {
         $crate::line_string![]
@@ -52,10 +50,10 @@ macro_rules! wkt_internal {
         ]
     };
     (LINESTRING ()) => {
-        compile_error!("use `EMPTY` instead of () for an empty collection")
+        compile_error!("对于空集合，请使用`EMPTY`而不是()")
     };
     (LINESTRING $($tail: tt)*) => {
-        compile_error!("Invalid LINESTRING wkt");
+        compile_error!("无效的LINESTRING wkt");
     };
     (POLYGON EMPTY) => {
         $crate::polygon![]
@@ -72,16 +70,16 @@ macro_rules! wkt_internal {
         )
     };
     (POLYGON ()) => {
-        compile_error!("use `EMPTY` instead of () for an empty collection")
+        compile_error!("对于空集合，请使用`EMPTY`而不是()")
     };
     (POLYGON $($tail: tt)*) => {
-        compile_error!("Invalid POLYGON wkt");
+        compile_error!("无效的POLYGON wkt");
     };
     (MULTIPOINT EMPTY) => {
         $crate::MultiPoint($crate::_alloc::vec![])
     };
     (MULTIPOINT ()) => {
-        compile_error!("use `EMPTY` instead of () for an empty collection")
+        compile_error!("对于空集合，请使用`EMPTY`而不是()")
     };
     (MULTIPOINT ($($x: literal $y: literal),* )) => {
         $crate::MultiPoint(
@@ -89,13 +87,13 @@ macro_rules! wkt_internal {
         )
     };
     (MULTIPOINT $($tail: tt)*) => {
-        compile_error!("Invalid MULTIPOINT wkt");
+        compile_error!("无效的MULTIPOINT wkt");
     };
     (MULTILINESTRING EMPTY) => {
         $crate::MultiLineString($crate::_alloc::vec![])
     };
     (MULTILINESTRING ()) => {
-        compile_error!("use `EMPTY` instead of () for an empty collection")
+        compile_error!("对于空集合，请使用`EMPTY`而不是()")
     };
     (MULTILINESTRING ( $($line_string_tt: tt),* )) => {
         $crate::MultiLineString($crate::_alloc::vec![
@@ -103,13 +101,13 @@ macro_rules! wkt_internal {
         ])
     };
     (MULTILINESTRING $($tail: tt)*) => {
-        compile_error!("Invalid MULTILINESTRING wkt");
+        compile_error!("无效的MULTILINESTRING wkt");
     };
     (MULTIPOLYGON EMPTY) => {
         $crate::MultiPolygon($crate::_alloc::vec![])
     };
     (MULTIPOLYGON ()) => {
-        compile_error!("use `EMPTY` instead of () for an empty collection")
+        compile_error!("对于空集合，请使用`EMPTY`而不是()")
     };
     (MULTIPOLYGON ( $($polygon_tt: tt),* )) => {
         $crate::MultiPolygon($crate::_alloc::vec![
@@ -117,13 +115,13 @@ macro_rules! wkt_internal {
         ])
     };
     (MULTIPOLYGON $($tail: tt)*) => {
-        compile_error!("Invalid MULTIPOLYGON wkt");
+        compile_error!("无效的MULTIPOLYGON wkt");
     };
     (GEOMETRYCOLLECTION EMPTY) => {
         $crate::GeometryCollection($crate::_alloc::vec![])
     };
     (GEOMETRYCOLLECTION ()) => {
-        compile_error!("use `EMPTY` instead of () for an empty collection")
+        compile_error!("对于空集合，请使用`EMPTY`而不是()")
     };
     (GEOMETRYCOLLECTION ( $($el_type:tt $el_tt: tt),* )) => {
         $crate::GeometryCollection($crate::_alloc::vec![
@@ -131,10 +129,10 @@ macro_rules! wkt_internal {
         ])
     };
     (GEOMETRYCOLLECTION $($tail: tt)*) => {
-        compile_error!("Invalid GEOMETRYCOLLECTION wkt");
+        compile_error!("无效的GEOMETRYCOLLECTION wkt");
     };
     ($name: ident ($($tail: tt)*)) => {
-        compile_error!("Unknown type. Must be one of POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON, or GEOMETRYCOLLECTION");
+        compile_error!("未知类型。必须是POINT、LINESTRING、POLYGON、MULTIPOINT、MULTILINESTRING、MULTIPOLYGON或GEOMETRYCOLLECTION之一");
     };
 }
 
@@ -153,7 +151,7 @@ mod test {
         assert_eq!(point.x(), 1.0);
         assert_eq!(point.y(), 2.0);
 
-        // This (rightfully) fails to compile because geo-types doesn't support "empty" points
+        // 这（正确地）无法编译，因为geo-types不支持"空"点
         // wkt! { POINT EMPTY }
     }
 
@@ -162,7 +160,7 @@ mod test {
         let line_string: LineString<f64> = wkt! { LINESTRING EMPTY };
         assert_eq!(line_string.0.len(), 0);
 
-        // This (rightfully) fails to compile because its invalid wkt
+        // 这（正确地）无法编译，因为它是无效的wkt
         // wkt! { LINESTRING() }
     }
 
@@ -179,7 +177,7 @@ mod test {
         assert_eq!(polygon.exterior().0.len(), 0);
         assert_eq!(polygon.interiors().len(), 0);
 
-        // This (rightfully) fails to compile because its invalid wkt
+        // 这（正确地）无法编译，因为它是无效的wkt
         // wkt! { POLYGON() }
     }
 
@@ -190,7 +188,7 @@ mod test {
         assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
 
         let polygon = wkt! { POLYGON((1.0 2.0,3.0 4.0)) };
-        // Note: an extra coord is added to close the linestring
+        // 注意：添加了一个额外的坐标以闭合线串
         assert_eq!(polygon.exterior().0.len(), 3);
         assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
         assert_eq!(polygon.exterior().0[1], coord! { x: 3.0, y: 4.0 });
@@ -213,7 +211,7 @@ mod test {
     fn empty_multi_point() {
         let multipoint: MultiPoint = wkt! { MULTIPOINT EMPTY };
         assert!(multipoint.0.is_empty());
-        // This (rightfully) fails to compile because its invalid wkt
+        // 这（正确地）无法编译，因为它是无效的wkt
         // wkt! { MULTIPOINT() }
     }
 
@@ -233,7 +231,7 @@ mod test {
     fn empty_multi_line_string() {
         let multi_line_string: MultiLineString = wkt! { MULTILINESTRING EMPTY };
         assert_eq!(multi_line_string.0, vec![]);
-        // This (rightfully) fails to compile because its invalid wkt
+        // 这（正确地）无法编译，因为它是无效的wkt
         // wkt! { MULTILINESTRING() }
     }
     #[test]
@@ -255,7 +253,7 @@ mod test {
         let multi_polygon: MultiPolygon = wkt! { MULTIPOLYGON EMPTY };
         assert!(multi_polygon.0.is_empty());
 
-        // This (rightfully) fails to compile because its invalid wkt
+        // 这（正确地）无法编译，因为它是无效的wkt
         // wkt! { MULTIPOLYGON() }
     }
 
@@ -286,7 +284,7 @@ mod test {
         let geometry_collection: GeometryCollection = wkt! { GEOMETRYCOLLECTION EMPTY };
         assert!(geometry_collection.is_empty());
 
-        // This (rightfully) fails to compile because its invalid wkt
+        // 这（正确地）无法编译，因为它是无效的wkt
         // wkt! { MULTIPOLYGON() }
     }
 

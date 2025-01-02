@@ -8,20 +8,19 @@ use geo_types::{
 
 use num_traits::FromPrimitive;
 
-/// Calculates the closest `Point` on a geometry from a given `Point` in sperical coordinates.
+/// 在球面坐标系中计算几何体中离给定`Point`最近的`Point`。
 ///
-/// Similar to [`ClosestPoint`](crate::ClosestPoint) but for spherical coordinates:
-/// * Longitude (x) in the [-180; 180] degrees range.
-/// * Latitude (y) in the [-90; 90] degrees range.
+/// 类似于[`ClosestPoint`](crate::ClosestPoint)，但是用于球面坐标：
+/// * 经度 (x) 在 [-180; 180] 度的范围内。
+/// * 纬度 (y) 在 [-90; 90] 度的范围内。
 ///
-/// The implementation is based on <https://edwilliams.org/avform147.htm#XTE>.
+/// 实现基于 <https://edwilliams.org/avform147.htm#XTE>。
 ///
-/// See [`Closest<F>`] for a description of the return states.
+/// 参见 [`Closest<F>`] 以获取返回状态的说明。
 ///
-/// Note: This may return `Closest::Intersection` even for non-intersecting geometies if they are
-/// very close to the input.
+/// 注意：即使对于非交叉的几何体，如果它们非常接近输入，也可能返回 `Closest::Intersection`。
 ///
-/// Example:
+/// 示例:
 /// ```
 /// # use geo::HaversineClosestPoint;
 /// # use geo::{Point, Line, Closest};
@@ -31,7 +30,7 @@ use num_traits::FromPrimitive;
 /// if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
 ///     assert_relative_eq!(pt, Point::new(-85.13337428852164, 32.45365659858937), epsilon = 1e-6);
 /// } else {
-///     panic!("Closest::SinglePoint expected");
+///     panic!("应返回 Closest::SinglePoint");
 /// }
 /// ```
 pub trait HaversineClosestPoint<T>
@@ -41,7 +40,7 @@ where
     fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T>;
 }
 
-// Implement for references as well as types
+// 为引用和类型实现
 impl<T, G> HaversineClosestPoint<T> for &'_ G
 where
     G: HaversineClosestPoint<T>,
@@ -82,7 +81,7 @@ where
         let p1 = self.start_point();
         let p2 = self.end_point();
 
-        // Optimization if the point s exactly one of the ends of the arc.
+        // 如果点正好是弧的一端，则优化。
         if p1 == *from {
             return Closest::Intersection(p1);
         }
@@ -91,13 +90,11 @@ where
             return Closest::Intersection(p2);
         }
 
-        // This can probably be done cheaper
+        // 这可能可以更便宜地完成
         let d3 = Haversine::distance(p2, p1);
         if d3 <= T::epsilon() {
-            // I think here it should be return Closest::SinglePoint(p1)
-            // If the line segment is degenerated to a point, that point is still the closest
-            // (instead of indeterminate as in the Cartesian case).
-
+            // 我认为这里应该返回 Closest::SinglePoint(p1)
+            // 如果线段退化为一个点，该点仍然是最近的（而不是像笛卡尔情况那样不确定）。
             return Closest::SinglePoint(p1);
         }
 
@@ -115,7 +112,7 @@ where
 
         let d1 = Haversine::distance(p1, *from);
 
-        // d1, d2, d3 are in principle not needed, only the sign matters
+        // d1, d2, d3 原则上不需要，只有符号重要
         let projection1 = d_crs1.cos();
         let projection2 = d_crs2.cos();
 
@@ -131,8 +128,8 @@ where
             }
         }
 
-        // Projected falls outside the GC Arc
-        // Return shortest distance pt, project either on point sp1 or sp2
+        // 投影点落在GC弧以外
+        // 返回最短距离点，要么投影到点sp1或sp2上
         let d2 = Haversine::distance(p2, *from);
         if d1 < d2 {
             return Closest::SinglePoint(p1);
@@ -145,10 +142,10 @@ impl<T> HaversineClosestPoint<T> for LineString<T>
 where
     T: GeoFloat + FromPrimitive,
 {
-    // This is a naive implementation
+    // 这是一个简单的实现
     fn haversine_closest_point(&self, from: &Point<T>) -> Closest<T> {
         if self.coords_count() == 0 {
-            return Closest::Indeterminate; // Empty LineString
+            return Closest::Indeterminate; // 空的 LineString
         }
 
         let mut min_distance = num_traits::Float::max_value();
@@ -157,12 +154,10 @@ where
         for line in self.lines() {
             match line.haversine_closest_point(from) {
                 intersect @ Closest::Intersection(_) => {
-                    // let's investigate the situation here:
-                    // - we have discovered that the point actually intersects the linestring.
-                    // Clearly no other non-intersecting point can be closer now.
-                    // Even if the linestring is degenerate and is intersecting itself at this specific point
-                    // by definition it must be that exact point.
-                    // So instead of returning an indeterminate of exactly the same point, we just return here.
+                    // 让我们调查一下这里的情况：
+                    // - 我们发现点实际上与线串相交。显然现在没有其他不相交的点能更接近。
+                    // 即使该线段是退化的，并且在此特定点自相交，按定义它也必须是该确切点。
+                    // 因此，与其返回完全相同的点的不确定状态，我们可以在这里直接返回。
                     return intersect;
                 }
                 Closest::SinglePoint(pt) => {
@@ -172,8 +167,8 @@ where
                         rv = Closest::SinglePoint(pt);
                     }
                 }
-                // If there is a case where we cannot figure out the closest,
-                // Then it needs to be intereminate, instead of skipping
+                // 如果有一个情况我们无法确定最近的点，
+                // 那么需要是不可确定的，而不是跳过
                 Closest::Indeterminate => return Closest::Indeterminate,
             }
         }
@@ -192,9 +187,8 @@ where
     for line in lines {
         match line.haversine_closest_point(from) {
             intersect @ Closest::Intersection(_) => {
-                // same as for the linestring, even if we detected multiple intersections,
-                // they would by definition be the same point, so we can just return it.
-                // Additionally, the distance on an intersection should be zero.
+                // 与线串的情况相同，即使我们检测到多个交点，它们按定义也会是相同的点，因此我们可以直接返回。
+                // 此外，交点处的距离应该为零。
                 return (intersect, T::zero());
             }
             Closest::SinglePoint(pt) => {
@@ -204,10 +198,9 @@ where
                     rv = Closest::SinglePoint(pt);
                 }
             }
-
-            // If there is a case where we cannot figure out the closest,
-            // Then it needs to be intereminate, instead of skipping
-            // This however never happens for a Line/Point, which is the case here
+            // 如果有一个情况我们无法确定最近的点，
+            // 那么需要是不可确定的，而不是跳过
+            // 但这在这里对线/点的情况不会发生
             Closest::Indeterminate => return (Closest::Indeterminate, T::zero()),
         }
     }
@@ -252,25 +245,24 @@ where
         }
 
         if self.exterior_coords_iter().count() < 3 {
-            // Not really a polygon
+            // 并不是一个真正的多边形
             return Closest::Indeterminate;
         }
 
         let (mut rv, mut min_distance) = closest_closed_simple_poly(self.exterior().lines(), from);
 
         match rv {
-            // Would not happen as it should be caught at the beginning of the function
+            // 不会发生，因为应该在函数开始时被捕获
             Closest::Intersection(_) => return rv,
             Closest::SinglePoint(_) => {}
-            // Would not happen either. See other geometries for an explanation.
-            // This is for future proof
+            // 也不会发生。参见其他几何体的说明。这是为了未来的稳定性
             Closest::Indeterminate => return rv,
         }
 
-        // Could be inside a inner ring
+        // 可能在内环中
         for ls in self.interiors() {
             match closest_closed_simple_poly(ls.lines(), from) {
-                // Would not happen as it should be caught at the beginning of the function
+                // 不会发生，因为应该在函数开始时被捕获
                 (Closest::Intersection(pt), _) => return Closest::Intersection(pt),
                 (Closest::SinglePoint(pt), dist) => {
                     if min_distance > dist {
@@ -278,7 +270,7 @@ where
                         rv = Closest::SinglePoint(pt);
                     }
                 }
-                // Would not happen either.
+                // 也不会发生。
                 (Closest::Indeterminate, _) => unreachable!(),
             }
         }
@@ -298,7 +290,7 @@ where
 
     for c in iter {
         match c.haversine_closest_point(from) {
-            // This mean on top of the line.
+            // 这意味着在线上。
             Closest::Intersection(pt) => return Closest::Intersection(pt),
             Closest::SinglePoint(pt) => {
                 let dist = Haversine::distance(pt, *from);
@@ -372,19 +364,19 @@ mod test {
         if let Closest::SinglePoint(p) = p_1.haversine_closest_point(&p_2) {
             assert_relative_eq!(p_1, p);
         } else {
-            panic!("Expecing Closest::SinglePoint");
+            panic!("期望 Closest::SinglePoint");
         }
 
         if let Closest::SinglePoint(p) = p_2.haversine_closest_point(&p_1) {
             assert_relative_eq!(p_2, p);
         } else {
-            panic!("Expecing Closest::SinglePoint");
+            panic!("期望 Closest::SinglePoint");
         }
 
         if let Closest::Intersection(p) = p_2.haversine_closest_point(&p_2) {
             assert_relative_eq!(p_2, p);
         } else {
-            panic!("Expecing Closest::Intersection");
+            panic!("期望 Closest::Intersection");
         }
     }
 
@@ -398,14 +390,14 @@ mod test {
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, Point::new(-85.13337428852164, 32.45365659858937));
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
 
         let p_from = Point::new(-85.67211, 32.39774);
         if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, Point::new(-85.58999680564376, 32.26023534389268));
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
@@ -418,7 +410,7 @@ mod test {
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_1) {
             assert!(pt == p_1);
         } else {
-            panic!("Did not get Closest::Intersection!");
+            panic!("没有得到 Closest::Intersection！");
         }
     }
 
@@ -432,7 +424,7 @@ mod test {
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, p_from);
         } else {
-            panic!("Did not get Closest::Intersection!");
+            panic!("没有得到 Closest::Intersection！");
         }
     }
 
@@ -446,11 +438,11 @@ mod test {
         if let Closest::Intersection(pt) = line.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, p_from);
         } else {
-            panic!("Did not get Closest::Intersection!");
+            panic!("没有得到 Closest::Intersection！");
         }
     }
 
-    // Across the pole
+    // 穿越极地
     #[test]
     fn point_to_line_across_equator() {
         let p_1 = Point::new(-38.424_794_871_794_916, 75.137_388_461_538_48);
@@ -464,7 +456,7 @@ mod test {
                 Point::new(-28.608_712_820_512_864, -85.278_057_692_307_67)
             );
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
@@ -482,7 +474,7 @@ mod test {
                 epsilon = 1.0e-6
             );
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
@@ -508,7 +500,7 @@ mod test {
                 epsilon = 1.0e-6
             );
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
@@ -548,7 +540,7 @@ mod test {
                 epsilon = 1.0e-6
             );
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
@@ -579,7 +571,7 @@ mod test {
                 epsilon = 1.0e-6
             );
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
@@ -606,7 +598,7 @@ mod test {
         if let Closest::Intersection(pt) = poly.haversine_closest_point(&p_from) {
             assert_relative_eq!(pt, p_from);
         } else {
-            panic!("Did not get Closest::Intersection!");
+            panic!("没有得到 Closest::Intersection！");
         }
     }
 
@@ -645,13 +637,13 @@ mod test {
                 epsilon = 1.0e-6
             );
         } else {
-            panic!("Did not get Closest::SinglePoint!");
+            panic!("没有得到 Closest::SinglePoint！");
         }
     }
 
     #[test]
     fn haversine_closest_point_intersecting_line() {
-        // First a sensible case: the point to test just happens to be one of the points on the linestring
+        // 首先是一个合理的情况：待测试的点正好是线串上的一个点
         let wkt = "LineString (3.86503906250000284 11.71231367187503736, 9.48691406250000568 17.3341886718750402)";
         let linestring = LineString::<f64>::try_from_wkt_str(wkt).unwrap();
 
@@ -661,16 +653,16 @@ mod test {
 
         match linestring.haversine_closest_point(&point) {
             Closest::Intersection(_) => {
-                // this is the correct answer
+                // 这是正确答案
             }
             Closest::SinglePoint(_) => {
-                panic!("unexpected: singlePoint")
+                panic!("意外：SinglePoint")
             }
-            Closest::Indeterminate => panic!("unexpected: indeterminate"),
+            Closest::Indeterminate => panic!("意外：Indeterminate"),
         }
 
-        // and now for the really degenerate case:
-        // We have a linestring with overlapping coordinates, _and_ test that point
+        // 现在是一个真正的退化情况：
+        // 我们有一个坐标重叠的线串，_并且_测试那个点
         let wkt = "LineString (3.86503906250000284 11.71231367187503736,
             3.86503906250000284 11.71231367187503736,
             9.48691406250000568 17.3341886718750402)";
@@ -678,11 +670,11 @@ mod test {
         let linestring = LineString::<f64>::try_from_wkt_str(wkt).unwrap();
         let point = linestring.lines().next().unwrap().start_point();
 
-        // because the overlapping point on the degenerate linestring is the exact same, we expect to get an intersection.
+        // 因为退化线串上的重叠点是完全相同的，我们期望得到一个交点。
         if let Closest::Intersection(_) = linestring.haversine_closest_point(&point) {
-            // this is correct
+            // 这是正确的
         } else {
-            panic!("got wrong result")
+            panic!("得到了错误的结果")
         }
     }
 }

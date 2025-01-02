@@ -54,20 +54,15 @@ fn test_unary_union_errors() {
     let simplified_area = simplified_union.unsigned_area();
     assert_relative_eq!(naive_area, simplified_area, max_relative = 1e-5);
 
-    // Serial vs. parallel are expected to have slightly different results.
+    // 串行和并行的结果预期会有些微不同。
     //
-    // Each boolean operation scales the floating point to a discrete
-    // integer grid, which introduces some error, and this error factor depends on the magnitude
-    // of the input.
+    // 每个布尔操作都会将浮点缩放到离散的整数网格，这会引入一些误差，这个误差值取决于输入的大小。
     //
-    // Because the serial vs. parallel approaches group inputs differently, error is accumulated
-    // differently - hence the slightly different outputs.
+    // 因为串行和并行方法会不同地分组输入，因此误差积累方式有所不同——因此输出会略有不同。
     //
-    // xor'ing the two shapes represents the magnitude of the difference between the two outputs.
+    // 对两种形状进行异或运算表示两种输出之间差异的大小。
     //
-    // We want to verify that this error is small - it should be near 0, but the
-    // magnitude of the error is relative to the magnitude of the input geometries, so we offset
-    // both the error and 0 by `input_area` to make a scale relative comparison.
+    // 我们想验证这种误差是否很小——应接近于0，但误差的大小与输入几何的大小成比例，因此我们通过`input_area`来做比例比较。
     let naive_vs_simplified_discrepancy = simplified_union.xor(&naive_union);
     assert_relative_eq!(
         input_area + naive_vs_simplified_discrepancy.unsigned_area(),
@@ -96,7 +91,7 @@ fn jts_overlay_tests() {
 
 #[test]
 fn jts_test_overlay_la_1() {
-    // From TestOverlayLA.xml test case with description "mLmA - A and B complex, overlapping and touching #1"
+    // 来自 TestOverlayLA.xml 测试用例，描述为 “mLmA - A 和 B 复杂，重叠并接触 #1”
     let a: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
         (
             (60 260, 60 120, 220 120, 220 260, 60 260),
@@ -115,7 +110,7 @@ fn jts_test_overlay_la_1() {
     .convert();
     let actual = a.clip(&b, false);
 
-    // This corresponds to the "intersection" output from JTS overlay
+    // 这对应于 JTS 叠加的“交集”输出
     let expected = wkt!(MULTILINESTRING(
         (220 260, 140 260),
         (140 260, 120 260),
@@ -145,7 +140,7 @@ fn jts_test_overlay_la_1() {
     let im = actual.relate(&expected);
     assert!(
         im.is_equal_topo(),
-        "actual: {:#?}, expected: {:#?}",
+        "实际值: {:#?}, 预期值: {:#?}",
         actual.wkt_string(),
         expected.wkt_string()
     );
@@ -170,7 +165,7 @@ mod gh_issues {
             17.576085274796423 - 15.791540153598898
         )));
         _ = p1.intersection(&p2);
-        // The goal is just to get here without panic
+        // 目标只是到达这里而不出现崩溃
     }
 
     #[test]
@@ -179,7 +174,7 @@ mod gh_issues {
         let polygon_y: Polygon<f32> = wkt!(POLYGON((8055.805 7977.847,8010.871 8000.2676,8033.105 8044.8286,8078.039 8022.408,8055.805 7977.847)));
         _ = polygon_x.union(&polygon_y);
         _ = polygon_x.intersection(&polygon_y);
-        // The goal is just to get here without panic
+        // 目标只是到达这里而不出现崩溃
     }
 
     mod gh_issue_913 {
@@ -195,7 +190,7 @@ mod gh_issues {
 
             let intersection = p2.intersection(&p1);
             _ = p1.difference(&intersection);
-            // The goal is just to get here without panic
+            // 目标只是到达这里而不出现崩溃
         }
 
         // https://github.com/georust/geo/issues/913#issuecomment-1266404475
@@ -207,7 +202,7 @@ mod gh_issues {
             let pg2 = wkt!(POLYGON((367.679 302.785,203.351 279.952,200.373 288.338,206.73187706275607 288.2205700292493,208.489 286.233,212.24 285.478,367.679 302.785)));
 
             _ = pg1.union(&pg2);
-            // The goal is just to get here without panic
+            // 目标只是到达这里而不出现崩溃
         }
 
         // https://github.com/georust/geo/issues/913#issuecomment-1268214178
@@ -217,7 +212,7 @@ mod gh_issues {
             let p2: MultiPolygon<f32> = wkt!(MULTIPOLYGON(((140.50359 62.237686,140.07256 62.337814,136.93997 63.053394,140.50359 62.237686))));
             let intersection = p1.intersection(&p2);
             _ = p1.difference(&intersection);
-            // The goal is just to get here without panic
+            // 目标只是到达这里而不出现崩溃
         }
 
         #[test]
@@ -226,7 +221,7 @@ mod gh_issues {
             let poly2: Polygon = wkt!(POLYGON((210.0 290.0,204.07584923592933 288.2701221108328,212.24082541367974 285.47846008552216,210.0 290.0)));
 
             _ = poly1.union(&poly2);
-            // The goal is just to get here without panic
+            // 目标只是到达这里而不出现崩溃
         }
     }
 
@@ -249,7 +244,7 @@ mod gh_issues {
                 // println!("{} ", i);
                 left.difference(&right);
             }
-            // The goal is just to get here without panic
+            // 目标只是到达这里而不出现崩溃
         }
     }
 
@@ -260,7 +255,7 @@ mod gh_issues {
         let b: Polygon = wkt!(POLYGON ((709800. 4600020., 809759.9999999993 4600020., 809759.9999999987 4500000., 709800.0000000003 4500000., 709800. 4590240., 709800. 4600020.)));
 
         _ = a.boolean_op(&b, OpType::Intersection);
-        // The goal is just to get here without panic
+        // 目标只是到达这里而不出现崩溃
     }
 
     // https://github.com/georust/geo/issues/1103
@@ -283,7 +278,7 @@ mod gh_issues {
         for poly in polygons {
             multi = multi.union(&MultiPolygon::new(vec![poly]));
         }
-        // The goal is just to get here without panic
+        // 目标只是到达这里而不出现崩溃
     }
 
     mod gh_issue_1174 {
@@ -292,8 +287,8 @@ mod gh_issues {
         // https://github.com/georust/geo/issues/1174
         #[test]
         fn issue_description() {
-            // TODO: CLIP implementation
-            // Also, brace yourself for annoyingly formatted test data from the GH issue
+            // TODO: CLIP 实现
+            // 同时，请准备好应对来自 GH 问题中格式极其不友好的测试数据
         }
 
         // https://github.com/georust/geo/issues/1174#issuecomment-2110782797
@@ -302,7 +297,7 @@ mod gh_issues {
             let poly1 = wkt!(POLYGON((-10339459.518507583 3672178.7824083967,-10172502.686420029 3169028.9498966974,-10002503.513328442 3498113.19617442,-10339459.518507583 3672178.7824083967)));
             let poly2 = wkt!(POLYGON((-10644125.090349106 3510000.058398463,-10010375.27222986 3502179.60931681,-10018249.493188547 3506247.294314978,-10018249.49318854 3506247.294314993,-10320063.446714956 3765929.7827082784,-10644125.090349106 3510000.058398463)));
             _ = poly2.union(&poly1);
-            // The goal is just to get here without panic
+            // 目标只是到达这里而不出现崩溃
         }
     }
 
@@ -312,7 +307,7 @@ mod gh_issues {
         let mutipolygon = wkt!(MULTIPOLYGON(((-842.8114919816321 -1593.246948876771,-250.74147790864794 -1277.405012942043,-107.7221679586994 -1437.4340368172966,548.266741952783 -851.1711267623472,1324.5108343844536 -437.08084844385627,1223.4931768687463 -247.7154757616648,1411.99111985414 -79.25324884855956,721.4329328584276 693.4350869619186,383.16901237055976 1327.5368365314368,228.479378920974 1245.0170801910524,79.25324884855956 1411.99111985414,-605.2045801730624 800.285292836034,-1784.1533139955259 171.37073609852212,-842.8114919816321 -1593.246948876771))));
         let p = wkt!(POLYGON((-842.8114919816321 -1593.246948876771,-1784.1533139955259 171.37073609852212,383.16901237055976 1327.5368365314368,1324.5108343844536 -437.08084844385627,-842.8114919816321 -1593.246948876771)));
         mutipolygon.union(&p);
-        // The goal is just to get here without panic
+        // 目标只是到达这里而不出现崩溃
     }
 
     // https://github.com/georust/geo/issues/1193
@@ -343,12 +338,11 @@ mod gh_issues {
         ));
         let c = a.difference(&b);
 
-        // Note the GH issue expected length 1, because `b` occludes the second polygon in `a`, but it's not a total occlusion - there is a tiny sliver left.
-        // I haven't investigated, but I'm going to assume this is a bug in the input data/expectations rather than the algorithm
+        // 注意 GH 问题预期长度为1，因为 `b` 遮住了 `a` 中的第二个多边形，但不是完全遮蔽 - 还留有一小段。
+        // 我还没有调查过，但我将假设这可能是输入数据/期望中的一个错误，而不是算法本身的问题
         // assert_eq!(c.0.len(), 1);
 
-        // this "expected" value and everything following is just provided to investigate that sliver.
-        // It wasn't part of the test originally provided.
+        // 这个 "expected" 值和随后的一切只是为了调查那个小段，最初测试中未提供它。
         let expected_c = wkt!(MULTIPOLYGON(
             ((
                 -22.058823 - 3.623188,
@@ -367,6 +361,6 @@ mod gh_issues {
         assert_eq!(c, expected_c);
         assert_eq!(c.0.len(), 2);
         assert!(crate::Area::unsigned_area(&c.0[1]) < 1e-5);
-        // The goal is just to get here without panic
+        // 目标只是到达这里而不出现崩溃
     }
 }

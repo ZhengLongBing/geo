@@ -2,42 +2,38 @@ use crate::algorithm::{Densify, Length, LineInterpolatePoint, LinesIter};
 use crate::geometry::{Coord, LineString, MultiLineString};
 use crate::line_measures::{Euclidean, Haversine};
 
-/// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
-/// using Euclidean distance calculations.  See `LineStringSegmentizeHaversine`
-/// if you are dealing with geographic coordinates (lat/lon).
+/// 将一个线串(LineString)分割成`segment_count`个等长的线串组成的多线串(MultiLineString)，
+/// 使用欧几里得距离计算。 如果处理地理坐标(纬度/经度)，请参见`LineStringSegmentizeHaversine`。
 ///
-/// `None` will be returned when `segment_count` is equal to 0 or when a point
-/// cannot be interpolated on a `Line` segment.
+/// 当`segment_count`等于0或无法在`Line`段上插入点时，将返回`None`。
 ///
-/// # Examples
+/// # 例子
 /// ```
 /// use geo::{LineString, MultiLineString, LineStringSegmentize};
-/// // Create a simple line string
+/// // 创建一个简单的线串
 /// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
-/// // Segment it into 6 LineStrings inside of a MultiLineString
+/// // 把它分割成6个线串，放入一个多线串中
 /// let segmentized = lns.line_segmentize(6).unwrap();
-/// // Compare the number of elements
+/// // 比较元素的数量
 /// assert_eq!(6, segmentized.0.len());
 ///```
 pub trait LineStringSegmentize {
     fn line_segmentize(&self, segment_count: usize) -> Option<MultiLineString>;
 }
 
-/// Segments a LineString into `segment_count` equal length LineStrings as a MultiLineString
-/// using Haversine distance calculations. Use this over `LineStringSegmentize`
-/// when using data from a geographic coordinate system.
+/// 将一个线串(LineString)分割成`segment_count`个等长的线串组成的多线串(MultiLineString)，
+/// 使用 Haversine 距离计算。使用于地理坐标系的数据时优先使用此方法而非`LineStringSegmentize`。
 ///
-/// `None` will be returned when `segment_count` is equal to 0 or when a point
-/// cannot be interpolated on a `Line` segment.
+/// 当`segment_count`等于0或无法在`Line`段上插入点时，将返回`None`。
 ///
-/// # Examples
+/// # 例子
 /// ```
 /// use geo::{LineString, MultiLineString, LineStringSegmentizeHaversine};
-/// // Create a simple line string
+/// // 创建一个简单的线串
 /// let lns: LineString<f64> = vec![[0.0, 0.0], [1.0, 2.0], [3.0, 6.0]].into();
-/// // Segment it into 6 LineStrings inside of a MultiLineString
+/// // 把它分割成6个线串，放入一个多线串中
 /// let segmentized = lns.line_segmentize_haversine(6).unwrap();
-/// // Compare the number of elements
+/// // 比较元素的数量
 /// assert_eq!(6, segmentized.0.len());
 ///```
 pub trait LineStringSegmentizeHaversine {
@@ -110,7 +106,9 @@ macro_rules! implement_segmentize {
     };
 }
 
+// 为平面距离(Euclidean)实现线段化(LineStringSegmentize)特性
 implement_segmentize!(LineStringSegmentize, line_segmentize, Euclidean);
+// 为大圆距离(Haversine)实现线段化(LineStringSegmentizeHaversine)特性
 implement_segmentize!(
     LineStringSegmentizeHaversine,
     line_segmentize_haversine,
@@ -119,14 +117,13 @@ implement_segmentize!(
 
 #[cfg(test)]
 mod test {
-    use approx::RelativeEq;
-
     use super::*;
     use crate::LineString;
+    use approx::RelativeEq;
 
     #[test]
     fn n_elems_bug() {
-        // Test for an edge case that seems to fail:
+        // 测试一个似乎失败的边缘案例：
         // https://github.com/georust/geo/issues/1075
         // https://github.com/JosiahParry/rsgeo/issues/28
 
@@ -228,7 +225,7 @@ mod test {
     }
 
     #[test]
-    // that 0 returns None and that usize::MAX returns None
+    // 测试 n 为 0 返回 None，usize::MAX 返回 None
     fn n_is_zero() {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
         let segments = linestring.line_segmentize(0);
@@ -247,10 +244,10 @@ mod test {
         let linestring: LineString = vec![[-1.0, 0.0], [0.5, 1.0], [1.0, 2.0]].into();
         let segments = linestring.line_segmentize(5).unwrap();
 
-        // assert that there are n linestring segments
+        // 确认有 n 个线段
         assert_eq!(segments.0.len(), 5);
 
-        // assert that the lines are equal length
+        // 确认线段是等长的
         let lens = segments
             .into_iter()
             .map(|x| x.length::<Euclidean>())
@@ -264,7 +261,7 @@ mod test {
     }
 
     #[test]
-    // test the cumulative length is the same
+    // 测试累计长度是相同的
     fn cumul_length() {
         let linestring: LineString = vec![[0.0, 0.0], [1.0, 1.0], [1.0, 2.0], [3.0, 3.0]].into();
         let segments = linestring.line_segmentize(2).unwrap();
@@ -285,8 +282,7 @@ mod test {
 
     #[test]
     fn tiny_distances() {
-        // this test is to ensure that at super small distances
-        // the number of units is still the specified one.
+        // 这个测试是为了确保在超小距离下，单位的数量仍然是指定的。
         let linestring: LineString = vec![
             [-3.19416, 55.95524],
             [-3.19352, 55.95535],
@@ -332,7 +328,7 @@ mod test {
             .map(|li| li.length::<Haversine>())
             .collect::<Vec<_>>();
 
-        let epsilon = 1e-6; // 6th decimal place which is micrometers
+        let epsilon = 1e-6; // 小数点后第6位，相当于微米
         assert!(lens.iter().all(|&x| (x - lens[0]).abs() < epsilon));
     }
 
@@ -351,7 +347,7 @@ mod test {
 
         let segments = linestring.line_segmentize_haversine(n).unwrap();
 
-        // different at 12th decimal which is a picometer
+        // 在第12位小数处不同，相当于皮米
         assert_relative_eq!(
             linestring.length::<Haversine>(),
             segments.length::<Haversine>(),

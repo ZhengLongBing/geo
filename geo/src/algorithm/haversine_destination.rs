@@ -3,21 +3,20 @@ use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Haversine::destination` method from the `Destination` trait instead"
+    note = "请使用 `Destination` 特征中的 `Haversine::destination` 方法"
 )]
-/// Returns a new Point using the distance to the existing Point and a bearing for the direction
+/// 使用到现有点的距离和方向方位角返回一个新的点。
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *注意*: 此实现假设地球平均半径为 6371.088 公里，基于[IUGG 的推荐值](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
 pub trait HaversineDestination<T: CoordFloat> {
-    /// Returns a new Point using distance to the existing Point and a bearing for the direction
+    /// 使用到现有点的距离和方向方位角返回一个新的点。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `bearing`: degrees, zero degrees is north
-    /// - `distance`: meters
+    /// - `bearing`: 角度值，以度为单位，零度为北
+    /// - `distance`: 距离值，以米为单位
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// # #[allow(deprecated)]
@@ -52,6 +51,7 @@ mod test {
 
     #[test]
     fn returns_a_new_point() {
+        // 测试返回一个新点
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         #[allow(deprecated)]
         let p_2 = p_1.haversine_destination(45., 10000.);
@@ -67,10 +67,11 @@ mod test {
 
     #[test]
     fn direct_and_indirect_destinations_are_close() {
+        // 测试直接和间接目的地接近
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         #[allow(deprecated)]
         let p_2 = p_1.haversine_destination(45., 10000.);
-        let square_edge = { pow(10000., 2) / 2f64 }.sqrt();
+        let square_edge = { pow(10000., 2) / 2f64 }.sqrt(); // 计算正方形边长的一半
         #[allow(deprecated)]
         let p_3 = p_1.haversine_destination(0., square_edge);
         #[allow(deprecated)]
@@ -80,6 +81,7 @@ mod test {
 
     #[test]
     fn bearing_zero_is_north() {
+        // 测试方位角为零时向北
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         #[allow(deprecated)]
         let p_2 = p_1.haversine_destination(0., 1000.);
@@ -89,6 +91,7 @@ mod test {
 
     #[test]
     fn should_wrap_correctly() {
+        // 测试经度绕过时处理正确
         let pt1 = Point::new(170.0, -30.0);
         let pt2 = Point::new(-170.0, -30.0);
 

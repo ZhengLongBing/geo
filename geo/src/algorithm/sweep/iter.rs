@@ -1,49 +1,47 @@
 use super::*;
 use crate::{line_intersection::line_intersection, Coord, LineIntersection};
 
-/// A segment of a input [`Cross`] type.
+/// 一个输入 [`Cross`] 类型的段。
 ///
-/// This type is used to convey the part of the input geometry that is
-/// intersecting at a given intersection. This is returned by the
-/// [`CrossingsIter::intersections`] method.
+/// 该类型用于传达在给定交点处相交的输入几何部分。
+/// 由 [`CrossingsIter::intersections`] 方法返回。
 #[derive(Debug, Clone)]
 pub(crate) struct Crossing<C: Cross> {
-    /// The input associated with this segment.
+    /// 与此段相关的输入。
     pub cross: C,
 
-    #[allow(unused)]
-    /// The geometry of this segment.
+    #[allow(unused)] // 忽略编译器对未使用字段的警告
+    /// 此段的几何。
     ///
-    /// This is a part of the input `crossable` geometry and either
-    /// starts or ends at the intersection point last yielded by
-    /// [`CrossingsIter`]. If it ends at the point (`at_left` is
-    /// `false`), then it is guaranteed to not contain any other
-    /// intersection point in its interior.
+    /// 这是输入的 `crossable` 几何的一部分，
+    /// 并且要么在上一次由 [`CrossingsIter`] 产生的交点处开始
+    /// 要么在此处结束。
+    /// 如果它在此点处结束（`at_left` 为 `false`），
+    /// 则可以保证它的内部不包含其他交点。
     pub line: LineOrPoint<C::Scalar>,
 
-    /// Whether this is the first segment of the input line.
+    /// 此段是否为输入线的第一个段。
     pub first_segment: bool,
 
-    /// Flag that is `true` if the next geom in the sequence overlaps
-    /// (i.e. intersects at more than one point) with this. Not
-    /// relevant and `false` if this is a point.
+    /// 如果序列中的下一个几何与此段重叠
+    /// （即在一个以上的点相交），则标记为 `true`。
+    /// 如果是点则不相关且为 `false`。
     ///
-    /// Note that the overlapping segments may not always
-    /// _all_ get batched together. They may be reported as
-    /// one or more set of overlapping segments in an
-    /// arbitrary order.
+    /// 请注意，重叠段可能不会总是
+    /// _全部_ 批量处理在一起。
+    /// 它们可能会以下一个或多个重叠段集合的任意顺序报告。
     pub has_overlap: bool,
 
-    /// Flag that is `true` if the `geom` starts at the intersection
-    /// point. Otherwise, it ends at the intersection point.
+    /// 如果 `geom` 在交点处开始则为 `true`，
+    /// 否则在交点处结束。
     pub at_left: bool,
 
-    #[allow(unused)]
+    #[allow(unused)] // 忽略编译器对未使用字段的警告
     pub(super) segment: IMSegment<C>,
 }
 
 impl<C: Cross + Clone> Crossing<C> {
-    /// Convert `self` into a `Crossing` to return to user.
+    /// 将 `self` 转换为用于用户返回的 `Crossing`。
     pub(super) fn from_segment(segment: &IMSegment<C>, event_ty: EventType) -> Crossing<C> {
         Crossing {
             cross: segment.cross_cloned(),
@@ -56,39 +54,12 @@ impl<C: Cross + Clone> Crossing<C> {
     }
 }
 
-/// Iterator that yields all crossings.
+/// 迭代器，用于产生所有交汇点。
 ///
-/// Yields all end points, intersections and overlaps of a set of
-/// line-segments and points. Construct it by `collect`-ing an
-/// iterator of [`Cross`]. The implementation uses the
-/// [Bentley-Ottman] algorithm and runs in time O((n + k) log n) time;
-/// this is faster than a brute-force search for intersections across
-/// all pairs of input segments if k --- the number of intersections
-/// --- is small compared to n^2.
-///
-/// ## Usage
-///
-/// Construct from an iterator of any type implementing the
-/// [`Cross`] trait. Use the [`CrossingsIter::intersections`]
-/// method to access all segments that start or end at the last
-/// yielded point.
-///
-/// ```rust,ignore
-/// use geo::Line;
-/// use geo::sweep::CrossingsIter;
-/// use std::iter::FromIterator;
-/// let input = vec![
-///     Line::from([(1., 0.), (0., 1.)]),
-///     Line::from([(0., 0.75), (1., 0.25)]),
-///     Line::from([(0., 0.25), (1., 0.75)]),
-///     Line::from([(0., 0.), (1., 1.)]),
-/// ];
-/// let iter = CrossingsIter::<_>::from_iter(input);
-/// // 1 intersection point, and 8 end points
-/// assert_eq!(iter.count(), 9);
-/// ```
-///
-/// [Bentley-Ottman]: //en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
+/// 产生一组线段和点的所有端点、交点和重叠。
+/// 通过对 [`Cross`] 的迭代器执行 `collect` 构建。
+/// 实现使用 [Bentley-Ottman] 算法，
+/// 并在时间 O((n + k) log n) 下运行；
 pub(crate) struct CrossingsIter<C>
 where
     C: Cross + Clone,
@@ -101,8 +72,7 @@ impl<C> CrossingsIter<C>
 where
     C: Cross + Clone,
 {
-    /// Returns the segments that intersect the last point yielded by
-    /// the iterator.
+    /// 返回与迭代器上次产生的点相交的段。
     pub fn intersections_mut(&mut self) -> &mut [Crossing<C>] {
         &mut self.segments
     }
@@ -162,40 +132,12 @@ where
     }
 }
 
-/// Iterator over all intersections of a collection of lines.
+/// 迭代一个线集合的所有交点。
 ///
-/// Yields tuples `(C, C, LineIntersection)` for each pair of input
-/// crossables that intersect or overlap. This is a drop-in
-/// replacement for computing [`LineIntersection`] over all pairs of
-/// the collection, but is typically more efficient. The
-/// implementation uses the [Bentley-Ottman] algorithm and runs in
-/// time O((n + k) log n) time; this is faster than a brute-force
-/// search for intersections across all pairs of input segments if k,
-/// the number of intersections is small compared to n^2.
-///
-/// ## Usage
-///
-/// Construct from an iterator of any type implementing the
-/// [`Cross`] trait. The geo-type [`Line`](crate::Line) implements this trait.
-/// See the trait documentation for more information on usage with
-/// custom types.
-///
-/// ```rust
-/// use geo::Line;
-/// use geo::sweep::Intersections;
-/// use std::iter::FromIterator;
-/// let input = vec![
-///     Line::from([(1., 0.), (0., 1.)]),
-///     Line::from([(0., 0.75), (1., 0.25)]),
-///     Line::from([(0., 0.25), (1., 0.75)]),
-///     Line::from([(0., 0.), (1., 1.)]),
-/// ];
-/// let iter = Intersections::<_>::from_iter(input);
-/// // All pairs intersect
-/// assert_eq!(iter.count(), 6);
-/// ```
-///
-/// [Bentley-Ottman]: //en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
+/// 为每一对相交或重叠的输入跨越对象产生元组 `(C, C, LineIntersection)`。
+/// 这是对集合中所有对计算 [`LineIntersection`] 的直接替代，但通常更有效。
+/// 实现使用 [Bentley-Ottman] 算法，
+/// 并在时间 O((n + k) log n) 下运行；
 pub struct Intersections<C: Cross + Clone> {
     inner: CrossingsIter<C>,
     idx: usize,
@@ -241,10 +183,9 @@ where
                 ovl = if i.has_overlap { "OVL" } else { "" },
             );
         }
-        // Ignore intersections that have already been processed
+        // 忽略已处理的交点
         let should_compute = if self.is_overlap {
-            // For overlap, we only return intersection if both segments are the
-            // first, and both are at left.
+            // 对于重叠，我们只在两个段都是第一个段，并且都是左侧时才返回交点。
             debug_assert_eq!(si.at_left, sj.at_left);
             si.at_left && (si.first_segment && sj.first_segment)
         } else {
@@ -256,7 +197,7 @@ where
             let sj = sj.cross.clone();
 
             let int = line_intersection(si.line().line(), sj.line().line())
-                .expect("line_intersection returned `None` disagreeing with `CrossingsIter`");
+                .expect("line_intersection 返回 `None`，与 `CrossingsIter` 不一致");
 
             Some((si, sj, int))
         } else {
@@ -348,7 +289,7 @@ pub(super) mod tests {
             [(0.5, 0.5), (0.5, 0.5)].into(),
             [(0., 0.), (0., 0.)].into(),
         ];
-        // Intersections (by_idx):
+        // 交点（按索引）：
         // (0, 1), (0, 2), (0, 3), (0, 4), (0, 5),
         // (1, 2), (1, 3), (1, 4),
         // (2, 3)

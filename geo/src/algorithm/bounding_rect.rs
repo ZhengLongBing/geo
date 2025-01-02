@@ -2,13 +2,13 @@ use crate::utils::{partial_max, partial_min};
 use crate::{coord, geometry::*, CoordNum, GeometryCow};
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
-/// Calculation of the bounding rectangle of a geometry.
+/// 计算几何图形的边界矩形。
 pub trait BoundingRect<T: CoordNum> {
     type Output: Into<Option<Rect<T>>>;
 
-    /// Return the bounding rectangle of a geometry
+    /// 返回几何图形的边界矩形
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::BoundingRect;
@@ -36,8 +36,7 @@ where
 {
     type Output = Rect<T>;
 
-    /// Return the bounding rectangle for a `Coord`. It will have zero width
-    /// and zero height.
+    /// 返回 `Coord` 的边界矩形。其宽度和高度为零。
     fn bounding_rect(&self) -> Self::Output {
         Rect::new(*self, *self)
     }
@@ -49,8 +48,7 @@ where
 {
     type Output = Rect<T>;
 
-    /// Return the bounding rectangle for a `Point`. It will have zero width
-    /// and zero height.
+    /// 返回 `Point` 的边界矩形。其宽度和高度为零。
     fn bounding_rect(&self) -> Self::Output {
         Rect::new(self.0, self.0)
     }
@@ -63,7 +61,7 @@ where
     type Output = Option<Rect<T>>;
 
     ///
-    /// Return the BoundingRect for a MultiPoint
+    /// 返回 `MultiPoint` 的边界矩形。
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(self.0.iter().map(|p| p.0))
     }
@@ -87,7 +85,7 @@ where
     type Output = Option<Rect<T>>;
 
     ///
-    /// Return the BoundingRect for a LineString
+    /// 返回 `LineString` 的边界矩形。
     fn bounding_rect(&self) -> Self::Output {
         line_string_bounding_rect(self)
     }
@@ -100,7 +98,7 @@ where
     type Output = Option<Rect<T>>;
 
     ///
-    /// Return the BoundingRect for a MultiLineString
+    /// 返回 `MultiLineString` 的边界矩形。
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(self.iter().flat_map(|line| line.0.iter().cloned()))
     }
@@ -113,7 +111,7 @@ where
     type Output = Option<Rect<T>>;
 
     ///
-    /// Return the BoundingRect for a Polygon
+    /// 返回 `Polygon` 的边界矩形。
     fn bounding_rect(&self) -> Self::Output {
         let line = self.exterior();
         get_bounding_rect(line.0.iter().cloned())
@@ -127,7 +125,7 @@ where
     type Output = Option<Rect<T>>;
 
     ///
-    /// Return the BoundingRect for a MultiPolygon
+    /// 返回 `MultiPolygon` 的边界矩形。
     fn bounding_rect(&self) -> Self::Output {
         get_bounding_rect(
             self.iter()
@@ -199,7 +197,7 @@ where
     }
 }
 
-// Return a new rectangle that encompasses the provided rectangles
+// 返回一个新的矩形，该矩形包含提供的矩形。
 fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
     Rect::new(
         coord! {

@@ -1,15 +1,15 @@
 use crate::CoordsIter;
 use crate::{Coord, CoordNum};
 
-/// Find the extreme coordinates and indices of a geometry.
+/// 找到几何体的极端坐标和索引。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::extremes::Extremes;
 /// use geo::polygon;
 ///
-/// // a diamond shape
+/// // 一个菱形形状
 /// let polygon = polygon![
 ///     (x: 1.0, y: 0.0),
 ///     (x: 2.0, y: 1.0),
@@ -25,21 +25,24 @@ use crate::{Coord, CoordNum};
 /// assert_eq!(extremes.y_max.coord.y, 2.);
 /// ```
 pub trait Extremes<'a, T: CoordNum> {
+    /// 计算几何体的极值坐标。
     fn extremes(&'a self) -> Option<Outcome<T>>;
 }
 
+/// 表示一个极值坐标的结构体
 #[derive(Debug, PartialEq, Eq)]
 pub struct Extreme<T: CoordNum> {
-    pub index: usize,
-    pub coord: Coord<T>,
+    pub index: usize,    // 坐标的索引
+    pub coord: Coord<T>, // 坐标值
 }
 
+/// 包含四个极值的结构体
 #[derive(Debug, PartialEq, Eq)]
 pub struct Outcome<T: CoordNum> {
-    pub x_min: Extreme<T>,
-    pub y_min: Extreme<T>,
-    pub x_max: Extreme<T>,
-    pub y_max: Extreme<T>,
+    pub x_min: Extreme<T>, // x轴最小值
+    pub y_min: Extreme<T>, // y轴最小值
+    pub x_max: Extreme<T>, // x轴最大值
+    pub y_max: Extreme<T>, // y轴最大值
 }
 
 impl<'a, T, G> Extremes<'a, T> for G
@@ -86,7 +89,7 @@ mod test {
 
     #[test]
     fn polygon() {
-        // a diamond shape
+        // 一个菱形形状
         let polygon = polygon![
             (x: 1.0, y: 0.0),
             (x: 2.0, y: 1.0),
@@ -122,6 +125,7 @@ mod test {
 
     #[test]
     fn empty() {
+        // 测试空几何
         let multi_point: MultiPoint<f32> = MultiPoint::new(vec![]);
 
         let actual = multi_point.extremes();

@@ -3,23 +3,20 @@ use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Rhumb::destination` method from the `Destination` trait instead"
+    note = "请使用 `Destination` 特征中的 `Rhumb::destination` 方法代替"
 )]
-/// Returns the destination Point having travelled the given distance along a [rhumb line]
-/// from the origin geometry with the given bearing
+/// 返回目标点，该点是沿着给定航向的[rhumb line]从起始几何体旅行给定距离到达的点。
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *注意*：此实现使用基于[IUGG的建议](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)的6371.088 km的平均地球半径。
 pub trait RhumbDestination<T: CoordFloat> {
-    /// Returns the destination Point having travelled the given distance along a [rhumb line]
-    /// from the origin Point with the given bearing
+    /// 返回目标点，该点是沿着[rhumb line]从起始点旅行给定距离和航向到达的点。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `bearing`: degrees, zero degrees is north
-    /// - `distance`: meters
+    /// - `bearing`: 度数，0 度是正北
+    /// - `distance`: 米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # #[allow(deprecated)]
@@ -54,6 +51,7 @@ mod test {
 
     #[test]
     fn returns_a_new_point() {
+        // 测试返回一个新的点
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         #[allow(deprecated)]
         let p_2 = p_1.rhumb_destination(45., 10000.);
@@ -65,6 +63,7 @@ mod test {
 
     #[test]
     fn direct_and_indirect_destinations_are_close() {
+        // 测试直接和间接目的地相近
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         #[allow(deprecated)]
         let p_2 = p_1.rhumb_destination(45., 10000.);
@@ -78,6 +77,7 @@ mod test {
 
     #[test]
     fn bearing_zero_is_north() {
+        // 测试方位角为零时为正北
         let p_1 = Point::new(9.177789688110352, 48.776781529534965);
         #[allow(deprecated)]
         let p_2 = p_1.rhumb_destination(0., 1000.);

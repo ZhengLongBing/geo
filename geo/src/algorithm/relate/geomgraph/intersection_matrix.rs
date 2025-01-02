@@ -4,36 +4,31 @@ use crate::geometry_cow::GeometryCow::Point;
 use crate::relate::geomgraph::intersection_matrix::dimension_matcher::DimensionMatcher;
 use std::str::FromStr;
 
-/// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
+/// 模型化一个*维度扩展的九交模型(DE-9IM)*矩阵。
 ///
-/// DE-9IM matrix values (such as "212FF1FF2") specify the topological relationship between
-/// two [Geometries](struct.Geometry.html).
+/// DE-9IM 矩阵值（例如“212FF1FF2”）指定两个[几何体](struct.Geometry.html)之间的拓扑关系。
 ///
-/// DE-9IM matrices are 3x3 matrices that represent the topological locations
-/// that occur in a geometry (Interior, Boundary, Exterior).
+/// DE-9IM矩阵是表示几何体中发生的拓扑位置（内部、边界、外部）的3x3矩阵。
 ///
-/// The indices are provided by the enum cases
-/// [CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside](CoordPos).
+/// 索引用枚举[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside](CoordPos)提供。
 ///
-/// The matrix entries represent the [Dimensions](enum.Dimension.html) of each intersection.
+/// 矩阵条目代表每个交点的[Dimensions](enum.Dimension.html)。
 ///
-/// For a description of the DE-9IM and the spatial predicates derived from it,
-/// see the following references:
-/// - [OGC 99-049 OpenGIS Simple Features Specification for SQL](http://portal.opengeospatial.org/files/?artifact_id=829), Section 2.1.13
-/// - [OGC 06-103r4 OpenGIS Implementation Standard for Geographic information - Simple feature access - Part 1: Common architecture](http://portal.opengeospatial.org/files/?artifact_id=25355), Section 6.1.15 (which provides some further details on certain predicate specifications).
-/// - Wikipedia article on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM)
+/// 有关 DE-9IM 及其派生的空间谓词的描述，请参阅以下参考文献：
+/// - [OGC 99-049 OpenGIS SQL 简单特性规范](http://portal.opengeospatial.org/files/?artifact_id=829)，第 2.1.13 节
+/// - [OGC 06-103r4 地理信息 - 简单特性访问 - 第 1 部分：通用架构的 OpenGIS 实现标准](http://portal.opengeospatial.org/files/?artifact_id=25355)，第 6.1.15 节（其中提供了有关某些谓词规范的更多详细信息）。
+/// - 关于[DE-9IM](https://en.wikipedia.org/wiki/DE-9IM)的维基百科文章
 ///
-/// This implementation is heavily based on that from the [JTS project](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/geom/IntersectionMatrix.java).
+/// 此实现很大程度上基于[JTS项目](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/geom/IntersectionMatrix.java)。
 #[derive(PartialEq, Eq, Clone)]
 pub struct IntersectionMatrix(LocationArray<LocationArray<Dimensions>>);
 
-/// Helper struct so we can index IntersectionMatrix by CoordPos
+/// 辅助结构以便我们可以通过 CoordPos 索引 IntersectionMatrix
 ///
-/// CoordPos enum members are ordered: OnBoundary, Inside, Outside
-/// DE-9IM matrices are ordered: Inside, Boundary, Exterior
+/// CoordPos 枚举成员的顺序为：OnBoundary, Inside, Outside
+/// DE-9IM 矩阵的顺序为：Inside, Boundary, Exterior
 ///
-/// So we can't simply `CoordPos as usize` without losing the conventional ordering
-/// of elements, which is useful for debug / interop.
+/// 因此，我们不能简单地使用 `CoordPos as usize`，否则会丢失元素的传统顺序，这对于调试/互操作很有用。
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct LocationArray<T>([T; 3]);
 
@@ -79,7 +74,7 @@ impl InvalidInputError {
 impl std::error::Error for InvalidInputError {}
 impl std::fmt::Display for InvalidInputError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "invalid input:  {}", self.message)
+        write!(f, "输入无效:  {}", self.message)
     }
 }
 
@@ -113,8 +108,8 @@ impl IntersectionMatrix {
         IntersectionMatrix(LocationArray([
             LocationArray([Dimensions::Empty, Dimensions::Empty, Dimensions::Empty]),
             LocationArray([Dimensions::Empty, Dimensions::Empty, Dimensions::Empty]),
-            // since Geometries are finite and embedded in a 2-D space,
-            // the `(Outside, Outside)` element must always be 2-D
+            // 因为几何体是有限的并且嵌入在二维空间中，
+            // 所以 `(Outside, Outside)` 元素必须始终是二维的
             LocationArray([
                 Dimensions::Empty,
                 Dimensions::Empty,
@@ -123,8 +118,7 @@ impl IntersectionMatrix {
         ]))
     }
 
-    /// If the Geometries are disjoint, we need to enter their dimension and boundary dimension in
-    /// the `Outside` rows in the IM
+    /// 如果几何体是不相交的，我们需要在IM的`Outside`行中输入它们的维度和边界维度
     pub(crate) fn compute_disjoint<F: GeoNum>(
         &mut self,
         geometry_a: &GeometryCow<F>,
@@ -156,11 +150,11 @@ impl IntersectionMatrix {
         }
     }
 
-    /// Set `dimensions` of the cell specified by the positions.
+    /// 设置由位置指定的格子的`dimensions`。
     ///
-    /// `position_a`: which position `dimensions` applies to within the first geometry
-    /// `position_b`: which position `dimensions` applies to within the second geometry
-    /// `dimensions`: the dimension of the incident
+    /// `position_a`：第一个几何体中应用`dimensions`的位置
+    /// `position_b`：第二个几何体中应用`dimensions`的位置
+    /// `dimensions`：事件的维度
     pub(crate) fn set(
         &mut self,
         position_a: CoordPos,
@@ -170,12 +164,11 @@ impl IntersectionMatrix {
         self.0[position_a][position_b] = dimensions;
     }
 
-    /// Reports an incident of `dimensions`, which updates the IntersectionMatrix if it's greater
-    /// than what has been reported so far.
+    /// 报告一个`dimensions`事件，如果它大于到目前为止报道的，则更新IntersectionMatrix。
     ///
-    /// `position_a`: which position `minimum_dimensions` applies to within the first geometry
-    /// `position_b`: which position `minimum_dimensions` applies to within the second geometry
-    /// `minimum_dimensions`: the dimension of the incident
+    /// `position_a`：第一个几何体中应用`minimum_dimensions`的位置
+    /// `position_b`：第二个几何体中应用`minimum_dimensions`的位置
+    /// `minimum_dimensions`：事件的维度
     pub(crate) fn set_at_least(
         &mut self,
         position_a: CoordPos,
@@ -187,16 +180,13 @@ impl IntersectionMatrix {
         }
     }
 
-    /// If both geometries have `Some` position, then changes the specified element to at
-    /// least `minimum_dimensions`.
+    /// 如果两个几何体都具有某个位置，则将指定元素更改为至少`minimum_dimensions`。
     ///
-    /// Else, if either is none, do nothing.
+    /// 否则，如果任意一个为无，则不做任何操作。
     ///
-    /// `position_a`: which position `minimum_dimensions` applies to within the first geometry, or
-    ///               `None` if the dimension was not incident with the first geometry.
-    /// `position_b`: which position `minimum_dimensions` applies to within the second geometry, or
-    ///               `None` if the dimension was not incident with the second geometry.
-    /// `minimum_dimensions`: the dimension of the incident
+    /// `position_a`：第一个几何体中应用`minimum_dimensions`的位置，或者如果维度未与第一个几何体发生关系，则为`None`。
+    /// `position_b`：第二个几何体中应用`minimum_dimensions`的位置，或者如果维度未与第二个几何体发生关系，则为`None`。
+    /// `minimum_dimensions`：事件的维度
     pub(crate) fn set_at_least_if_in_both(
         &mut self,
         position_a: Option<CoordPos>,
@@ -213,20 +203,20 @@ impl IntersectionMatrix {
         dimensions: &str,
     ) -> Result<(), InvalidInputError> {
         if dimensions.len() != 9 {
-            let message = format!("Expected dimensions length 9, found: {}", dimensions.len());
+            let message = format!("期望的维度长度为9，发现: {}", dimensions.len());
             return Err(InvalidInputError::new(message));
         }
 
         let mut chars = dimensions.chars();
         for a in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
             for b in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
-                match chars.next().expect("already validated length is 9") {
+                match chars.next().expect("长度已经验证为9") {
                     '0' => self.0[*a][*b] = self.0[*a][*b].max(Dimensions::ZeroDimensional),
                     '1' => self.0[*a][*b] = self.0[*a][*b].max(Dimensions::OneDimensional),
                     '2' => self.0[*a][*b] = self.0[*a][*b].max(Dimensions::TwoDimensional),
                     'F' => {}
                     other => {
-                        let message = format!("expected '0', '1', '2', or 'F'. Found: {other}");
+                        let message = format!("预期为'0', '1', '2', 或 'F'。发现: {other}");
                         return Err(InvalidInputError::new(message));
                     }
                 }
@@ -236,11 +226,11 @@ impl IntersectionMatrix {
         Ok(())
     }
 
-    // NOTE for implementers
-    // See https://en.wikipedia.org/wiki/DE-9IM#Spatial_predicates for a mapping between predicates and matrices
-    // The number of constraints in your relation function MUST match the number of NON-MASK (T or F) matrix entries
+    // 实现者注意
+    // 请参阅 https://en.wikipedia.org/wiki/DE-9IM#Spatial_predicates 以了解谓词与矩阵之间的映射
+    // 您的关系列函数中的约束数量必须与非掩码（T 或 F）矩阵条目数匹配
 
-    // Indexes of the IntersectionMatrix map to indexes of a DE-9IM specification string as follows:
+    // IntersectionMatrix的索引映射到DE-9IM规范字符串的索引如下：
     // ==================================================================
     // self.0[CoordPos::Inside][CoordPos::Inside]: 0
     // self.0[CoordPos::Inside][CoordPos::OnBoundary]: 1
@@ -255,14 +245,14 @@ impl IntersectionMatrix {
     // self.0[CoordPos::Outside][CoordPos::Outside]: 8
     // ==================================================================
 
-    // Relationship between matrix entry and Dimensions
+    // 矩阵条目与Dimensions之间的关系
     // ==================================================================
-    // A `T` entry translates to `!= Dimensions::Empty`
-    // An `F` entry translates to `== Dimensions::Empty`
-    // A `*` (mask) entry is OMITTED
+    // 一个 `T` 条目转换为 `!= Dimensions::Empty`
+    // 一个 `F` 条目转换为 `== Dimensions::Empty`
+    // 一个 `*`（掩码）条目被省略
     // ==================================================================
 
-    // Examples
+    // 示例
     // ==================================================================
     // `[T********]` -> `self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty`
     // `[********F]` -> `self.0[CoordPos::Outside][CoordPos::Outside] == Dimensions::Empty`
@@ -270,12 +260,12 @@ impl IntersectionMatrix {
     //     && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty`
     // ==================================================================
 
-    /// Returns `true` if geometries `a` and `b` are disjoint: they have no point in common,
-    /// forming a set of disconnected geometries.
+    /// 如果几何体 `a` 和 `b` 是分开的，返回 `true`：它们没有共同点，
+    /// 形成一组不连接的几何体。
     ///
-    /// # Notes
-    /// - Matches `[FF*FF****]`
-    /// - This predicate is **anti-reflexive**
+    /// # 注意
+    /// - 匹配 `[FF*FF****]`
+    /// - 这个谓词是 **反自反** 的
     pub fn is_disjoint(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Inside][CoordPos::OnBoundary] == Dimensions::Empty
@@ -283,49 +273,49 @@ impl IntersectionMatrix {
             && self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
-    /// Tests if [`IntersectionMatrix::is_disjoint`] returns `false`.
+    /// 测试 [`IntersectionMatrix::is_disjoint`] 是否返回 `false`。
     ///
-    /// Returns `true` if the two geometries related by this matrix intersect: they have at least one point in common.
+    /// 如果这个矩阵关系的两个几何体相交，返回 `true`：它们至少有一个共同点。
     ///
-    /// # Notes
-    /// - Matches any of `[T********], [*T*******], [***T*****], [****T****]`
-    /// - This predicate is **reflexive and symmetric**
+    /// # 注意
+    /// - 匹配任何 `[T********], [*T*******], [***T*****], [****T****]`
+    /// - 这个谓词是**自反和对称**的
     pub fn is_intersects(&self) -> bool {
         !self.is_disjoint()
     }
 
-    /// Returns `true` if the first geometry is within the second: `a` lies in the interior of `b`.
+    /// 如果第一个几何体在第二个几何体内，返回 `true`：`a` 位于 `b` 的内部。
     ///
     ///
-    /// # Notes
-    /// - Also known as **inside**
-    /// - The mask `[T*F**F***`] occurs in the definition of both [`IntersectionMatrix::is_within`] and [`IntersectionMatrix::is_coveredby`]; For **most** situations, [`IntersectionMatrix::is_coveredby`] should be used in preference to [`IntersectionMatrix::is_within`]
-    /// - This predicate is **reflexive and transitive**
+    /// # 注意
+    /// - 也称为 **inside**
+    /// - 掩码 `[T*F**F***`] 出现在 [`IntersectionMatrix::is_within`] 和 [`IntersectionMatrix::is_coveredby`] 的定义中；对于**大多数**情况，应该优先使用 [`IntersectionMatrix::is_coveredby`] 而不是 [`IntersectionMatrix::is_within`]
+    /// - 这个谓词是 **自反和传递** 的
     pub fn is_within(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Inside][CoordPos::Outside] == Dimensions::Empty
             && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
     }
 
-    /// Returns `true` if geometry `a` contains geometry `b`.
+    /// 如果几何体 `a` 包含几何体 `b`，返回 `true`。
     ///
-    /// # Notes
-    /// - Matches `[T*****FF*]`
-    /// - This predicate is **reflexive and transitive**
+    /// # 注意
+    /// - 匹配 `[T*****FF*]`
+    /// - 这个谓词是 **自反和传递** 的
     pub fn is_contains(&self) -> bool {
         self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
             && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
-    /// Returns `true` if the first geometry is *topologically* equal to the second.
+    /// 如果第一个几何体与第二个几何体 *拓扑等价*，返回 `true`。
     ///
-    /// # Notes
-    /// - Matches `[T*F**FFF*]`
-    /// - This predicate is **reflexive, symmetric, and transitive**
+    /// # 注意
+    /// - 匹配 `[T*F**FFF*]`
+    /// - 这个谓词是**自反、对称和传递**的
     pub fn is_equal_topo(&self) -> bool {
         if self == &Self::empty_disjoint() {
-            // Any two empty geometries are topologically equal
+            // 任何两个空几何体在拓扑上是相等的
             return true;
         }
 
@@ -336,14 +326,14 @@ impl IntersectionMatrix {
             && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
     }
 
-    /// Returns true if every point in Geometry `a` lies inside (i.e. intersects the interior or boundary of) Geometry `b`.
+    /// 如果几何体 `a` 中的每个点都在几何体 `b` 内部(即与`b`的内部或边界相交)，返回 true。
     ///
-    /// Equivalently, tests that no point of `a` lies outside (in the exterior of) `b`:
-    /// - `a` is covered by `b` (extends [`IntersectionMatrix::is_within`]): geometry `a` lies in `b`. OR
-    /// - At least **one** point of `a` lies in `b`, and **no** point of `a` lies in the **exterior** of `b` OR
-    /// - **Every** point of `a` is a point of (the **interior** or **boundary** of) `b`
+    /// 等效地，测试 `a` 的任何点都不在 `b` 的外部(即在 `b` 的外部):
+    /// - `a` 被 `b` 覆盖(扩展[`IntersectionMatrix::is_within`])：几何体`a`位于`b`内部或者
+    /// - `a` 的至少**一个**点位于 `b`，并且 `a` 的**没有**点位于 `b` 的**外部**，或者
+    /// - `a` 的**每个**点都是( `b` 的**内部**或**边界**的)一点
     ///
-    /// returns `true` if the first geometry is covered by the second.
+    /// 返回 true 如果第一个几何体被第二个几何体覆盖。
     ///
     /// ```
     /// use geo_types::{Polygon, polygon};
@@ -366,9 +356,9 @@ impl IntersectionMatrix {
     /// assert_eq!(intersection.is_coveredby(), true);
     /// ```
     ///
-    /// # Notes
-    /// - Matches any of `[T*F**F***], [*TF**F***], [**FT*F***], [**F*TF***]`
-    /// - This predicate is **reflexive and transitive**
+    /// # 注意
+    /// - 匹配任何 `[T*F**F***], [*TF**F***], [**FT*F***], [**F*TF***]`
+    /// - 这个谓词是 **自反和传递** 的
     #[allow(clippy::nonminimal_bool)]
     pub fn is_coveredby(&self) -> bool {
         // [T*F**F***]
@@ -389,15 +379,15 @@ impl IntersectionMatrix {
             && self.0[CoordPos::OnBoundary][CoordPos::Outside] == Dimensions::Empty
     }
 
-    /// Returns `true` if every point in Geometry `b` lies inside
-    /// (i.e. intersects the interior or boundary of) Geometry `a`. Equivalently,
-    /// tests that no point of `b` lies outside (in the exterior of) `a`.
+    /// 如果几何体 `b` 中的每个点都在几何体 `a` 内部
+    /// (即与`a`的内部或边界相交)。等效地，
+    /// 测试 `b` 的任何点都不在 `a` 的外部。
     ///
-    /// # Notes
-    /// - Unlike [`IntersectionMatrix::is_contains`], it does **not** distinguish between points in the boundary and in the interior of geometries
-    /// - For **most** situations, [`IntersectionMatrix::is_covers`] should be used in preference to [`IntersectionMatrix::is_contains`]
-    /// - Matches any of `[T*****FF*], [*T****FF*], [***T**FF*], [****T*FF*]`
-    /// - This predicate is **reflexive and transitive**
+    /// # 注意
+    /// - 与 [`IntersectionMatrix::is_contains`] 不同，它**不**区分几何体中边界点和内部点
+    /// - 对于**大多数**情况，应该优先使用 [`IntersectionMatrix::is_covers`] 而不是 [`IntersectionMatrix::is_contains`]
+    /// - 匹配任何 `[T*****FF*], [*T****FF*], [***T**FF*], [****T*FF*]`
+    /// - 这个谓词是 **自反和传递** 的
     #[allow(clippy::nonminimal_bool)]
     pub fn is_covers(&self) -> bool {
         // [T*****FF*]
@@ -418,12 +408,11 @@ impl IntersectionMatrix {
         && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
-    /// Returns `true` if `a` touches `b`: they have at least one point in common, but their
-    /// interiors do not intersect.
+    /// 如果 `a` 接触 `b`，返回 `true`：它们至少有一个共同点，但它们的内部不相交。
     ///
-    /// # Notes
-    /// - Matches any of `[FT*******], [F**T*****], [F***T****]`
-    /// - This predicate is **symmetric**
+    /// # 注意
+    /// - 匹配任何 `[FT*******], [F**T*****], [F***T****]`
+    /// - 这个谓词是 **对称的**
     #[allow(clippy::nonminimal_bool)]
     pub fn is_touches(&self) -> bool {
         // [FT*******]
@@ -437,8 +426,8 @@ impl IntersectionMatrix {
         && self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] != Dimensions::Empty
     }
 
-    /// Compares two geometry objects and returns `true` if their intersection "spatially crosses";
-    /// that is, the geometries have some, but not all interior points in common
+    /// 比较两个几何对象并返回`true`如果它们的交点“空间上交叉”；
+    /// 也就是说，几何体有一些，但不是所有的内部点是共同的。
     ///
     /// ```
     /// use geo_types::{LineString, line_string, polygon};
@@ -456,13 +445,13 @@ impl IntersectionMatrix {
     /// assert_eq!(intersection.is_crosses(), true);
     /// ```
     ///
-    /// # Notes
-    /// - If any of the following do not hold, the function will return `false`:
-    ///     - The intersection of the interiors of the geometries must be non-empty
-    ///     - The intersection must have dimension less than the maximum dimension of the two input geometries (two polygons cannot cross)
-    ///     - The intersection of the two geometries must not equal either geometry (two points cannot cross)
-    /// - Matches one of `[T*T******] (a < b)`, `[T*****T**] (a > b)`, `[0********] (dimensions == 1)`
-    /// - This predicate is **symmetric and irreflexive**
+    /// # 注意
+    /// - 如果以下任何条件不成立，则函数将返回 false:
+    ///     - 几何体的内部交点必须为非空
+    ///     - 交点的维度必须小于两个输入几何体的最大维度（两个多边形不能交叉）
+    ///     - 两个几何体的交点不能与任一几何体相等（两点不能交叉）
+    /// - 匹配一个 `[T*T******] (a < b)`, `[T*****T**] (a > b)`, `[0********] (dimensions == 1)`
+    /// - 这个谓词是 **对称和非自反的**
     pub fn is_crosses(&self) -> bool {
         let dims_a = self.0[CoordPos::Inside][CoordPos::Inside]
             .max(self.0[CoordPos::Inside][CoordPos::OnBoundary])
@@ -496,9 +485,7 @@ impl IntersectionMatrix {
         }
     }
 
-    /// Returns `true` if geometry `a` and `b` "spatially overlap". Two geometries overlap if they have the
-    /// same dimension, their interiors intersect in that dimension, and each has at least one point
-    /// inside the other (or equivalently, neither one covers the other)
+    /// 如果几何体 `a` 和 `b` "空间重叠"，返回 `true`。如果两个几何体具有相同的维度，它们的内部在该维度上相交，并且每个几何体至少有一个点在另一个几何体之内（或者等效地，两个几何体没有覆盖对方）
     ///
     /// ```
     /// use geo_types::{Polygon, polygon};
@@ -521,12 +508,12 @@ impl IntersectionMatrix {
     /// assert_eq!(intersection.is_overlaps(), true);
     /// ```
     ///
-    /// # Notes
-    /// - Matches one of `[1*T***T**] (dimensions == 1)`, `[T*T***T**] (dimensions == 0 OR 2)`
-    /// - This predicate is **symmetric**
+    /// # 注意
+    /// - 匹配一个 `[1*T***T**] (dimensions == 1)`, `[T*T***T**] (dimensions == 0 OR 2)`
+    /// - 这个谓词是 **对称的**
     #[allow(clippy::nonminimal_bool)]
     pub fn is_overlaps(&self) -> bool {
-        // dimensions must be non-empty, equal, and line / line is a special case
+        // dimensions 必须为非空，相等，并且线/线是一个特殊情况
         let dims_a = self.0[CoordPos::Inside][CoordPos::Inside]
             .max(self.0[CoordPos::Inside][CoordPos::OnBoundary])
             .max(self.0[CoordPos::Inside][CoordPos::Outside]);
@@ -535,13 +522,13 @@ impl IntersectionMatrix {
             .max(self.0[CoordPos::OnBoundary][CoordPos::Inside])
             .max(self.0[CoordPos::Outside][CoordPos::Inside]);
         match (dims_a, dims_b) {
-            // line / line: [1*T***T**]
+            // 线/线: [1*T***T**]
             (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
                 self.0[CoordPos::Inside][CoordPos::Inside] == Dimensions::OneDimensional
                     && self.0[CoordPos::Inside][CoordPos::Outside] != Dimensions::Empty
                     && self.0[CoordPos::Outside][CoordPos::Inside] != Dimensions::Empty
             }
-            // point / point or polygon / polygon: [T*T***T**]
+            // 点/点 或 多边形/多边形: [T*T***T**]
             (Dimensions::ZeroDimensional, Dimensions::ZeroDimensional)
             | (Dimensions::TwoDimensional, Dimensions::TwoDimensional) => {
                 self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
@@ -552,7 +539,7 @@ impl IntersectionMatrix {
         }
     }
 
-    /// Directly accesses this matrix
+    /// 直接访问这个矩阵
     ///
     /// ```
     /// use geo_types::{LineString, Rect, line_string};
@@ -563,65 +550,64 @@ impl IntersectionMatrix {
     ///
     /// let intersection = line_string.relate(&rect);
     ///
-    /// // The intersection of the two interiors is empty, because no part of the string is inside the rect
+    /// // 两个内部的交点是空的，因为字符串的任何部分都不在矩形内
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::Inside), Dimensions::Empty);
     ///
-    /// // The intersection of the line string's interior with the rect's boundary is one-dimensional, because part of the first line overlaps one of the rect's edges
+    /// // 线字符串的内部与矩形边界的交点是一维的，因为第一条线的一部分与矩形的边重叠
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::OnBoundary), Dimensions::OneDimensional);
     ///
-    /// // The intersection of the line string's interior with the rect's exterior is one-dimensional, because part of the string is outside the rect
+    /// // 线字符串的内部与矩形外部的交点是一维的，因为字符串的一部分在矩形外
     /// assert_eq!(intersection.get(CoordPos::Inside, CoordPos::Outside), Dimensions::OneDimensional);
     ///
-    /// // The intersection of the line string's boundary with the rect's interior is empty, because neither of its end points are inside the rect
+    /// // 线字符串的边界与矩形内部的交点是空的，因为它的两个端点都不在矩形内
     /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::Inside), Dimensions::Empty);
     ///
-    /// // The intersection of the line string's boundary with the rect's boundary is zero-dimensional, because the string's start and end points are on the rect's edges
+    /// // 线字符串的边界与矩形边界的交点是零维的，因为字符串的起点和终点都在矩形的边上
     /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::OnBoundary), Dimensions::ZeroDimensional);
     ///
-    /// // The intersection of the line string's boundary with the rect's exterior is empty, because neither of its end points are outside the rect
+    /// // 线字符串的边界与矩形外部的交点是空的，因为它的两个端点都不在矩形外
     /// assert_eq!(intersection.get(CoordPos::OnBoundary, CoordPos::Outside), Dimensions::Empty);
     ///
-    /// // The intersection of the the line's exterior with the rect's interior is two-dimensional, because it's simply the rect's interior
+    /// // 线的外部与矩形内部的交点是二维的，因为它简单地是矩形的内部
     /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::Inside), Dimensions::TwoDimensional);
     ///
-    /// // The intersection of the line's exterior with the rect's boundary is one-dimensional, because it's the rect's edges (minus where the string overlaps it)
+    /// // 线的外部与矩形边界的交点是一维的，因为它是矩形的边(减去字符串覆盖它的地方)
     /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::OnBoundary), Dimensions::OneDimensional);
     ///
-    /// // The intersection of the two exteriors is two-dimensional, because it's the whole plane around the two shapes
+    /// // 两个外部的交点是二维的，因为它是两种形状的整个平面
     /// assert_eq!(intersection.get(CoordPos::Outside, CoordPos::Outside), Dimensions::TwoDimensional);
     /// ```
     pub fn get(&self, lhs: CoordPos, rhs: CoordPos) -> Dimensions {
         self.0[lhs][rhs]
     }
 
-    /// Does the intersection matrix match the provided DE-9IM specification string?
+    /// 交点矩阵是否匹配提供的 DE-9IM 规范字符串？
     ///
-    /// A DE-9IM spec string must be 9 characters long, and each character
-    /// must be one of the following:
+    /// DE-9IM 规范字符串必须是9个字符长，并且每个字符必须是以下之一:
     ///
-    /// - 0: matches a 0-dimensional (point) intersection
-    /// - 1: matches a 1-dimensional (line) intersection
-    /// - 2: matches a 2-dimensional (area) intersection
-    /// - f or F: matches only empty dimensions
-    /// - t or T: matches anything non-empty
-    /// - *: matches anything
+    /// - 0: 匹配一个0维（点）交点
+    /// - 1: 匹配一个1维（线）交点
+    /// - 2: 匹配一个2维（面积）交点
+    /// - f 或 F: 仅匹配空维度
+    /// - t 或 T: 匹配任何非空的
+    /// - *: 匹配任何
     ///
     /// ```
     /// use geo::algorithm::Relate;
     /// use geo::geometry::Polygon;
     /// use wkt::TryFromWkt;
     ///
-    /// let a = Polygon::<f64>::try_from_wkt_str("POLYGON((0 0,4 0,4 4,0 4,0 0))").expect("valid WKT");
-    /// let b = Polygon::<f64>::try_from_wkt_str("POLYGON((1 1,4 0,4 4,0 4,1 1))").expect("valid WKT");
+    /// let a = Polygon::<f64>::try_from_wkt_str("POLYGON((0 0,4 0,4 4,0 4,0 0))").expect("有效的 WKT");
+    /// let b = Polygon::<f64>::try_from_wkt_str("POLYGON((1 1,4 0,4 4,0 4,1 1))").expect("有效的 WKT");
     /// let im = a.relate(&b);
-    /// assert!(im.matches("212F11FF2").expect("valid DE-9IM spec"));
-    /// assert!(im.matches("TTT***FF2").expect("valid DE-9IM spec"));
-    /// assert!(!im.matches("TTT***FFF").expect("valid DE-9IM spec"));
+    /// assert!(im.matches("212F11FF2").expect("有效的 DE-9IM 规范"));
+    /// assert!(im.matches("TTT***FF2").expect("有效的 DE-9IM 规范"));
+    /// assert!(!im.matches("TTT***FFF").expect("有效的 DE-9IM 规范"));
     /// ```
     pub fn matches(&self, spec: &str) -> Result<bool, InvalidInputError> {
         if spec.len() != 9 {
             return Err(InvalidInputError::new(format!(
-                "DE-9IM specification must be exactly 9 characters. Got {len}",
+                "DE-9IM 规范必须正好是9个字符。得到 {len}",
                 len = spec.len()
             )));
         }
@@ -630,7 +616,7 @@ impl IntersectionMatrix {
         for a in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
             for b in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
                 let dim_spec = dimension_matcher::DimensionMatcher::try_from(
-                    chars.next().expect("already validated length is 9"),
+                    chars.next().expect("长度已经验证为9"),
                 )?;
                 if !dim_spec.matches(self.0[*a][*b]) {
                     return Ok(false);
@@ -641,12 +627,12 @@ impl IntersectionMatrix {
     }
 }
 
-/// Build an IntersectionMatrix based on a string specification.
+/// 根据字符串规范构建一个IntersectionMatrix。
 /// ```
 /// use geo::algorithm::relate::IntersectionMatrix;
 /// use std::str::FromStr;
 ///
-/// let intersection_matrix = IntersectionMatrix::from_str("212101212").expect("valid DE-9IM specification");
+/// let intersection_matrix = IntersectionMatrix::from_str("212101212").expect("有效的 DE-9IM 规范");
 /// assert!(intersection_matrix.is_intersects());
 /// assert!(!intersection_matrix.is_contains());
 /// ```
@@ -663,7 +649,7 @@ pub(crate) mod dimension_matcher {
     use super::Dimensions;
     use super::InvalidInputError;
 
-    /// A single letter from a DE-9IM matching specification like "1*T**FFF*"
+    /// DE-9IM 匹配规范中的单个字母，如 "1*T**FFF*"
     pub(crate) enum DimensionMatcher {
         Anything,
         NonEmpty,
@@ -693,7 +679,7 @@ pub(crate) mod dimension_matcher {
                 '2' => Self::Exact(Dimensions::TwoDimensional),
                 _ => {
                     return Err(InvalidInputError::new(format!(
-                        "invalid DE-9IM specification character: {value}"
+                        "无效的 DE-9IM 规范字符：{value}"
                     )))
                 }
             })
@@ -710,10 +696,10 @@ mod tests {
 
     #[test]
     fn test_crosses() {
-        // these polygons look like they cross, but two polygons cannot cross
+        // 这些多边形看起来像是交叉的，但两个多边形不能交叉
         let a: Geometry<_> = wkt! { POLYGON ((3.4 15.7, 2.2 11.3, 5.8 11.4, 3.4 15.7)) }.into();
         let b: Geometry<_> = wkt! { POLYGON ((5.2 13.1, 4.5 10.9, 6.3 11.1, 5.2 13.1)) }.into();
-        // this linestring is a single leg of b: it can cross polygon a
+        // 这个线串是 b 的一个单独的腿：它可以跨过多边形 a
         let c: Geometry<_> = wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
         let relate_ab = a.relate(&b);
         let relate_ca = c.relate(&a);
@@ -723,8 +709,8 @@ mod tests {
 
     #[test]
     fn test_crosses_2() {
-        // two lines can cross
-        // same geometry as test_crosses: single legs of polygons a and b
+        // 两条线可以交叉
+        // 与 test_crosses 相同的几何结构：多边形 a 和 b 的单个腿
         let a: Geometry<_> = wkt! { LINESTRING (5.2 13.1, 4.5 10.9) }.into();
         let b: Geometry<_> = wkt! { LINESTRING (3.4 15.7, 2.2 11.3, 5.8 11.4) }.into();
         let relate_ab = a.relate(&b);
@@ -735,7 +721,7 @@ mod tests {
         use super::*;
 
         fn subject() -> IntersectionMatrix {
-            // Topologically, this is a nonsense IM
+            // 拓扑上，这是一个无意义的 IM
             IntersectionMatrix::from_str("F00111222").unwrap()
         }
 

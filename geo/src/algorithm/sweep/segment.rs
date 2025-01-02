@@ -2,7 +2,7 @@ use super::*;
 use crate::GeoFloat;
 use std::{cmp::Ordering, fmt::Debug};
 
-/// A segment of input [`LineOrPoint`] generated during the sweep.
+/// 扫描过程中生成的输入 [`LineOrPoint`] 的一段。
 #[derive(Clone)]
 pub(super) struct Segment<C: Cross> {
     pub(super) geom: LineOrPoint<C::Scalar>,
@@ -27,36 +27,30 @@ impl<C: Cross> Segment<C> {
         }
     }
 
-    /// Split a line segment into pieces at points of intersection.
+    /// 在交点处将线段分割成多个部分。
     ///
-    /// The initial segment is mutated in place, and extra-segment(s) are
-    /// returned if any. Assume exact arithmetic, the ordering of self should
-    /// remain the same among active segments. However, with finite-precision,
-    /// this may not be the case.
+    /// 初始段就地变动，如果有其他段，则返回。假设精确算术，
+    /// self 的顺序在活动段中应保持不变。然而，在有限精度下，
+    /// 可能情况并非如此。
     pub fn adjust_for_intersection(
         &mut self,
         intersection: LineOrPoint<C::Scalar>,
     ) -> SplitSegments<C::Scalar> {
         use SplitSegments::*;
 
-        // We only support splitting a line segment.
+        // 我们仅支持拆分线段。
         debug_assert!(self.geom.is_line());
         let (p, q) = self.geom.end_points();
 
         if !intersection.is_line() {
-            // Handle point intersection
+            // 处理点交点
             let r = intersection.left();
-            debug_assert!(
-                p <= r,
-                "intersection point was not ordered within the line: {p:?} <= {r:?} <=> {q:?}",
-            );
+            debug_assert!(p <= r, "交点未在线上排序: {p:?} <= {r:?} <=> {q:?}",);
             if p == r || q == r {
-                // If the intersection is at the end point, the
-                // segment doesn't need to be split.
+                // 如果交点在端点处，则无需分割此段。
                 Unchanged { overlap: false }
             } else {
-                // Otherwise, split it. Mutate `self` to be the
-                // first part, and return the second part.
+                // 否则，将其拆分。将 `self` 变为第一部分，并返回第二部分。
                 self.geom = (p, r).into();
                 // self.first_segment = false;
                 SplitOnce {
@@ -66,13 +60,10 @@ impl<C: Cross> Segment<C> {
             }
         } else {
             let (r1, r2) = intersection.end_points();
-            debug_assert!(
-                p <= r1 && r2 <= q,
-                "overlapping segment was not ordered within the line!"
-            );
+            debug_assert!(p <= r1 && r2 <= q, "重叠段未在行中排序！");
             if p == r1 {
                 if r2 == q {
-                    // The whole segment overlaps.
+                    // 整个段重叠。
                     Unchanged { overlap: true }
                 } else {
                     self.geom = (p, r2).into();
@@ -100,7 +91,7 @@ impl<C: Cross> Segment<C> {
     }
 }
 
-/// A more concise debug impl.
+/// 更简洁的调试实现。
 impl<C: Cross> Debug for Segment<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -119,9 +110,9 @@ impl<C: Cross> Debug for Segment<C> {
     }
 }
 
-/// Partial equality based on key.
+/// 基于键的部分相等性。
 ///
-/// This is consistent with the `PartialOrd` impl.
+/// 这与 `PartialOrd` 的实现一致。
 impl<C: Cross> PartialEq for Segment<C> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
@@ -129,17 +120,16 @@ impl<C: Cross> PartialEq for Segment<C> {
     }
 }
 
-/// Partial ordering defined as per algorithm.
+/// 按算法定义的部分排序。
 ///
-/// This is requires the same pre-conditions as for [`LineOrPoint`].
+/// 这要求与 [`LineOrPoint`] 相同的先决条件。
 impl<C: Cross> PartialOrd for Segment<C> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.geom.partial_cmp(&other.geom)
     }
 }
 
-/// Stores the type of split and extra geometries from adjusting a
-/// segment for intersection.
+/// 存储调整段以进行交叉的拆分类型和额外几何。
 #[derive(Debug)]
 pub(super) enum SplitSegments<T: GeoFloat> {
     Unchanged {

@@ -4,30 +4,30 @@ use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Line};
 
-/// A trait for accessing data from a generic Line.
+/// 用于从通用线段访问数据的特征。
 ///
-/// A Line is a line segment made up of exactly two [coordinates][CoordTrait].
+/// 线段由恰好两个[坐标][CoordTrait]组成。
 ///
-/// Refer to [geo_types::Line] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅 [geo_types::Line]。
 pub trait LineTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying coordinate, which implements [CoordTrait]
+    /// 每个底层坐标的类型，实现 [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// Access the start coordinate in this Line
+    /// 访问此线段的起始坐标
     fn start(&self) -> Self::CoordType<'_>;
 
-    /// Access the start coordinate in this Line
+    /// 访问此线段的结束坐标
     fn end(&self) -> Self::CoordType<'_>;
 
-    /// Access the two underlying coordinates
+    /// 访问两个底层坐标
     fn coords(&self) -> [Self::CoordType<'_>; 2] {
         [self.start(), self.end()]
     }
@@ -75,10 +75,9 @@ impl<'a, T: CoordNum> LineTrait for &'a Line<T> {
     }
 }
 
-/// An empty struct that implements [LineTrait].
+/// 实现 [LineTrait] 的空结构体。
 ///
-/// This can be used as the `LineType` of the `GeometryTrait` by implementations that don't
-/// have a Line concept
+/// 这可以被没有线段概念的实现用作 `GeometryTrait` 的 `LineType`
 pub struct UnimplementedLine<T>(PhantomData<T>);
 
 impl<T> LineTrait for UnimplementedLine<T> {

@@ -5,14 +5,14 @@ use serde::{Deserialize, Deserializer};
 
 use super::Result;
 
-/// Example of the XML that these structures represent
+/// 这些结构体所代表的XML示例
 ///
 /// ```xml
 /// <run>
 /// <precisionModel scale="1.0" offsetx="0.0" offsety="0.0"/>
 ///
 /// <case>
-/// <desc>AA disjoint</desc>
+/// <desc>AA 不相交</desc>
 /// <a>
 /// POLYGON(
 /// (0 0, 80 0, 80 80, 0 80, 0 0))
@@ -31,214 +31,214 @@ use super::Result;
 #[derive(Debug, Deserialize)]
 pub(crate) struct Run {
     #[serde(rename = "precisionModel", default)]
-    pub precision_model: Option<PrecisionModel>,
+    pub precision_model: Option<PrecisionModel>, // 可选的精度模型
 
     #[serde(rename = "case")]
-    pub cases: Vec<Case>,
+    pub cases: Vec<Case>, // 测试用例集合
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct PrecisionModel {
     #[serde(rename = "type", default)]
-    pub ty: String,
+    pub ty: String, // 类型
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Case {
     #[serde(default)]
-    pub(crate) desc: String,
+    pub(crate) desc: String, // 描述信息
 
     #[serde(deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) a: Geometry,
+    pub(crate) a: Geometry, // 几何对象A
 
     #[serde(deserialize_with = "deserialize_opt_geometry", default)]
-    pub(crate) b: Option<Geometry>,
+    pub(crate) b: Option<Geometry>, // 可选的几何对象B
 
     #[serde(rename = "test", default)]
-    pub(crate) tests: Vec<Test>,
+    pub(crate) tests: Vec<Test>, // 测试集合
 }
 
 #[derive(Debug, Deserialize)]
 pub(crate) struct Test {
     #[serde(rename = "op")]
-    pub(crate) operation_input: OperationInput,
+    pub(crate) operation_input: OperationInput, // 操作输入信息
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CentroidInput {
-    pub(crate) arg1: String,
+    pub(crate) arg1: String, // 参数1
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_point")]
-    pub(crate) expected: Option<geo::Point>,
+    pub(crate) expected: Option<geo::Point>, // 期望的结果（可选）
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ConvexHullInput {
-    pub(crate) arg1: String,
+    pub(crate) arg1: String, // 参数1
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) expected: geo::Geometry,
+    pub(crate) expected: geo::Geometry, // 期望的结果
 }
 
 #[derive(Debug, Deserialize)]
 pub struct EqualsTopoInput {
-    pub(crate) arg1: String,
-    pub(crate) arg2: String,
+    pub(crate) arg1: String, // 参数1
+    pub(crate) arg2: String, // 参数2
 
     #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
-    pub(crate) expected: bool,
+    pub(crate) expected: bool, // 期望的布尔值结果
 }
 
 #[derive(Debug, Deserialize)]
 pub struct IntersectsInput {
-    pub(crate) arg1: String,
-    pub(crate) arg2: String,
+    pub(crate) arg1: String, // 参数1
+    pub(crate) arg2: String, // 参数2
 
     #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
-    pub(crate) expected: bool,
+    pub(crate) expected: bool, // 期望的布尔值结果
 }
 
 #[derive(Debug, Deserialize)]
 pub struct IsValidInput {
-    pub(crate) arg1: String,
+    pub(crate) arg1: String, // 参数1
 
     #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
-    pub(crate) expected: bool,
+    pub(crate) expected: bool, // 期望的布尔值结果
 }
 
 #[derive(Debug, Deserialize)]
 pub struct RelateInput {
-    pub(crate) arg1: String,
-    pub(crate) arg2: String,
+    pub(crate) arg1: String, // 参数1
+    pub(crate) arg2: String, // 参数2
 
     #[serde(rename = "arg3", deserialize_with = "deserialize_from_str")]
-    pub(crate) expected: IntersectionMatrix,
+    pub(crate) expected: IntersectionMatrix, // 期望的交集矩阵
 }
 
 #[derive(Debug, Deserialize)]
 pub struct ContainsInput {
-    pub(crate) arg1: String,
-    pub(crate) arg2: String,
+    pub(crate) arg1: String, // 参数1
+    pub(crate) arg2: String, // 参数2
 
     #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
-    pub(crate) expected: bool,
+    pub(crate) expected: bool, // 期望的布尔值结果
 }
 
 #[derive(Debug, Deserialize)]
 pub struct WithinInput {
-    pub(crate) arg1: String,
-    pub(crate) arg2: String,
+    pub(crate) arg1: String, // 参数1
+    pub(crate) arg2: String, // 参数2
 
     #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
-    pub(crate) expected: bool,
+    pub(crate) expected: bool, // 期望的布尔值结果
 }
 
 #[derive(Debug, Deserialize)]
 pub struct OverlayInput {
-    pub(crate) arg1: String,
-    pub(crate) arg2: String,
+    pub(crate) arg1: String, // 参数1
+    pub(crate) arg2: String, // 参数2
 
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) expected: geo::Geometry<f64>,
+    pub(crate) expected: geo::Geometry<f64>, // 期望的几何结果
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub(crate) enum OperationInput {
     #[serde(rename = "contains")]
-    ContainsInput(ContainsInput),
+    ContainsInput(ContainsInput), // 包含操作输入
 
     #[serde(rename = "getCentroid")]
-    CentroidInput(CentroidInput),
+    CentroidInput(CentroidInput), // 中心点操作输入
 
     #[serde(rename = "convexhull")]
-    ConvexHullInput(ConvexHullInput),
+    ConvexHullInput(ConvexHullInput), // 凸包操作输入
 
     #[serde(rename = "equalsTopo")]
-    EqualsTopoInput(EqualsTopoInput),
+    EqualsTopoInput(EqualsTopoInput), // 拓扑相等操作输入
 
     #[serde(rename = "intersects")]
-    IntersectsInput(IntersectsInput),
+    IntersectsInput(IntersectsInput), // 相交操作输入
 
     #[serde(rename = "isValid")]
-    IsValidInput(IsValidInput),
+    IsValidInput(IsValidInput), // 验证操作输入
 
     #[serde(rename = "relate")]
-    RelateInput(RelateInput),
+    RelateInput(RelateInput), // 关系操作输入
 
     #[serde(rename = "union")]
-    UnionInput(OverlayInput),
+    UnionInput(OverlayInput), // 合并（并集）操作输入
 
     #[serde(rename = "intersection")]
-    IntersectionInput(OverlayInput),
+    IntersectionInput(OverlayInput), // 交集操作输入
 
     #[serde(rename = "difference")]
-    DifferenceInput(OverlayInput),
+    DifferenceInput(OverlayInput), // 差分操作输入
 
     #[serde(rename = "symdifference")]
-    SymDifferenceInput(OverlayInput),
+    SymDifferenceInput(OverlayInput), // 对称差操作输入
 
     #[serde(rename = "within")]
-    WithinInput(WithinInput),
+    WithinInput(WithinInput), // 包含于操作输入
 
     #[serde(other)]
-    Unsupported,
+    Unsupported, // 不支持的操作输入
 }
 
 #[derive(Debug, Clone)]
 pub(crate) enum Operation {
     Centroid {
-        subject: Geometry,
-        expected: Option<Point>,
+        subject: Geometry,       // 主体几何
+        expected: Option<Point>, // 期望的结果（可选点）
     },
     Contains {
-        subject: Geometry,
-        target: Geometry,
-        expected: bool,
+        subject: Geometry, // 主体几何
+        target: Geometry,  // 目标几何
+        expected: bool,    // 期望的布尔值结果
     },
     IsValidOp {
-        subject: Geometry,
-        expected: bool,
+        subject: Geometry, // 主体几何
+        expected: bool,    // 期望的布尔值结果
     },
     Within {
-        subject: Geometry,
-        target: Geometry,
-        expected: bool,
+        subject: Geometry, // 主体几何
+        target: Geometry,  // 目标几何
+        expected: bool,    // 期望的布尔值结果
     },
     ConvexHull {
-        subject: Geometry,
-        expected: Geometry,
+        subject: Geometry,  // 主体几何
+        expected: Geometry, // 期望的几何结果
     },
     EqualsTopo {
-        a: Geometry,
-        b: Geometry,
-        expected: bool,
+        a: Geometry,    // 几何对象A
+        b: Geometry,    // 几何对象B
+        expected: bool, // 期望的布尔值结果
     },
     Intersects {
-        subject: Geometry,
-        clip: Geometry,
-        expected: bool,
+        subject: Geometry, // 主体几何
+        clip: Geometry,    // 剪切几何
+        expected: bool,    // 期望的布尔值结果
     },
     Relate {
-        a: Geometry,
-        b: Geometry,
-        expected: IntersectionMatrix,
+        a: Geometry,                  // 几何对象A
+        b: Geometry,                  // 几何对象B
+        expected: IntersectionMatrix, // 期望的交集矩阵
     },
     BooleanOp {
-        a: Geometry<f64>,
-        b: Geometry<f64>,
-        op: BoolOp,
-        expected: Geometry<f64>,
+        a: Geometry<f64>,        // 几何对象A
+        b: Geometry<f64>,        // 几何对象B
+        op: BoolOp,              // 布尔操作类型
+        expected: Geometry<f64>, // 期望的几何结果
     },
     ClipOp {
-        a: Geometry<f64>,
-        b: Geometry<f64>,
-        invert: bool,
-        expected: Geometry<f64>,
+        a: Geometry<f64>,        // 几何对象A
+        b: Geometry<f64>,        // 几何对象B
+        invert: bool,            // 反转标识
+        expected: Geometry<f64>, // 期望的几何结果
     },
     Unsupported {
         #[allow(dead_code)]
-        reason: String,
+        reason: String, // 不支持的原因
     },
 }
 
@@ -263,36 +263,30 @@ impl OperationInput {
             Self::EqualsTopoInput(equals_topo_input) => {
                 assert_eq!("A", equals_topo_input.arg1);
                 assert_eq!("B", equals_topo_input.arg2);
-                assert!(
-                    case.b.is_some(),
-                    "equalsTopo test case must contain geometry b"
-                );
+                assert!(case.b.is_some(), "equalsTopo测试用例必须包含几何对象B");
                 Ok(Operation::EqualsTopo {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b.clone().expect("没有几何对象B在测试用例中"),
                     expected: equals_topo_input.expected,
                 })
             }
             Self::IntersectsInput(input) => {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
-                assert!(
-                    case.b.is_some(),
-                    "intersects test case must contain geometry b"
-                );
+                assert!(case.b.is_some(), "intersects测试用例必须包含几何对象B");
                 Ok(Operation::Intersects {
                     subject: geometry.clone(),
-                    clip: case.b.clone().expect("no geometry b in case"),
+                    clip: case.b.clone().expect("没有几何对象B在测试用例中"),
                     expected: input.expected,
                 })
             }
             Self::RelateInput(input) => {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
-                assert!(case.b.is_some(), "relate test case must contain geometry b");
+                assert!(case.b.is_some(), "relate测试用例必须包含几何对象B");
                 Ok(Operation::Relate {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b.clone().expect("没有几何对象B在测试用例中"),
                     expected: input.expected,
                 })
             }
@@ -301,7 +295,7 @@ impl OperationInput {
                 assert_eq!("B", input.arg2);
                 Ok(Operation::Contains {
                     subject: geometry.clone(),
-                    target: case.b.clone().expect("no geometry b in case"),
+                    target: case.b.clone().expect("没有几何对象B在测试用例中"),
                     expected: input.expected,
                 })
             }
@@ -310,7 +304,7 @@ impl OperationInput {
                 assert_eq!("B", input.arg2);
                 Ok(Operation::Within {
                     subject: geometry.clone(),
-                    target: case.b.clone().expect("no geometry b in case"),
+                    target: case.b.clone().expect("没有几何对象B在测试用例中"),
                     expected: input.expected,
                 })
             }
@@ -319,11 +313,11 @@ impl OperationInput {
                     &input.arg1,
                     &input.arg2,
                     geometry,
-                    case.b.as_ref().expect("no geometry b in case"),
+                    case.b.as_ref().expect("没有几何对象B在测试用例中"),
                 )?;
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b.clone().expect("没有几何对象B在测试用例中"),
                     op: BoolOp::Union,
                     expected: input.expected,
                 })
@@ -332,8 +326,11 @@ impl OperationInput {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
 
-                // Clipping a line string in geo is like a Line x Poly Intersection in JTS
-                match (geometry, case.b.as_ref().expect("no geometry b in case")) {
+                // 在geo中裁剪线字符串就像是在JTS中进行线与多边形的交集
+                match (
+                    geometry,
+                    case.b.as_ref().expect("没有几何对象B在测试用例中"),
+                ) {
                     (
                         Geometry::LineString(_) | Geometry::MultiLineString(_),
                         Geometry::Polygon(_) | Geometry::MultiPolygon(_),
@@ -344,7 +341,7 @@ impl OperationInput {
                     ) => {
                         return Ok(Operation::ClipOp {
                             a: geometry.clone(),
-                            b: case.b.clone().expect("no geometry b in case"),
+                            b: case.b.clone().expect("没有几何对象B在测试用例中"),
                             invert: false,
                             expected: input.expected,
                         });
@@ -354,21 +351,24 @@ impl OperationInput {
                             &input.arg1,
                             &input.arg2,
                             geometry,
-                            case.b.as_ref().expect("no geometry b in case"),
+                            case.b.as_ref().expect("没有几何对象B在测试用例中"),
                         )?;
                     }
                 };
 
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b.clone().expect("没有几何对象B在测试用例中"),
                     op: BoolOp::Intersection,
                     expected: input.expected,
                 })
             }
             Self::DifferenceInput(input) => {
-                // Clipping a line string in geo is like a Line x Poly Intersection in JTS
-                match (geometry, case.b.as_ref().expect("no geometry b in case")) {
+                // 在geo中裁剪线字符串就像是在JTS中进行线与多边形的交集
+                match (
+                    geometry,
+                    case.b.as_ref().expect("没有几何对象B在测试用例中"),
+                ) {
                     (
                         Geometry::LineString(_) | Geometry::MultiLineString(_),
                         Geometry::Polygon(_) | Geometry::MultiPolygon(_),
@@ -379,7 +379,7 @@ impl OperationInput {
                     ) => {
                         return Ok(Operation::ClipOp {
                             a: geometry.clone(),
-                            b: case.b.clone().expect("no geometry b in case"),
+                            b: case.b.clone().expect("没有几何对象B在测试用例中"),
                             invert: true,
                             expected: input.expected,
                         });
@@ -389,13 +389,13 @@ impl OperationInput {
                             &input.arg1,
                             &input.arg2,
                             geometry,
-                            case.b.as_ref().expect("no geometry b in case"),
+                            case.b.as_ref().expect("没有几何对象B在测试用例中"),
                         )?;
                     }
                 };
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b.clone().expect("没有几何对象B在测试用例中"),
                     op: BoolOp::Difference,
                     expected: input.expected,
                 })
@@ -405,22 +405,22 @@ impl OperationInput {
                     &input.arg1,
                     &input.arg2,
                     geometry,
-                    case.b.as_ref().expect("no geometry b in case"),
+                    case.b.as_ref().expect("没有几何对象B在测试用例中"),
                 )?;
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b.clone().expect("没有几何对象B在测试用例中"),
                     op: BoolOp::Xor,
                     expected: input.expected,
                 })
             }
-            Self::Unsupported => Err("This OperationInput not supported".into()),
+            Self::Unsupported => Err("不支持的OperationInput".into()),
             OperationInput::IsValidInput(input) => match input.arg1.as_str() {
                 "A" => Ok(Operation::IsValidOp {
                     subject: geometry.clone(),
                     expected: input.expected,
                 }),
-                _ => todo!("Handle {}", input.arg1),
+                _ => todo!("处理 {}", input.arg1),
             },
         }
     }
@@ -431,12 +431,12 @@ fn validate_boolean_op(arg1: &str, arg2: &str, a: &Geometry<f64>, b: &Geometry<f
     assert_eq!("B", arg2);
     for arg in &[a, b] {
         if matches!(arg, Geometry::LineString(_)) {
-            log::warn!("skipping `line_string.union` we don't support");
-            return Err("`line_string.union` is not supported".into());
+            log::warn!("跳过不支持的`line_string.union`");
+            return Err("不支持`line_string.union`".into());
         }
         if matches!(arg, Geometry::MultiPoint(_)) {
-            log::warn!("skipping `line_string.union` we don't support");
-            return Err("`line_string.union` is not supported".into());
+            log::warn!("跳过不支持的`line_string.union`");
+            return Err("不支持`line_string.union`".into());
         }
     }
     Ok(())

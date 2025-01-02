@@ -9,21 +9,17 @@ use core::iter::FromIterator;
 #[cfg(feature = "multithreading")]
 use rayon::prelude::*;
 
-/// A collection of [`Point`s](struct.Point.html). Can
-/// be created from a `Vec` of `Point`s, or from an
-/// Iterator which yields `Point`s. Iterating over this
-/// object yields the component `Point`s.
+/// [`Point`](struct.Point.html)的集合。可以从`Point`的`Vec`创建，
+/// 或者从产生`Point`的迭代器创建。迭代这个对象会产生组成它的`Point`。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// The _interior_ and the _boundary_ are the union of the
-/// interior and the boundary of the constituent points. In
-/// particular, the boundary of a `MultiPoint` is always
-/// empty.
+/// _内部_和_边界_是构成点的内部和边界的并集。
+/// 特别地，`MultiPoint`的边界总是空的。
 ///
-/// # Examples
+/// # 示例
 ///
-/// Iterating over a `MultiPoint` yields the `Point`s inside.
+/// 迭代`MultiPoint`会产生其中的`Point`。
 ///
 /// ```
 /// use geo_types::{MultiPoint, Point};
@@ -37,29 +33,27 @@ use rayon::prelude::*;
 pub struct MultiPoint<T: CoordNum = f64>(pub Vec<Point<T>>);
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<IP> for MultiPoint<T> {
-    /// Convert a single `Point` (or something which can be converted to a
-    /// `Point`) into a one-member `MultiPoint`
+    /// 将单个`Point`（或可以转换为`Point`的东西）转换为只有一个成员的`MultiPoint`
     fn from(x: IP) -> Self {
         Self(vec![x.into()])
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> From<Vec<IP>> for MultiPoint<T> {
-    /// Convert a `Vec` of `Points` (or `Vec` of things which can be converted
-    /// to a `Point`) into a `MultiPoint`.
+    /// 将`Point`的`Vec`（或可以转换为`Point`的东西的`Vec`）转换为`MultiPoint`。
     fn from(v: Vec<IP>) -> Self {
         Self(v.into_iter().map(|p| p.into()).collect())
     }
 }
 
 impl<T: CoordNum, IP: Into<Point<T>>> FromIterator<IP> for MultiPoint<T> {
-    /// Collect the results of a `Point` iterator into a `MultiPoint`
+    /// 将`Point`迭代器的结果收集到`MultiPoint`中
     fn from_iter<I: IntoIterator<Item = IP>>(iter: I) -> Self {
         Self(iter.into_iter().map(|p| p.into()).collect())
     }
 }
 
-/// Iterate over the `Point`s in this `MultiPoint`.
+/// 迭代这个`MultiPoint`中的`Point`。
 impl<T: CoordNum> IntoIterator for MultiPoint<T> {
     type Item = Point<T>;
     type IntoIter = ::alloc::vec::IntoIter<Point<T>>;
@@ -149,9 +143,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::MultiPoint;
@@ -191,9 +185,9 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 带有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::MultiPoint;
@@ -234,7 +228,7 @@ mod test {
             }
         }
 
-        // Do it again to prove that `multi` wasn't `moved`.
+        // 再次执行以证明`multi`没有被`moved`。
         first = true;
         for p in &multi {
             if first {
@@ -288,11 +282,11 @@ mod test {
         assert!(multi.relative_eq(&multi_y, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_y, 1e-12, 1e-12));
 
-        // Under-sized but otherwise equal.
+        // 大小不足但其他方面相等。
         let multi_undersized = wkt! { MULTIPOINT(0. 0.) };
         assert!(multi.relative_ne(&multi_undersized, 1., 1.));
 
-        // Over-sized but otherwise equal.
+        // 大小过大但其他方面相等。
         let multi_oversized = wkt! { MULTIPOINT(0. 0.,10. 10.,10. 100.) };
         assert!(multi.relative_ne(&multi_oversized, 1., 1.));
     }
@@ -313,11 +307,11 @@ mod test {
         assert!(multi.abs_diff_eq(&multi_y, 1e-2));
         assert!(multi.abs_diff_ne(&multi_y, 1e-12));
 
-        // Under-sized but otherwise equal.
+        // 大小不足但其他方面相等。
         let multi_undersized = wkt! { MULTIPOINT(0. 0.) };
         assert!(multi.abs_diff_ne(&multi_undersized, 1.));
 
-        // Over-sized but otherwise equal.
+        // 大小过大但其他方面相等。
         let multi_oversized = wkt! { MULTIPOINT(0. 0.,10. 10.,10. 100.) };
         assert!(multi.abs_diff_ne(&multi_oversized, 1.));
     }

@@ -5,7 +5,7 @@ use super::{
 
 macro_rules! impl_iterator {
     ($struct_name:ident, $self_trait:ident, $item_trait:ident, $access_method:ident, $item_type:ident) => {
-        /// An iterator over the parts of this geometry.
+        /// 这个几何体部分的迭代器。
         pub(crate) struct $struct_name<
             'a,
             T,
@@ -24,7 +24,7 @@ macro_rules! impl_iterator {
                 G: $self_trait<T = T, $item_type<'a> = $item_type>,
             > $struct_name<'a, T, $item_type, G>
         {
-            /// Create a new iterator
+            /// 创建一个新的迭代器
             pub fn new(geom: &'a G, index: usize, end: usize) -> Self {
                 Self { geom, index, end }
             }
@@ -84,6 +84,7 @@ macro_rules! impl_iterator {
     };
 }
 
+// 为LineString实现迭代器
 impl_iterator!(
     LineStringIterator,
     LineStringTrait,
@@ -91,6 +92,8 @@ impl_iterator!(
     coord_unchecked,
     CoordType
 );
+
+// 为Polygon的内部环实现迭代器
 impl_iterator!(
     PolygonInteriorIterator,
     PolygonTrait,
@@ -98,6 +101,8 @@ impl_iterator!(
     interior_unchecked,
     RingType
 );
+
+// 为MultiPoint实现迭代器
 impl_iterator!(
     MultiPointIterator,
     MultiPointTrait,
@@ -105,6 +110,8 @@ impl_iterator!(
     point_unchecked,
     PointType
 );
+
+// 为MultiLineString实现迭代器
 impl_iterator!(
     MultiLineStringIterator,
     MultiLineStringTrait,
@@ -112,6 +119,8 @@ impl_iterator!(
     line_string_unchecked,
     LineStringType
 );
+
+// 为MultiPolygon实现迭代器
 impl_iterator!(
     MultiPolygonIterator,
     MultiPolygonTrait,
@@ -119,6 +128,8 @@ impl_iterator!(
     polygon_unchecked,
     PolygonType
 );
+
+// 为GeometryCollection实现迭代器
 impl_iterator!(
     GeometryCollectionIterator,
     GeometryCollectionTrait,

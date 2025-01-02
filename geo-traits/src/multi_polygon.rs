@@ -6,33 +6,33 @@ use crate::{Dimensions, PolygonTrait};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, MultiPolygon, Polygon};
 
-/// A trait for accessing data from a generic MultiPolygon.
+/// 用于从通用MultiPolygon访问数据的特征。
 ///
-/// Refer to [geo_types::MultiPolygon] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅 [geo_types::MultiPolygon]。
 pub trait MultiPolygonTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying Polygon, which implements [PolygonTrait]
+    /// 每个底层Polygon的类型，实现 [PolygonTrait]
     type PolygonType<'a>: 'a + PolygonTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// An iterator over the Polygons in this MultiPolygon
+    /// 此MultiPolygon中Polygon的迭代器
     fn polygons(
         &self,
     ) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::PolygonType<'_>> {
         MultiPolygonIterator::new(self, 0, self.num_polygons())
     }
 
-    /// The number of polygons in this MultiPolygon
+    /// 此MultiPolygon中polygon的数量
     fn num_polygons(&self) -> usize;
 
-    /// Access to a specified polygon in this MultiPolygon
-    /// Will return None if the provided index is out of bounds
+    /// 访问此MultiPolygon中指定的polygon
+    /// 如果提供的索引超出范围，将返回None
     fn polygon(&self, i: usize) -> Option<Self::PolygonType<'_>> {
         if i >= self.num_polygons() {
             None
@@ -41,11 +41,11 @@ pub trait MultiPolygonTrait: Sized {
         }
     }
 
-    /// Access to a specified polygon in this MultiPolygon
+    /// 访问此MultiPolygon中指定的polygon
     ///
-    /// # Safety
+    /// # 安全性
     ///
-    /// Accessing an index out of bounds is UB.
+    /// 访问超出范围的索引是未定义行为。
     unsafe fn polygon_unchecked(&self, i: usize) -> Self::PolygonType<'_>;
 }
 
@@ -91,10 +91,9 @@ impl<'a, T: CoordNum> MultiPolygonTrait for &'a MultiPolygon<T> {
     }
 }
 
-/// An empty struct that implements [MultiPolygonTrait].
+/// 实现 [MultiPolygonTrait] 的空结构体。
 ///
-/// This can be used as the `MultiPolygonType` of the `GeometryTrait` by implementations that don't
-/// have a MultiPolygon concept
+/// 这可以被没有MultiPolygon概念的实现用作 `GeometryTrait` 的 `MultiPolygonType`
 pub struct UnimplementedMultiPolygon<T>(PhantomData<T>);
 
 impl<T> MultiPolygonTrait for UnimplementedMultiPolygon<T> {

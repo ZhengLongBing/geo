@@ -1,118 +1,93 @@
-//! This module defines the [Vector2DOps] trait and implements it for the
-//! [Coord] struct.
+//! 本模块定义了 [Vector2DOps] 特性，并为 [Coord] 结构体实现。
 
 use crate::{Coord, CoordFloat, CoordNum};
 
-/// Defines vector operations for 2D coordinate types which implement CoordFloat
+/// 为实现 CoordFloat 的二维坐标类型定义向量运算
 ///
-/// This trait is intended for internal use within the geo crate as a way to
-/// bring together the various hand-crafted linear algebra operations used
-/// throughout other algorithms and attached to various structs.
+/// 此特性用于 geo crate 的内部，作为一种方法，将使用于其他算法中的各种手工线性代数运算汇总在一起，并附加到不同的结构体上。
 pub trait Vector2DOps<Rhs = Self>
 where
     Self: Sized,
 {
     type Scalar: CoordNum;
 
-    /// The euclidean distance between this coordinate and the origin
+    /// 该坐标到原点的欧几里得距离
     ///
     /// `sqrt(x² + y²)`
     ///
     fn magnitude(self) -> Self::Scalar;
 
-    /// The squared distance between this coordinate and the origin.
-    /// (Avoids the square root calculation when it is not needed)
+    /// 该坐标到原点的平方距离。
+    /// （避免在不需要时进行平方根计算）
     ///
     /// `x² + y²`
     ///
     fn magnitude_squared(self) -> Self::Scalar;
 
-    /// Rotate this coordinate around the origin by 90 degrees clockwise.
+    /// 将此坐标绕原点顺时针旋转90度。
     ///
     /// `a.left() => (-a.y, a.x)`
     ///
-    /// Assumes a coordinate system where positive `y` is up and positive `x` is
-    /// to the right. The described rotation direction is consistent with the
-    /// documentation for [crate::algorithm::rotate::Rotate].
+    /// 假设坐标系中正 `y` 向上，正 `x` 向右。描述的旋转方向与 [crate::algorithm::rotate::Rotate] 文档一致。
     fn left(self) -> Self;
 
-    /// Rotate this coordinate around the origin by 90 degrees anti-clockwise.
+    /// 将此坐标绕原点逆时针旋转90度。
     ///
     /// `a.right() => (a.y, -a.x)`
     ///
-    /// Assumes a coordinate system where positive `y` is up and positive `x` is
-    /// to the right. The described rotation direction is consistent with the
-    /// documentation for [crate::algorithm::rotate::Rotate].
+    /// 假设坐标系中正 `y` 向上，正 `x` 向右。描述的旋转方向与 [crate::algorithm::rotate::Rotate] 文档一致。
     fn right(self) -> Self;
 
-    /// The inner product of the coordinate components
+    /// 坐标分量的内积
     ///
     /// `a · b = a.x * b.x + a.y * b.y`
     ///
     fn dot_product(self, other: Rhs) -> Self::Scalar;
 
-    /// The calculates the `wedge product` between two vectors.
+    /// 计算两个向量之间的 `楔积`。
     ///
     /// `a ∧ b = a.x * b.y - a.y * b.x`
     ///
-    /// Also known as:
+    /// 也称为：
     ///
-    ///  - `exterior product`
-    ///    - because the wedge product comes from 'Exterior Algebra'
-    ///  - `perpendicular product`
-    ///    -  because it is equivalent to `a.dot(b.right())`
-    ///  - `2D cross product`
-    ///    - because it is equivalent to the signed magnitude of the
-    ///      conventional 3D cross product assuming `z` ordinates are zero
-    ///  - `determinant`
-    ///    - because it is equivalent to the `determinant` of the 2x2 matrix
-    ///      formed by the column-vector inputs.
+    ///  - `外积`
+    ///    - 因为楔积来自'Exterior Algebra'
+    ///  - `垂直乘积`
+    ///    - 因为它相当于 `a.dot(b.right())`
+    ///  - `二维叉积`
+    ///    - 因为它等同于假设 `z` 坐标为零的常规三维叉积的有符号大小
+    ///  - `行列式`
+    ///    - 因为它等效于由列向量输入组成的 2x2 矩阵的`行列式`。
     ///
-    /// ## Examples
+    /// ## 示例
     ///
-    /// The following list highlights some examples in geo which might be
-    /// brought together to use this function:
+    /// 以下列出了一些 geo 中可以使用此功能的示例：
     ///
-    /// 1. [geo_types::Point::cross_prod()] is already defined on
-    ///    [geo_types::Point]... but that it seems to be some other
-    ///    operation on 3 points??
-    /// 2. [geo_types::Line] struct also has a [geo_types::Line::determinant()]
-    ///    function which is the same as `line.start.wedge_product(line.end)`
-    /// 3. The [crate::algorithm::Kernel::orient2d()] trait default
-    ///    implementation uses cross product to compute orientation. It returns
-    ///    an enum, not the numeric value which is needed for line segment
-    ///    intersection.
+    /// 1. [geo_types::Point::cross_prod()] 已经在 [geo_types::Point] 上定义...但似乎是对3个点的某种其他运算？
+    /// 2. [geo_types::Line] 结构体也有一个 [geo_types::Line::determinant()] 函数，对应于 `line.start.wedge_product(line.end)`
+    /// 3. [crate::algorithm::Kernel::orient2d()] 特性的默认实现使用交叉积来计算方向。 它返回一个枚举，而不是线段交点所需的数值。
     ///
-    /// ## Properties
+    /// ## 属性
     ///
-    /// - The absolute value of the cross product is the area of the
-    ///   parallelogram formed by the operands
-    /// - Anti-commutative: The sign of the output is reversed if the operands
-    ///   are reversed
-    /// - If the operands are colinear with the origin, the value is zero
-    /// - The sign can be used to check if the operands are clockwise with
-    ///   respect to the origin, or phrased differently:
-    ///   "is a to the left of the line between the origin and b"?
-    ///   - If this is what you are using it for, then please use
-    ///     [crate::algorithm::Kernel::orient2d()] instead as this is more
-    ///     explicit and has a `RobustKernel` option for extra precision.
+    /// - 叉积的绝对值是操作数形成的平行四边形的面积
+    /// - 反交换：如果交换操作数，输出符号将反转
+    /// - 如果操作数与原点共线，值为零
+    /// - 符号可以用来检查操作数是否以原点为中心顺时针排列，或者换句话说：
+    ///   "a 是否在以原点为起点、b 为终点的线的左侧"？
+    ///   - 如果您用于此用途，请使用 [crate::algorithm::Kernel::orient2d()]，因为这更明确并具有 `RobustKernel` 选项以提高精度。
     fn wedge_product(self, other: Rhs) -> Self::Scalar;
 
-    /// Try to find a vector of unit length in the same direction as this
-    /// vector.
+    /// 尝试找到与此向量方向相同的单位长度向量。
     ///
-    /// Returns `None` if the result is not finite. This can happen when
+    /// 如果结果不是有限值，则返回 `None`。这可能发生在
     ///
-    /// - the vector is really small (or zero length) and the `.magnitude()`
-    ///   calculation has rounded-down to `0.0`
-    /// - the vector is really large and the `.magnitude()` has rounded-up
-    ///   or 'overflowed' to `f64::INFINITY`
-    /// - Either x or y are `f64::NAN` or `f64::INFINITY`
+    /// — 向量非常小（或零长度），`.magnitude()` 计算四舍五入为 `0.0`
+    /// — 向量非常大并且 `.magnitude()` 四舍五入为或“溢出”为 `f64::INFINITY`
+    /// — x 或 y 为 `f64::NAN` 或 `f64::INFINITY`
     fn try_normalize(self) -> Option<Self>;
 
-    /// Returns true if both the x and y components are finite
-    // Annotation to disable bad clippy lint; It is not good to use
-    // `&self` as clippy suggests since Coord is Copy
+    /// 如果 x 和 y 组件都是有限的，则返回 true
+    // 注释是为了禁用错误的 clippy lint； 使用 &self 不好，因为 Coord 是 Copy
     #[allow(clippy::wrong_self_convention)]
     fn is_finite(self) -> bool;
 }
@@ -132,8 +107,8 @@ where
     }
 
     fn magnitude(self) -> Self::Scalar {
-        // Note uses cmath::hypot which avoids 'undue overflow and underflow'
-        // This also increases the range of values for which `.try_normalize()` works
+        // 注意使用 cmath::hypot 避免“不必要的溢出和下溢”
+        // 这也增加了 `.try_normalize()` 可以工作的值范围
         Self::Scalar::hypot(self.x, self.y)
     }
 
@@ -158,11 +133,10 @@ where
     fn try_normalize(self) -> Option<Self> {
         let magnitude = self.magnitude();
         let result = self / magnitude;
-        // Both the result AND the magnitude must be finite they are finite
-        // Otherwise very large vectors overflow magnitude to Infinity,
-        // and the after the division the result would be coord!{x:0.0,y:0.0}
-        // Note we don't need to check if magnitude is zero, because after the division
-        // that would have made result non-finite or NaN anyway.
+        // 结果和幅度都必须有限
+        // 否则非常大的向量将幅度溢出为 Infinity，
+        // 然后在除法后，结果将是 coord!{x:0.0,y:0.0}
+        // 注意我们不需要检查幅度是否为零，因为除法后会导致结果不是有限值或 NaN 无论如何。
         if result.is_finite() && magnitude.is_finite() {
             Some(result)
         } else {
@@ -182,25 +156,25 @@ mod test {
 
     #[test]
     fn test_cross_product() {
-        // perpendicular unit length
+        // 垂直单位长度
         let a = coord! { x: 1f64, y: 0f64 };
         let b = coord! { x: 0f64, y: 1f64 };
 
-        // expect the area of parallelogram
+        // 期望为平行四边形的面积
         assert_eq!(a.wedge_product(b), 1f64);
-        // expect swapping will result in negative
+        // 期待交换将导致负值
         assert_eq!(b.wedge_product(a), -1f64);
 
-        // Add skew; expect results should be the same
+        // 添加偏差；期望结果应相同
         let a = coord! { x: 1f64, y: 0f64 };
         let b = coord! { x: 1f64, y: 1f64 };
 
-        // expect the area of parallelogram
+        // 期望为平行四边形的面积
         assert_eq!(a.wedge_product(b), 1f64);
-        // expect swapping will result in negative
+        // 期待交换将导致负值
         assert_eq!(b.wedge_product(a), -1f64);
 
-        // Make Colinear; expect zero
+        // 使共线；期望为零
         let a = coord! { x: 2f64, y: 2f64 };
         let b = coord! { x: 1f64, y: 1f64 };
         assert_eq!(a.wedge_product(b), 0f64);
@@ -208,26 +182,26 @@ mod test {
 
     #[test]
     fn test_dot_product() {
-        // perpendicular unit length
+        // 垂直单位长度
         let a = coord! { x: 1f64, y: 0f64 };
         let b = coord! { x: 0f64, y: 1f64 };
-        // expect zero for perpendicular
+        // 垂直时期待为零
         assert_eq!(a.dot_product(b), 0f64);
 
-        // Parallel, same direction
+        // 平行，同方向
         let a = coord! { x: 1f64, y: 0f64 };
         let b = coord! { x: 2f64, y: 0f64 };
-        // expect +ive product of magnitudes
+        // 期望与幅度之积相同
         assert_eq!(a.dot_product(b), 2f64);
-        // expect swapping will have same result
+        // 期待交换会有同样的结果
         assert_eq!(b.dot_product(a), 2f64);
 
-        // Parallel, opposite direction
+        // 平行，相反方向
         let a = coord! { x: 3f64, y: 4f64 };
         let b = coord! { x: -3f64, y: -4f64 };
-        // expect -ive product of magnitudes
+        // 期望负值的幅度之积
         assert_eq!(a.dot_product(b), -25f64);
-        // expect swapping will have same result
+        // 期待交换会有同样的结果
         assert_eq!(b.dot_product(a), -25f64);
     }
 
@@ -270,15 +244,12 @@ mod test {
     fn test_left_right_match_rotate() {
         use crate::algorithm::rotate::Rotate;
         use crate::Point;
-        // The aim of this test is to confirm that wording in documentation is
-        // consistent.
+        // 此测试的目的是确认文档中的措辞是一致的。
 
-        // when the user is in a coordinate system where the y axis is flipped
-        // (eg screen coordinates in a HTML canvas), then rotation directions
-        // will be different to those described in the documentation.
+        // 当用户位于 y 轴翻转的坐标系中时
+        // （例如 HTML 画布中的屏幕坐标），旋转方向将不同于文档中描述的方向。
 
-        // The documentation for the Rotate trait says: 'Positive angles are
-        // counter-clockwise, and negative angles are clockwise rotations'
+        // Rotate 特性的文档说明：'正角度为逆时针方向，负角度为顺时针方向'
 
         let counter_clockwise_rotation_degrees = 90.0;
         let clockwise_rotation_degrees = -counter_clockwise_rotation_degrees;
@@ -286,12 +257,12 @@ mod test {
         let a: Point = coord! { x: 1.0, y: 0.0 }.into();
         let origin: Point = coord! { x: 0.0, y: 0.0 }.into();
 
-        // left is anti-clockwise
+        // 左为逆时针
         assert_relative_eq!(
             Point::from(a.0.left()),
             a.rotate_around_point(counter_clockwise_rotation_degrees, origin),
         );
-        // right is clockwise
+        // 右为顺时针
         assert_relative_eq!(
             Point::from(a.0.right()),
             a.rotate_around_point(clockwise_rotation_degrees, origin),
@@ -300,21 +271,21 @@ mod test {
 
     #[test]
     fn test_try_normalize() {
-        // Already Normalized
+        // 已经标准化
         let a = coord! {
             x: 1.0,
             y: 0.0
         };
         assert_relative_eq!(a.try_normalize().unwrap(), a);
 
-        // Already Normalized
+        // 已经标准化
         let a = coord! {
             x: 1.0 / f64::sqrt(2.0),
             y: -1.0 / f64::sqrt(2.0)
         };
         assert_relative_eq!(a.try_normalize().unwrap(), a);
 
-        // Non trivial example
+        // 非平凡示例
         let a = coord! { x: -10.0, y: 8.0 };
         assert_relative_eq!(
             a.try_normalize().unwrap(),
@@ -323,11 +294,10 @@ mod test {
     }
 
     #[test]
-    /// Tests edge cases that were previously returning None
-    /// before switching to cmath::hypot
+    /// 测试以前在切换到 cmath::hypot 之前返回 None 的边缘情况
     fn test_try_normalize_edge_cases_1() {
         use float_next_after::NextAfter;
-        // Very Small Input still returns a value thanks to cmath::hypot
+        // 非常小的输入仍然可以返回值，感谢 cmath::hypot
         let a = coord! {
             x: 0.0,
             y: 1e-301_f64
@@ -340,8 +310,8 @@ mod test {
             })
         );
 
-        // A large vector where try_normalize returns Some
-        // Because the magnitude is f64::MAX (Just before overflow to f64::INFINITY)
+        // 一个大的向量，其中 try_normalize 返回 Some
+        // 因为幅度是 f64::MAX（刚好到达溢出到 f64::INFINITY 之前）
         let a = coord! {
             x: f64::sqrt(f64::MAX/2.0),
             y: f64::sqrt(f64::MAX/2.0)
@@ -354,8 +324,8 @@ mod test {
             }
         );
 
-        // A large vector where try_normalize still returns Some because we are using cmath::hypot
-        // even though the magnitude would be just above f64::MAX
+        // 一个大的向量，where try_normalize 仍然返回 Some，因为我们正在使用 cmath::hypot
+        // 尽管幅度刚好超过 f64::MAX
         let a = coord! {
             x: f64::sqrt(f64::MAX / 2.0),
             y: f64::sqrt(f64::MAX / 2.0).next_after(f64::INFINITY)
@@ -371,18 +341,17 @@ mod test {
 
     #[test]
     fn test_try_normalize_edge_cases_2() {
-        // The following tests demonstrate some of the floating point
-        // edge cases that can cause try_normalize to return None.
+        // 以下测试展示了一些导致 try_normalize 返回 None 的浮点数边缘情况。
 
-        // Zero vector - Normalize returns None
+        // 零向量 - 归一化返回 None
         let a = coord! { x: 0.0, y: 0.0 };
         assert_eq!(a.try_normalize(), None);
 
-        // Where one of the components is NaN try_normalize returns None
+        // 如果其中一个分量为 NaN，则 try_normalize 返回 None
         let a = coord! { x: f64::NAN, y: 0.0 };
         assert_eq!(a.try_normalize(), None);
 
-        // Where one of the components is Infinite try_normalize returns None
+        // 如果其中一个分量为 Infinite，则 try_normalize 返回 None
         let a = coord! { x: f64::INFINITY, y: 0.0 };
         assert_eq!(a.try_normalize(), None);
     }

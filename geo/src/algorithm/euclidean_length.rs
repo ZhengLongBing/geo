@@ -2,15 +2,15 @@ use std::iter::Sum;
 
 use crate::{CoordFloat, Euclidean, Length, Line, LineString, MultiLineString};
 
-/// Calculation of the length
+/// 长度的计算
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length::<Euclidean>()` via the `Length` trait instead."
+    note = "请通过 `Length` 特征使用 `line.length::<Euclidean>()` 代替。"
 )]
 pub trait EuclideanLength<T, RHS = Self> {
-    /// Calculation of the length of a Line
+    /// 计算线的长度
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::EuclideanLength;
@@ -69,18 +69,21 @@ mod test {
     #[allow(deprecated)]
     #[test]
     fn empty_linestring_test() {
+        // 测试空的 LineString
         let linestring = line_string![];
         assert_relative_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[allow(deprecated)]
     #[test]
     fn linestring_one_point_test() {
+        // 测试只含一个点的 LineString
         let linestring = line_string![(x: 0., y: 0.)];
         assert_relative_eq!(0.0_f64, linestring.euclidean_length());
     }
     #[allow(deprecated)]
     #[test]
     fn linestring_test() {
+        // 测试正常的 LineString
         let linestring = line_string![
             (x: 1., y: 1.),
             (x: 7., y: 1.),
@@ -94,6 +97,7 @@ mod test {
     #[allow(deprecated)]
     #[test]
     fn multilinestring_test() {
+        // 测试 MultiLineString
         let mline = MultiLineString::new(vec![
             line_string![
                 (x: 1., y: 0.),
@@ -113,6 +117,7 @@ mod test {
     #[allow(deprecated)]
     #[test]
     fn line_test() {
+        // 测试 Line
         let line0 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 1. });
         let line1 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 3., y: 4. });
         assert_relative_eq!(line0.euclidean_length(), 1.);

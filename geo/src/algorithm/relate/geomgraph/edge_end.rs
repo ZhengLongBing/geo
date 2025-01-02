@@ -4,17 +4,15 @@ use crate::{coord, Coord, GeoFloat};
 use std::cell::RefCell;
 use std::fmt;
 
-/// Models the end of an edge incident on a node.
+/// 模型化一个连接到节点的边的末端。
 ///
-/// EdgeEnds have a direction determined by the direction of the ray from the initial
-/// point to the next point.
+/// EdgeEnd 的方向是由从初始点到下一个点的射线方向决定的。
 ///
-/// EdgeEnds are comparable by their EdgeEndKey, under the ordering
-/// "a has a greater angle with the x-axis than b".
+/// EdgeEnd 可以通过它们的 EdgeEndKey 来比较，根据"相对于 x 轴来说，a 的角度比 b 大"的顺序。
 ///
-/// This ordering is used to sort EdgeEnds around a node.
+/// 此排序用于在一个节点周围对 EdgeEnd 进行排序。
 ///
-/// This is based on [JTS's EdgeEnd as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/EdgeEnd.java)
+/// 这是基于 [JTS 的 EdgeEnd 版本 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/EdgeEnd.java)
 #[derive(Clone, Debug)]
 pub(crate) struct EdgeEnd<F>
 where
@@ -29,9 +27,12 @@ pub(crate) struct EdgeEndKey<F>
 where
     F: GeoFloat,
 {
+    // 边的两个坐标
     coord_0: Coord<F>,
     coord_1: Coord<F>,
+    // 差值坐标
     delta: Coord<F>,
+    // 象限
     quadrant: Option<Quadrant>,
 }
 
@@ -51,6 +52,7 @@ impl<F> EdgeEnd<F>
 where
     F: GeoFloat,
 {
+    // 创建一个新的 EdgeEnd
     pub fn new(coord_0: Coord<F>, coord_1: Coord<F>, label: Label) -> EdgeEnd<F> {
         let delta = coord_1 - coord_0;
         let quadrant = Quadrant::new(delta.x, delta.y);
@@ -65,18 +67,22 @@ where
         }
     }
 
+    // 获取标签
     pub fn label(&self) -> &Label {
         &self.label
     }
 
+    // 获取可修改的标签
     pub fn label_mut(&mut self) -> &mut Label {
         &mut self.label
     }
 
+    // 获取起始坐标
     pub fn coordinate(&self) -> &Coord<F> {
         &self.key.coord_0
     }
 
+    // 获取 EdgeEndKey
     pub fn key(&self) -> &EdgeEndKey<F> {
         &self.key
     }
@@ -88,6 +94,7 @@ impl<F> std::cmp::PartialEq for EdgeEndKey<F>
 where
     F: GeoFloat,
 {
+    // 判等
     fn eq(&self, other: &EdgeEndKey<F>) -> bool {
         self.delta == other.delta
     }
@@ -97,6 +104,7 @@ impl<F> std::cmp::PartialOrd for EdgeEndKey<F>
 where
     F: GeoFloat,
 {
+    // 部分比较
     fn partial_cmp(&self, other: &EdgeEndKey<F>) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
@@ -106,6 +114,7 @@ impl<F> std::cmp::Ord for EdgeEndKey<F>
 where
     F: GeoFloat,
 {
+    // 全比较
     fn cmp(&self, other: &EdgeEndKey<F>) -> std::cmp::Ordering {
         self.compare_direction(other)
     }
@@ -115,6 +124,7 @@ impl<F> EdgeEndKey<F>
 where
     F: GeoFloat,
 {
+    // 比较方向
     pub(crate) fn compare_direction(&self, other: &EdgeEndKey<F>) -> std::cmp::Ordering {
         use std::cmp::Ordering;
         if self.delta == other.delta {
@@ -141,6 +151,7 @@ mod test {
     use super::*;
 
     #[test]
+    // 测试排序
     fn test_ord() {
         let fake_label = Label::empty_line_or_point();
         let edge_end_1 = EdgeEnd::new(Coord::zero(), coord! { x: 1.0, y: 1.0 }, fake_label.clone());
@@ -150,7 +161,7 @@ mod test {
             std::cmp::Ordering::Equal
         );
 
-        // edge_end_3 is clockwise from edge_end_1
+        // edge_end_3 顺时针方向在 edge_end_1 的右边
         let edge_end_3 = EdgeEnd::new(Coord::zero(), coord! { x: 1.0, y: -1.0 }, fake_label);
         assert_eq!(
             edge_end_1.key().cmp(edge_end_3.key()),

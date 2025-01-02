@@ -1,41 +1,39 @@
 use crate::geometry::*;
 use geographiclib_rs::{Geodesic, PolygonArea, Winding};
 
-/// Determine the perimeter and area of a geometry on an ellipsoidal model of the earth.
+/// 计算地球椭球模型上的几何体的周长和面积。
 ///
-/// This uses the geodesic measurement methods given by [Karney (2013)].
+/// 使用[Karney (2013)]的方法进行大地测量。
 ///
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicArea<T> {
-    /// Determine the area of a geometry on an ellipsoidal model of the earth.
+    /// 计算地球椭球模型上的几何体的面积。
     ///
-    /// This uses the geodesic measurement methods given by [Karney (2013)].
+    /// 使用[Karney (2013)]的方法进行大地测量。
     ///
-    /// # Assumptions
-    ///  - Polygons are assumed to be wound in a counter-clockwise direction
-    ///    for the exterior ring and a clockwise direction for interior rings.
-    ///    This is the standard winding for geometries that follow the Simple Feature standard.
-    ///    Alternative windings may result in a negative area. See "Interpreting negative area values" below.
-    ///  - Polygons are assumed to be smaller than half the size of the earth. If you expect to be dealing
-    ///    with polygons larger than this, please use the `unsigned` methods.
+    /// # 假设
+    ///  - 多边形的外环假定为逆时针方向缠绕，内环为顺时针方向缠绕。
+    ///    这是符合简单特征标准的几何体的标准缠绕方式。
+    ///    使用其他缠绕方式可能导致面积为负。请参见下文“解释负面积值”。
+    ///  - 假定多边形小于地球的一半。如果处理更大的多边形，请使用`unsigned`方法。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meter²
+    /// - 返回值：平方米
     ///
-    /// # Interpreting negative area values
+    /// # 解释负面积值
     ///
-    /// A negative value can mean one of two things:
-    /// 1. The winding of the polygon is in the clockwise direction (reverse winding). If this is the case, and you know the polygon is smaller than half the area of earth, you can take the absolute value of the reported area to get the correct area.
-    /// 2. The polygon is larger than half the planet. In this case, the returned area of the polygon is not correct. If you expect to be dealing with very large polygons, please use the `unsigned` methods.
+    /// 负值可能意味着以下两种情况之一：
+    /// 1. 多边形是顺时针缠绕（反向缠绕）。如果是这种情况，并且您知道多边形小于地球的一半，可以取面积的绝对值。
+    /// 2. 多边形大于半个地球。在这种情况下，返回的多边形面积是不正确的。如果处理非常大的多边形，请使用`unsigned`方法。
     ///
-    /// # Examples
+    /// # 示例
     /// ```rust
     /// use geo::prelude::*;
     /// use geo::polygon;
     /// use geo::Polygon;
     ///
-    /// // The O2 in London
+    /// // 伦敦的O2
     /// let mut polygon: Polygon<f64> = polygon![
     ///     (x: 0.00388383, y: 51.501574),
     ///     (x: 0.00538587, y: 51.502278),
@@ -52,35 +50,34 @@ pub trait GeodesicArea<T> {
     /// let area = polygon.geodesic_area_unsigned();
     ///
     /// assert_eq!(
-    ///     78_596., // meters
+    ///     78_596., // 米
     ///     area.round()
     /// );
     /// ```
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn geodesic_area_signed(&self) -> T;
 
-    /// Determine the area of a geometry on an ellipsoidal model of the earth. Supports very large geometries that cover a significant portion of the earth.
+    /// 计算地球椭球模型上的几何体的面积。支持覆盖地球大部分的大型几何体。
     ///
-    /// This uses the geodesic measurement methods given by [Karney (2013)].
+    /// 使用[Karney (2013)]的方法进行大地测量。
     ///
-    /// # Assumptions
-    ///  - Polygons are assumed to be wound in a counter-clockwise direction
-    ///    for the exterior ring and a clockwise direction for interior rings.
-    ///    This is the standard winding for geometries that follow the Simple Features standard.
-    ///    Using alternative windings will result in incorrect results.
+    /// # 假设
+    ///  - 多边形的外环假定为逆时针方向缠绕，内环为顺时针方向缠绕。
+    ///    这是符合简单特征标准的几何体的标准缠绕方式。
+    ///    使用其他缠绕方式会导致结果不正确。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meter²
+    /// - 返回值：平方米
     ///
-    /// # Examples
+    /// # 示例
     /// ```rust
     /// use geo::prelude::*;
     /// use geo::polygon;
     /// use geo::Polygon;
     ///
-    /// // Describe a polygon that covers all of the earth EXCEPT this small square.
-    /// // The outside of the polygon is in this square, the inside of the polygon is the rest of the earth.
+    /// // 描述一个覆盖除了这个小正方形外的整个地球的多边形。
+    /// // 多边形的外环在这个正方形，内环是地球的其余部分。
     /// let mut polygon: Polygon<f64> = polygon![
     ///     (x: 0.0, y: 0.0),
     ///     (x: 0.0, y: 1.0),
@@ -90,72 +87,69 @@ pub trait GeodesicArea<T> {
     ///
     /// let area = polygon.geodesic_area_unsigned();
     ///
-    /// // Over 5 trillion square meters!
+    /// // 超过5万亿平方米！
     /// assert_eq!(area, 510053312945726.94);
     /// ```
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn geodesic_area_unsigned(&self) -> T;
 
-    /// Determine the perimeter of a geometry on an ellipsoidal model of the earth.
+    /// 计算地球椭球模型上的几何体的周长。
     ///
-    /// This uses the geodesic measurement methods given by [Karney (2013)].
+    /// 使用[Karney (2013)]的方法进行大地测量。
     ///
-    /// For a polygon this returns the sum of the perimeter of the exterior ring and interior rings.
-    /// To get the perimeter of just the exterior ring of a polygon, do `polygon.exterior().geodesic_length()`.
+    /// 对于多边形，此方法返回外环和内环的周长之和。
+    /// 要仅获得多边形的外环周长，请使用`polygon.exterior().geodesic_length()`。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meter
+    /// - 返回值：米
     ///
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn geodesic_perimeter(&self) -> T;
 
-    /// Determine the perimeter and area of a geometry on an ellipsoidal model of the earth, all in one operation.
+    /// 在一个操作中计算地球椭球模型上的几何体的周长和面积。
     ///
-    /// This returns the perimeter and area in a `(perimeter, area)` tuple and uses the geodesic measurement methods given by [Karney (2013)].
+    /// 以`(周长, 面积)`元组的形式返回周长和面积，并使用[Karney (2013)]的方法进行大地测量。
     ///
-    /// # Area Assumptions
-    ///  - Polygons are assumed to be wound in a counter-clockwise direction
-    ///    for the exterior ring and a clockwise direction for interior rings.
-    ///    This is the standard winding for Geometries that follow the Simple Features standard.
-    ///    Alternative windings may result in a negative area. See "Interpreting negative area values" below.
-    ///  - Polygons are assumed to be smaller than half the size of the earth. If you expect to be dealing
-    ///    with polygons larger than this, please use the 'unsigned' methods.
+    /// # 面积假设
+    ///  - 多边形的外环假定为逆时针方向缠绕，内环为顺时针方向缠绕。
+    ///    这是符合简单特征标准的几何体的标准缠绕方式。
+    ///    使用其他缠绕方式可能导致面积为负。请参见下文“解释负面积值”。
+    ///  - 假定多边形小于地球的一半。如果处理更大的多边形，请使用`unsigned`方法。
     ///
-    /// # Perimeter
-    /// For a polygon this returns the sum of the perimeter of the exterior ring and interior rings.
-    /// To get the perimeter of just the exterior ring of a polygon, do `polygon.exterior().geodesic_length()`.
+    /// # 周长
+    /// 对于多边形，此方法返回外环和内环的周长之和。
+    /// 要仅获得多边形的外环周长，请使用`polygon.exterior().geodesic_length()`。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: (meter, meter²)
+    /// - 返回值：(米, 平方米)
     ///
-    /// # Interpreting negative area values
+    /// # 解释负面积值
     ///
-    /// A negative area value can mean one of two things:
-    /// 1. The winding of the polygon is in the clockwise direction (reverse winding). If this is the case, and you know the polygon is smaller than half the area of earth, you can take the absolute value of the reported area to get the correct area.
-    /// 2. The polygon is larger than half the planet. In this case, the returned area of the polygon is not correct. If you expect to be dealing with very large polygons, please use the 'unsigned' methods.
+    /// 负面积值可能意味着以下两种情况之一：
+    /// 1. 多边形是顺时针缠绕（反向缠绕）。如果是这种情况，并且您知道多边形小于地球的一半，可以取面积的绝对值。
+    /// 2. 多边形大于半个地球。在这种情况下，返回的多边形面积是不正确的。如果处理非常大的多边形，请使用`unsigned`方法。
     ///
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn geodesic_perimeter_area_signed(&self) -> (T, T);
 
-    /// Determine the perimeter and area of a geometry on an ellipsoidal model of the earth, all in one operation. Supports very large geometries that cover a significant portion of the earth.
+    /// 在一个操作中计算地球椭球模型上的几何体的周长和面积。支持覆盖地球大部分的大型几何体。
     ///
-    /// This returns the perimeter and area in a `(perimeter, area)` tuple and uses the geodesic measurement methods given by [Karney (2013)].
+    /// 以`(周长, 面积)`元组的形式返回周长和面积，并使用[Karney (2013)]的方法进行大地测量。
     ///
-    /// # Area Assumptions
-    ///  - Polygons are assumed to be wound in a counter-clockwise direction
-    ///    for the exterior ring and a clockwise direction for interior rings.
-    ///    This is the standard winding for Geometries that follow the Simple Features standard.
-    ///    Using alternative windings will result in incorrect results.
+    /// # 面积假设
+    ///  - 多边形的外环假定为逆时针方向缠绕，内环为顺时针方向缠绕。
+    ///    这是符合简单特征标准的几何体的标准缠绕方式。
+    ///    使用其他缠绕方式会导致结果不正确。
     ///
-    /// # Perimeter
-    /// For a polygon this returns the perimeter of the exterior ring and interior rings.
-    /// To get the perimeter of just the exterior ring of a polygon, do `polygon.exterior().geodesic_length()`.
+    /// # 周长
+    /// 对于多边形，此方法返回外环和内环的周长。
+    /// 要仅获得多边形的外环周长，请使用`polygon.exterior().geodesic_length()`。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: (meter, meter²)
+    /// - 返回值：(米, 平方米)
     ///
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn geodesic_perimeter_area_unsigned(&self) -> (T, T);
@@ -195,7 +189,7 @@ fn geodesic_area(poly: &Polygon, sign: bool, reverse: bool, exterior_only: bool)
         (Winding::CounterClockwise, Winding::Clockwise)
     };
 
-    // Add the exterior ring
+    // 添加外环
     let (outer_perimeter, outer_area) = {
         let mut pa = PolygonArea::new(&g, exterior_winding);
         poly.exterior().points().for_each(|p| {
@@ -205,7 +199,7 @@ fn geodesic_area(poly: &Polygon, sign: bool, reverse: bool, exterior_only: bool)
         (perimeter, area)
     };
 
-    // Add the interior rings
+    // 添加内环
     let (interior_perimeter, mut inner_area) = if exterior_only {
         (0.0, 0.0)
     } else {
@@ -233,7 +227,7 @@ fn geodesic_area(poly: &Polygon, sign: bool, reverse: bool, exterior_only: bool)
     )
 }
 
-/// Generate a `GeodesicArea` implementation where the result is zero.
+/// 生成结果为零的`GeodesicArea`实现。
 macro_rules! zero_impl {
     ($type:ident) => {
         impl GeodesicArea<f64> for $type {
@@ -260,8 +254,7 @@ macro_rules! zero_impl {
     };
 }
 
-/// Generate a `GeodesicArea` implementation which delegates to the `Polygon`
-/// implementation.
+/// 生成一个`GeodesicArea`实现，该实现委托给`Polygon`实现。
 macro_rules! to_polygon_impl {
     ($type:ident) => {
         impl GeodesicArea<f64> for $type {
@@ -288,8 +281,7 @@ macro_rules! to_polygon_impl {
     };
 }
 
-/// Generate a `GeodesicArea` implementation which calculates the area for each of its
-/// sub-components and sums them up.
+/// 生成一个`GeodesicArea`实现，该实现计算其每个子组件的面积并求和。
 macro_rules! sum_impl {
     ($type:ident) => {
         impl GeodesicArea<f64> for $type {
@@ -378,7 +370,7 @@ mod test {
             epsilon = 0.01
         );
 
-        // Confirm that the exterior ring geodesic_length is the same as the perimeter
+        // 确认外环的大地测量长度与周长一致
         assert_relative_eq!(
             polygon.exterior().length::<Geodesic>(),
             polygon.geodesic_perimeter()
@@ -408,7 +400,7 @@ mod test {
             epsilon = 0.01
         );
 
-        // Confirm that the exterior ring geodesic_length is the same as the perimeter
+        // 确认外环的大地测量长度与周长一致
         assert_relative_eq!(
             polygon.exterior().length::<Geodesic>(),
             polygon.geodesic_perimeter()
@@ -425,7 +417,7 @@ mod test {
             (x: 148., y: -39.),
             (x: 154., y: -27.),
             (x: 144., y: -15.),
-            // (x: 125., y: -15.), <-- missing endpoint
+            // (x: 125., y: -15.), <-- 缺少终点
         ];
         assert_relative_eq!(
             7786102826806.07,
@@ -438,7 +430,7 @@ mod test {
             epsilon = 0.01
         );
 
-        // Confirm that the exterior ring geodesic_length is the same as the perimeter
+        // 确认外环的大地测量长度与周长一致
         assert_relative_eq!(
             polygon.exterior().length::<Geodesic>(),
             polygon.geodesic_perimeter()
@@ -495,7 +487,7 @@ mod test {
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
         assert_relative_eq!(1203317999173.7063, area, epsilon = 0.01);
 
-        // Test with exterior and interior both with CW winding
+        // 测试外环和内环均为CW缠绕
         use crate::algorithm::winding_order::Winding;
         poly.exterior_mut(|exterior| {
             exterior.make_cw_winding();
@@ -505,7 +497,7 @@ mod test {
         assert_relative_eq!(-1203317999173.7063, area, epsilon = 0.01);
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
 
-        // Test with exterior CW and interior CCW winding
+        // 测试外环CW和内环CCW缠绕
         poly.interiors_mut(|interiors| {
             for interior in interiors {
                 interior.make_ccw_winding();
@@ -516,7 +508,7 @@ mod test {
         assert_relative_eq!(-1203317999173.7063, area, epsilon = 0.01);
         assert_relative_eq!(5307742.446635911, perimeter, epsilon = 0.01);
 
-        // Test with exterior and interior both with CCW winding
+        // 测试外环和内环均为CCW缠绕
         poly.exterior_mut(|exterior| {
             exterior.make_ccw_winding();
         });
@@ -559,9 +551,9 @@ mod test {
 
     #[test]
     fn test_diamond() {
-        // a diamond shape
+        // 一个菱形形状
         let mut diamond = polygon![
-            // exterior oriented counter-clockwise
+            // 外环逆时针方向
             exterior: [
                 (x: 1.0, y: 0.0),
                 (x: 2.0, y: 1.0),
@@ -569,7 +561,7 @@ mod test {
                 (x: 0.0, y: 1.0),
                 (x: 1.0, y: 0.0),
             ],
-            // interior oriented clockwise
+            // 内环顺时针方向
             interiors: [
                 [
                     (x: 1.0, y: 0.5),
@@ -592,7 +584,7 @@ mod test {
         assert_relative_eq!(941333.0085011568, perimeter);
         assert_relative_eq!(18462065880.09138, area);
 
-        // Test with exterior and interior both with CW winding
+        // 测试外环和内环均为CW缠绕
         use crate::algorithm::winding_order::Winding;
         diamond.exterior_mut(|exterior| {
             exterior.make_cw_winding();
@@ -602,7 +594,7 @@ mod test {
         assert_relative_eq!(-18462065880.09138, area);
         assert_relative_eq!(941333.0085011568, perimeter);
 
-        // Test with exterior CW and interior CCW winding
+        // 测试外环CW和内环CCW缠绕
         diamond.interiors_mut(|interiors| {
             for interior in interiors {
                 interior.make_ccw_winding();
@@ -613,7 +605,7 @@ mod test {
         assert_relative_eq!(-18462065880.09138, area);
         assert_relative_eq!(941333.0085011568, perimeter);
 
-        // Test with exterior and interior both with CCW winding
+        // 测试外环和内环均为CCW缠绕
         diamond.exterior_mut(|exterior| {
             exterior.make_ccw_winding();
         });
@@ -625,8 +617,8 @@ mod test {
 
     #[test]
     fn test_very_large_polygon() {
-        // Describe a polygon that covers all of the earth EXCEPT this small square.
-        // The outside of the polygon is in this square, the inside of the polygon is the rest of the earth.
+        // 描述一个覆盖除这个小正方形外的整个地球的多边形。
+        // 多边形的外环在这个正方形，内环是地球的其余部分。
         let polygon_large: Polygon<f64> = polygon![
             (x: 0.0, y: 0.0),
             (x: 0.0, y: 1.0),
@@ -637,8 +629,8 @@ mod test {
         let area = polygon_large.geodesic_area_unsigned();
         assert_eq!(area, 510053312945726.94);
 
-        // A very large polygon that covers nearly all the earth, and then a hole that also covers nearly all the earth as well.
-        // This is a neat polygon because signed and unsigned areas are the same, regardless of the winding order.
+        // 一个几乎覆盖整个地球的大型多边形，然后是一个同样覆盖几乎整个地球的洞。
+        // 这是一个有趣的多边形，因为无论缠绕顺序如何，带符号和无符号面积都是相同的。
         let polygon_large_with_hole: Polygon<f64> = polygon![
             exterior: [
                 (x: 0.5, y: 0.5),

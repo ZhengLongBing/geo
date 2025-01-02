@@ -6,43 +6,38 @@ use crate::{GeoFloat, MultiPoint, Point};
 use rstar::primitives::GeomWithData;
 use rstar::RTree;
 
-/// Calculate the [Local Outlier Factor](https://en.wikipedia.org/wiki/Local_outlier_factor) of a set of points
+/// 计算一组点的[局部离群因子](https://en.wikipedia.org/wiki/Local_outlier_factor)
 ///
-/// Based on: Breunig, M., Kriegel, H., Ng, R., and Sander, J. (2000). *LOF: identifying density-based local
-/// outliers.* In ACM Int. Conf. on Management of Data, pages 93-104. doi: [10.1145/335191.335388](https://doi.org/10.1145/335191.335388)
+/// 基于：Breunig, M., Kriegel, H., Ng, R., 和 Sander, J. (2000). *LOF: identifying density-based local
+/// outliers.* 在 ACM Int. Conf. on Management of Data, 第 93-104 页。doi: [10.1145/335191.335388](https://doi.org/10.1145/335191.335388)
 ///
-/// LOF is an unsupervised algorithm that uses local data for anomaly detection.
+/// LOF 是一种使用局部数据进行异常检测的无监督算法。
 ///
-/// Outlier vs inlier classification is **highly dependent** on the shape of the data. LOF values <= 1
-/// can generally be considered inliers, but e.g. a highly concentrated, uniform dataset could result in
-/// points with a LOF of 1.05 being outliers.
-/// LOF scores should thus be evaluated in the context of the dataset as a whole in order to classify outliers.
+/// 离群和内部分类对于数据形态**高度依赖**。LOF 值 <= 1 通常可以被认为是内部点，但如一个高度集中的统一数据集可能导致
+/// LOF 为 1.05 的点是离群点。
+/// LOF 得分因此应在整个数据集的背景下进行评估，以便分类离群点。
 ///
-/// If you wish to run multiple outlier detection processes with differing neighbour counts in order
-/// to build up data for more robust detection (see p. 100-1 above), you can use the [`OutlierDetection::prepared_detector`] method, which retains
-/// the spatial index and point set between runs for greater efficiency. The [`OutlierDetection::generate_ensemble`] method
-/// will efficiently run the LOF algorithm over a contiguous range of neighbour inputs,
-/// allowing aggregations to be carried out over the resulting data.
+/// 如果你想运行多个具有不同邻居数量的离群检测过程以构建更稳健的检测数据(参见上文第 100-1 页)，可以使用 [`OutlierDetection::prepared_detector`] 方法，它在运行之间保留
+/// 空间索引和点集以提高效率。[`OutlierDetection::generate_ensemble`] 方法
+/// 将有效地在邻居输入的连续范围上运行 LOF 算法，允许在生成的数据上进行聚合。
 pub trait OutlierDetection<T>
 where
     T: GeoFloat,
 {
-    /// The LOF algorithm. `k_neighbours` specifies the number of neighbours to use for local outlier
-    /// classification. The paper linked above (see p. 100) suggests a `k_neighbours` value of 10 - 20
-    /// as a lower bound for "real-world"
-    /// data.
+    /// LOF 算法。 `k_neighbours` 指定用于局部离群分类的邻居数。上文链接的论文(参见第 100 页)建议将 `k_neighbours` 值设定为 10 - 20
+    /// 作为“现实世界”数据的下限。
     ///
-    /// # Note on Erroneous Input
-    /// If `k_neighbours` >= points in the set, or `k_neighbours` < 1, all input points will be returned with an LOF score of 1.
-    /// If there are at least `k_neighbours` duplicate points of an input point, LOF scores can be `∞` or `NaN`.
-    /// It is thus advisable to **deduplicate** or otherwise ensure the uniqueness of the input points.
+    /// # 关于错误输入的注意事项
+    /// 如果 `k_neighbours` >= 集合中的点或 `k_neighbours` < 1，所有输入点都会返回 LOF 值为 1。
+    /// 如果输入点有至少 `k_neighbours` 个重复点，LOF 值可以是 `∞` 或 `NaN`。
+    /// 因此建议**去重**或确保输入点的唯一性。
     ///
-    /// # Note on Returned Points
-    /// Outlier scores are always returned corresponding to input point order
+    /// # 关于返回点的注意事项
+    /// 离群得分总是对应于输入点的顺序返回。
     ///
-    /// # Examples
+    /// # 示例
     ///
-    /// ## MultiPoint
+    /// ## 多点
     ///
     /// ```
     /// use approx::assert_relative_eq;
@@ -57,18 +52,18 @@ where
     /// ];
     ///
     /// let lofscores = v.outliers(2);
-    /// // The third point is an outlier, resulting in a large LOF score
+    /// // 第三个点是离群点，导致较大的 LOF 得分
     /// assert_relative_eq!(lofscores[2], 3.0);
-    /// // The last point is an inlier, resulting in a small LOF score
+    /// // 最后一个点是内部点，导致较小的 LOF 得分
     /// assert_relative_eq!(lofscores[3], 1.0);
     /// ```
     ///
-    /// ## Computing indices, sorting by LOF score
+    /// ## 计算索引，根据 LOF 得分排序
     ///```
     /// use geo::OutlierDetection;
     /// use geo::{point, MultiPoint};
     ///
-    /// // these points contain 4 strong outliers
+    /// // 这些点包含4个强离群点
     /// let v = vec![
     ///     point!(x: 0.16, y: 0.14),
     ///     point!(x: 0.15, y: 0.33),
@@ -96,11 +91,11 @@ where
     ///     .enumerate()
     ///     .map(|(idx, score)| (idx, *score))
     ///     .collect();
-    /// // sort by LOF score
+    /// // 根据 LOF 得分排序
     /// idx_lofs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
-    /// // most likely outliers first
+    /// // 最有可能的离群点优先
     /// idx_lofs.reverse();
-    /// // four outliers, LOF scores way above 10
+    /// // 四个离群点，LOF 得分远高于 10
     /// idx_lofs
     ///     .iter()
     ///     .take(4)
@@ -108,14 +103,14 @@ where
     ///```
     fn outliers(&self, k_neighbours: usize) -> Vec<T>;
 
-    /// Create a prepared outlier detector allowing multiple runs to retain the spatial index in use.
-    /// A [`PreparedDetector`] can efficiently recompute outliers with different `k_neigbhours` values.
+    /// 创建一个准备好的离群检测器，允许多次运行以保留使用中的空间索引。
+    /// 一个[`PreparedDetector`]可以高效地重新计算不同 `k_neigbhours` 值的离群点。
     fn prepared_detector(&self) -> PreparedDetector<T>;
 
-    /// Perform successive runs with `k_neighbours` values between `bounds`,
-    /// generating an ensemble of LOF scores, which may be aggregated using e.g. min, max, or mean
+    /// 在`k_neighbours`值在`bounds`之间执行连续的运行，
+    /// 生成一个 LOF 得分的集合，可以使用如 min、max 或 mean 进行聚合。
     ///
-    /// # Examples
+    /// # 示例
     ///```
     /// use geo::OutlierDetection;
     /// use geo::{point, Point, MultiPoint};
@@ -141,8 +136,8 @@ where
     ///     point!(x: 0.2 , y: 0.2),
     /// ];
     /// let ensemble = v.generate_ensemble((2..=5));
-    /// // retain the maximum LOF value for each point for all runs
-    /// // this will result in a single Vec
+    /// // 保留每次运行中每个点的最大 LOF 值
+    /// // 这将导致一个单独的 Vec
     /// let aggregated = ensemble[1..].iter().fold(ensemble[0].clone(), |acc, xs| {
     ///     acc.iter()
     ///         .zip(xs)
@@ -153,17 +148,17 @@ where
     ///```
     fn generate_ensemble(&self, bounds: RangeInclusive<usize>) -> Vec<Vec<T>>;
 
-    /// Convenience method to efficiently calculate the minimum values of an LOF ensemble
+    /// 便捷方法来有效计算 LOF 集合的最小值
     fn ensemble_min(&self, bounds: RangeInclusive<usize>) -> Vec<T>;
 
-    /// Convenience method to efficiently calculate the maximum values of an LOF ensemble
+    /// 便捷方法来有效计算 LOF 集合的最大值
     fn ensemble_max(&self, bounds: RangeInclusive<usize>) -> Vec<T>;
 }
 
-/// This struct allows multiple detection operations to be run on a point set using varying `k_neighbours` sizes
-/// without having to rebuild the underlying spatial index. Its [`PreparedDetector::outliers`] method
-/// has the same signature as [`OutlierDetection::outliers`], but retains the underlying spatial index and point set
-/// for greater efficiency.
+/// 此结构体允许在点集中使用不同的 `k_neighbours` 大小进行多次检测操作，
+/// 而无需重建底层的空间索引。它的 [`PreparedDetector::outliers`] 方法
+/// 与 [`OutlierDetection::outliers`] 方法具有相同的签名，但保留底层的空间索引和点集，
+/// 提高效率。
 #[derive(Clone, Debug)]
 pub struct PreparedDetector<'a, T>
 where
@@ -177,7 +172,7 @@ impl<'a, T> PreparedDetector<'a, T>
 where
     T: GeoFloat + Sum,
 {
-    /// Create a new "prepared" detector which allows repeated LOF algorithm calls with varying neighbour sizes
+    /// 创建一个新的"准备好"的检测器，允许重复进行具有不同邻居大小的 LOF 算法调用
     fn new(points: &'a [Point<T>]) -> Self {
         let geoms: Vec<GeomWithData<_, usize>> = points
             .iter()
@@ -188,7 +183,7 @@ where
         Self { tree, points }
     }
 
-    /// See [`OutlierDetection::outliers`] for usage
+    /// 参见 [`OutlierDetection::outliers`] 以了解用法
     pub fn outliers(&self, kneighbours: usize) -> Vec<T> {
         lof(self.points, &self.tree, kneighbours)
     }
@@ -204,7 +199,7 @@ where
 {
     debug_assert!(kneighbours > 0);
     if points.len() <= kneighbours || kneighbours < 1 {
-        // no point in trying to run the algorithm in this case
+        // 在这种情况下没有必要尝试运行算法
         return points.iter().map(|_| T::one()).collect();
     }
     let knn_dists = points
@@ -215,14 +210,14 @@ where
                 .collect()
         })
         .collect::<Vec<Vec<_>>>();
-    // calculate LRD (local reachability density) of each point
-    // LRD is the estimated distance at which a point can be found by its neighbours:
-    // count(neighbour_set) / sum(max(point.kTh_dist, point.dist2(other point)) for all points in neighbour_set)
-    // we call this sum-of–max-distances reachDistance
+    // 计算每个点的 LRD（局部可达性密度）
+    // LRD 是一个点可以被其邻居找到的估计距离：
+    // count(neighbour_set) / sum(max(point.kTh_dist, point.dist2(另一个点)) 对于邻域集中的所有点)
+    // 我们称这个最大距离之和为 reachDistance
     let local_reachability_densities: Vec<T> = knn_dists
         .iter()
         .map(|neighbours| {
-            // for each point's neighbour set, calculate kth distance
+            // 对于每个点的邻居集，计算第k个距离
             let kth_dist = neighbours
                 .iter()
                 .map(|(_, distance)| distance)
@@ -231,29 +226,29 @@ where
             T::from(neighbours.len()).unwrap()
                 / neighbours
                     .iter()
-                    // sum the max between neighbour distance and kth distance for the neighbour set
+                    // 对邻居集中邻居距离和第k个距离之间的最大值求和
                     .map(|(_, distance)| distance.max(*kth_dist))
                     .sum()
         })
         .collect();
-    // LOF of a point p is the sum of the LRD of all the points
-    // in the set kNearestSet(p) * the sum of the reachDistance of all the points of the same set,
-    // to the point p, all divided by the number of items in p's kNN set, squared.
+    // 一个点 p 的 LOF 是所有点的 LRD 之和
+    // 在集合 kNearestSet(p) 中 * 对第一个点 p，所有点的 reachDistance 之和，
+    // 除以 p 的 kNN 集中项数的平方。
     knn_dists
         .iter()
         .map(|neighbours| {
-            // for each point's neighbour set, calculate kth distance
+            // 对于每个点的邻居集，计算第k个距离
             let kth_dist = neighbours
                 .iter()
                 .map(|(_, distance)| distance)
                 .last()
                 .unwrap();
-            // sum neighbour set LRD scores
+            // 邻居集 LRD 得分之和
             let lrd_scores: T = neighbours
                 .iter()
                 .map(|(neighbour, _)| local_reachability_densities[neighbour.data])
                 .sum();
-            // sum neighbour set reachDistance
+            // 求和邻居集合的 reachDistance
             let sum_rd: T = neighbours
                 .iter()
                 .map(|(_, distance)| distance.max(*kth_dist))
@@ -339,7 +334,7 @@ mod tests {
 
     #[test]
     fn test_lof() {
-        // third point is an outlier
+        // 第三个点是离群点
         let v = [
             Point::new(0.0, 0.0),
             Point::new(0.0, 1.0),
@@ -352,7 +347,7 @@ mod tests {
     }
     #[test]
     fn test_lof2() {
-        // fourth point is an outlier
+        // 第四个点是离群点
         let v = [
             Point::new(0.0, 0.0),
             Point::new(1.0, 0.0),
@@ -364,7 +359,7 @@ mod tests {
     }
     #[test]
     fn test_lof3() {
-        // second point is an outlier, sort and reverse so scores are in descending order
+        // 第二个点是离群点，排序并反转，因此分数按降序排列
         let v = [
             Point::new(0.0, 0.0),
             Point::new(0.0, 3.0),
@@ -378,9 +373,9 @@ mod tests {
     }
     #[test]
     fn test_lof4() {
-        // this dataset contains 4 outliers
-        // indices 6, 7, 8, 9 should be detected
-        // order: 9, 6, 8, 7
+        // 该数据集包含4个离群点
+        // 应检测出索引 6, 7, 8, 9
+        // 顺序：9, 6, 8, 7
         let v = vec![
             point!(x: 0.16, y: 0.14),
             point!(x: 0.15, y: 0.33),
@@ -410,17 +405,17 @@ mod tests {
             .collect();
         idx_lofs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
         idx_lofs.reverse();
-        // four outliers, scores way above 10
+        // 四个离群点，得分远高于 10
         idx_lofs
             .iter()
             .take(4)
             .for_each(|score| assert!(score.1 > 10.0));
-        // the rest below 2
+        // 剩下的低于 2
         idx_lofs
             .iter()
             .skip(4)
             .for_each(|score| assert!(score.1 < 2.0));
-        // ensure that scores are being computed correctly
+        // 确保得分计算正确
         assert_eq!(idx_lofs[0].0, 9);
         assert_eq!(idx_lofs[1].0, 6);
         assert_eq!(idx_lofs[2].0, 8);
@@ -428,7 +423,7 @@ mod tests {
     }
     #[test]
     fn test_lof5() {
-        // third point is an outlier
+        // 第三个点是离群点
         let v = [
             Point::new(0.0, 0.0),
             Point::new(0.0, 1.0),
@@ -439,7 +434,7 @@ mod tests {
         let prepared = &v.prepared_detector();
         let s1 = prepared.outliers(2);
         let s2 = prepared.outliers(3);
-        // different neighbour sizes give different scores
+        // 不同的邻居大小给出了不同的分数
         assert_ne!(s1[2], s2[2]);
     }
 }

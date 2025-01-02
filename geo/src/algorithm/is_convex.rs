@@ -1,110 +1,89 @@
 use crate::kernels::*;
 use crate::{Coord, GeoNum, LineString};
 
-/// Predicates to test the convexity of a [ `LineString` ].
-/// A closed `LineString` is said to be _convex_ if it
-/// encloses a [convex set]. It is said to be _strictly
-/// convex_ if in addition, no three consecutive vertices
-/// are collinear. It is _collinear_ if all the vertices lie
-/// on the same line.
+/// 用于测试[ `LineString` ]的凸性。
+/// 当封闭的`LineString`包围一个[凸集]时，被称为_凸_。
+/// 如果三个连续顶点中没有共线的，它被称为_严格凸_。
+/// 所有顶点在同一条直线上称为_共线_。
 ///
-/// # Remarks
+/// # 备注
 ///
-/// - Collinearity does not require that the `LineString`
-///   be closed, but the rest of the predicates do.
+/// - 共线性不要求`LineString`是封闭的，但其他谓词是这样。
 ///
-/// - This definition is closely related to the notion
-///   of [convexity of polygons][convex set]. In particular, a
-///   [`Polygon`](crate::Polygon) is convex, if and only if its `exterior` is
-///   convex, and `interiors` is empty.
+/// - 这个定义与[多边形的凸性][凸集]的概念密切相关。
+///   特别地，一个[`多边形`](crate::Polygon)是凸的，当且仅当它的`外部边界`是凸的，
+///   且`内部`为空。
 ///
-/// - The [`ConvexHull`] algorithm always returns a strictly
-///   convex `LineString` unless the input is empty or
-///   collinear. The [`graham_hull`] algorithm provides an
-///   option to include collinear points, producing a
-///   (possibly non-strict) convex `LineString`.
+/// - [`ConvexHull`]算法总是返回一个严格凸的`LineString`，除非输入为空或共线。
+///   [`graham_hull`]算法提供包含共线点的选项，生成一个（可能非严格）的凸`LineString`。
 ///
-/// # Edge Cases
+/// # 极端情况
 ///
-/// - the convexity, and collinearity of an empty
-///   `LineString` is _unspecified_ and must not be relied
-///   upon.
+/// - 一个空的`LineString`的凸性和共线性是_未指定的_，不应倚赖于此。
 ///
-/// - A closed `LineString` with at most three coordinates
-///   (including the possibly repeated first coordinate) is
-///   both convex and collinear. However, the strict convexity
-///   is _unspecified_ and must not be relied upon.
+/// - 一个封闭的`LineString`最多包含三个坐标（包括可能重复的第一个坐标）是
+///   既凸又共线的。然而，严格凸性是_未指定的_，不应被倚赖。
 ///
 /// [convex combination]: //en.wikipedia.org/wiki/Convex_combination
 /// [convex set]: //en.wikipedia.org/wiki/Convex_set
 /// [`ConvexHull`]: crate::ConvexHull
 /// [`graham_hull`]: crate::convex_hull::graham_hull
 pub trait IsConvex {
-    /// Test and get the orientation if the shape is convex.
-    /// Tests for strict convexity if `allow_collinear`, and
-    /// only accepts a specific orientation if provided.
+    /// 测试并获取形状是否为凸的方向。
+    /// 如果`allow_collinear`为真，测试严格凸性，只接受提供的特定方向。
     ///
-    /// The return value is `None` if either:
+    /// 如果以下任何一个成立，返回值为`None`：
     ///
-    /// 1. the shape is not convex
+    /// 1. 形状不是凸的
     ///
-    /// 1. the shape is not strictly convex, and
-    ///    `allow_collinear` is false
+    /// 2. 形状不是严格凸的，并且`allow_collinear`为假
     ///
-    /// 1. an orientation is specified, and some three
-    ///    consecutive vertices where neither collinear, nor
-    ///    in the specified orientation.
+    /// 3. 指定了一个方向，且存在三个连续顶点既非共线也不是在指定方向。
     ///
-    /// In all other cases, the return value is the
-    /// orientation of the shape, or `Orientation::Collinear`
-    /// if all the vertices are on the same line.
+    /// 在所有其他情况下，返回值是形状的方向，或者如果所有顶点在同一条线上，
+    /// 返回`Orientation::Collinear`。
     ///
-    /// **Note.** This predicate is not equivalent to
-    /// `is_collinear` as this requires that the input is
-    /// closed.
+    /// **注意。** 这个谓词不同于`is_collinear`，因为后者要求输入是封闭的。
     fn convex_orientation(
         &self,
         allow_collinear: bool,
         specific_orientation: Option<Orientation>,
     ) -> Option<Orientation>;
 
-    /// Test if the shape is convex.
+    /// 测试形状是否为凸的。
     fn is_convex(&self) -> bool {
         self.convex_orientation(true, None).is_some()
     }
 
-    /// Test if the shape is convex, and oriented
-    /// counter-clockwise.
+    /// 测试形状是否为逆时针方向的凸。
     fn is_ccw_convex(&self) -> bool {
         self.convex_orientation(true, Some(Orientation::CounterClockwise))
             .is_some()
     }
 
-    /// Test if the shape is convex, and oriented clockwise.
+    /// 测试形状是否为顺时针方向的凸。
     fn is_cw_convex(&self) -> bool {
         self.convex_orientation(true, Some(Orientation::Clockwise))
             .is_some()
     }
 
-    /// Test if the shape is strictly convex.
+    /// 测试形状是否为严格凸。
     fn is_strictly_convex(&self) -> bool {
         self.convex_orientation(false, None).is_some()
     }
 
-    /// Test if the shape is strictly convex, and oriented
-    /// counter-clockwise.
+    /// 测试形状是否为逆时针方向的严格凸。
     fn is_strictly_ccw_convex(&self) -> bool {
         self.convex_orientation(false, Some(Orientation::CounterClockwise))
             == Some(Orientation::CounterClockwise)
     }
 
-    /// Test if the shape is strictly convex, and oriented
-    /// clockwise.
+    /// 测试形状是否为顺时针方向的严格凸。
     fn is_strictly_cw_convex(&self) -> bool {
         self.convex_orientation(false, Some(Orientation::Clockwise)) == Some(Orientation::Clockwise)
     }
 
-    /// Test if the shape lies on a line.
+    /// 测试形状是否在一条线上。
     fn is_collinear(&self) -> bool;
 }
 
@@ -127,13 +106,10 @@ impl<T: GeoNum> IsConvex for LineString<T> {
     }
 }
 
-/// A utility that tests convexity of a sequence of
-/// coordinates. It verifies that for all `0 <= i < n`, the
-/// vertices at positions `i`, `i+1`, `i+2` (mod `n`) have
-/// the same orientation, optionally accepting collinear
-/// triplets, and expecting a specific orientation. The
-/// output is `None` or the only non-collinear orientation,
-/// unless everything is collinear.
+/// 验证一系列坐标是否为凸的工具函数。
+/// 它验证对于所有`0 <= i < n`，在位置`i`，`i+1`，`i+2`（模`n`）的顶点具有相同的方向，
+/// 可选择性地接受共线的三元组，并期望特定的方向。
+/// 除非所有东西都是共线的，否则输出为`None`或唯一的非共线方向。
 fn is_convex_shaped<T>(
     coords: &[Coord<T>],
     allow_collinear: bool,
@@ -154,8 +130,7 @@ where
     let find_first_non_collinear = (0..n).map(orientation_at).find_map(|(i, orientation)| {
         match orientation {
             Orientation::Collinear => {
-                // If collinear accepted, we skip, otherwise
-                // stop.
+                // 如果接受共线，继续，否则停止。
                 if allow_collinear {
                     None
                 } else {
@@ -169,26 +144,25 @@ where
     let (i, first_non_collinear) = if let Some((i, orientation)) = find_first_non_collinear {
         match orientation {
             Orientation::Collinear => {
-                // Only happens if !allow_collinear
+                // 只有在!allow_collinear时发生
                 assert!(!allow_collinear);
                 return None;
             }
             _ => (i, orientation),
         }
     } else {
-        // Empty or everything collinear, and allowed.
+        // 空的或所有东西都是共线并且被允许。
         return Some(Orientation::Collinear);
     };
 
-    // If a specific orientation is expected, accept only that.
+    // 如果期望一个特定的方向，则只接受该方向。
     if let Some(req_orientation) = specific_orientation {
         if req_orientation != first_non_collinear {
             return None;
         }
     }
 
-    // Now we have a fixed orientation expected at the rest
-    // of the coords. Loop to check everything matches it.
+    // 现在，我们在其余坐标中预期一个固定的方向。循环检查每个都匹配它。
     if ((i + 1)..n)
         .map(orientation_at)
         .all(|(_, orientation)| match orientation {
@@ -209,8 +183,7 @@ mod tests {
 
     #[test]
     fn test_corner_cases() {
-        // This is just tested to ensure there is no panic
-        // due to out-of-index access
+        // 此测试仅用于确保没有因越界访问而导致恐慌。
         let empty: LineString = line_string!();
         assert!(empty.is_collinear());
         assert!(!empty.is_convex());

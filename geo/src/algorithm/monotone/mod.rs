@@ -12,21 +12,17 @@ pub(crate) use sweep::SimpleSweep;
 mod builder;
 pub use builder::monotone_subdivision;
 
-/// A multi-polygon represented as a collection of (disjoint) monotone polygons.
+/// 一个由多个（不相交）单调多边形组成的多边形集合。
 ///
-/// This structure is optimized for point-in-polygon queries, and is typically
-/// much faster than the equivalent method on `Polygon`.  This is because a
-/// single monotone polygon can be tested for intersection with a point in
-/// `O(log n)` time, where `n` is the number of vertices in the polygon.  In
-/// contrast, the equivalent method on `Polygon` is `O(n)`.  Typically, a
-/// polygon can be sub-divided into a small number of monotone polygons, thus
-/// providing a significant speed-up.
+/// 该结构针对点在多边形内的查询进行了优化，通常比`Polygon`上的同等方法快得多。
+/// 这是因为单个单调多边形可以在`O(log n)`时间内进行点的相交测试，其中`n`是多边形中的顶点数量。
+/// 相比之下，`Polygon`上的当量方法是`O(n)`。
+/// 通常，一个多边形可以分割为少量单调多边形，从而提供显著的加速。
 ///
-/// # Example
+/// # 示例
 ///
-/// Construct a `MonotonicPolygons` from a `Polygon`, or a `MultiPolygon` using
-/// `MontonicPolygons::from`, and query point intersection via the
-/// `Intersects<Coord>` trait.
+/// 从`Polygon`或`MultiPolygon`构造一个`MonotonicPolygons`，使用`MonotonicPolygons::from`，
+/// 并通过`Intersects<Coord>`特性查询点相交。
 ///
 /// ```rust
 /// use geo::prelude::*;
@@ -46,12 +42,12 @@ pub use builder::monotone_subdivision;
 pub struct MonotonicPolygons<T: GeoNum>(Vec<MonoPoly<T>>);
 
 impl<T: GeoNum> MonotonicPolygons<T> {
-    /// Get a reference to the monotone polygons.
+    /// 获取单调多边形的引用。
     pub fn subdivisions(&self) -> &Vec<MonoPoly<T>> {
         &self.0
     }
 
-    /// Reduce to inner `Vec` of monotone polygons.
+    /// 将其简化为内在的单调多边形向量。
     pub fn into_subdivisions(self) -> Vec<MonoPoly<T>> {
         self.0
     }

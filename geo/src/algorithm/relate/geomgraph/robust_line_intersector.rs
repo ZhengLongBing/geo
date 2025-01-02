@@ -4,7 +4,7 @@ use crate::{BoundingRect, Contains, Intersects};
 use crate::{Coord, GeoFloat, Line, Rect};
 use num_traits::Zero;
 
-/// A robust version of [LineIntersector](traits.LineIntersector).
+/// [LineIntersector](traits.LineIntersector) 的一个稳健版本
 #[derive(Clone)]
 pub(crate) struct RobustLineIntersector;
 
@@ -21,22 +21,18 @@ impl<F: GeoFloat> LineIntersector<F> for RobustLineIntersector {
 }
 
 impl RobustLineIntersector {
-    /// Computes the "edge distance" of an intersection point p along a segment.
+    /// 计算交点 p 在线段上的“边缘距离”
     ///
-    /// The edge distance is a metric of the point along the edge.
-    /// The metric used is a robust and easy to compute metric function.
-    /// It is _not_ equivalent to the usual Euclidean metric.
-    /// It relies on the fact that either the x or the y ordinates of the
-    /// points in the edge are unique, depending on whether the edge is longer in
-    /// the horizontal or vertical direction.
+    /// 边缘距离是沿边缘的点的度量。
+    /// 使用的度量是一个稳健且易于计算的度量函数。
+    /// 它 _不_ 等于通常的欧几里得度量。
+    /// 该方法依赖于边缘中的点的 x 或 y 坐标是唯一的，具体取决于边缘在横向或纵向哪个更长。
     ///
-    /// NOTE: This function may produce incorrect distances for inputs where p is not precisely
-    /// on p1-p2 (E.g. p = (139,9) p1 = (139,10), p2 = (280,1) produces distance 0.0, which is
-    /// incorrect.
+    /// 注意：对于 p 不完全位于 p1-p2 的输入，这个函数可能会产生不正确的距离
+    /// （例如：p = (139,9)，p1 = (139,10)，p2 = (280,1)，返回的距离是 0.0，这是不正确的）。
     ///
-    /// My hypothesis is that the function is safe to use for points which are the
-    /// result of _rounding_ points which lie on the line,
-    /// but not safe to use for _truncated_ points.
+    /// 我的假设是，该函数对于那些精确位于直线上的点的 _舍入_ 结果是安全的，
+    /// 但对于 _截断_ 的点不安全。
     pub fn compute_edge_distance<F: GeoFloat>(intersection: Coord<F>, line: Line<F>) -> F {
         let dx = (line.end.x - line.start.x).abs();
         let dy = (line.end.y - line.start.y).abs();
@@ -58,14 +54,14 @@ impl RobustLineIntersector {
             } else {
                 dist = intersection_dy;
             }
-            // hack to ensure that non-endpoints always have a non-zero distance
+            // 确保非端点始终具有非零距离的修正
             if dist == F::zero() && intersection != line.start {
                 dist = intersection_dx.max(intersection_dy);
             }
         }
         debug_assert!(
             !(dist == F::zero() && intersection != line.start),
-            "Bad distance calculation"
+            "距离计算错误"
         );
         dist
     }

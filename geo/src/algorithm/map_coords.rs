@@ -1,19 +1,19 @@
-//! # Advanced Example: Fallible Geometry coordinate conversion using `PROJ`
-//!
-#![cfg_attr(feature = "use-proj", doc = "```")]
-#![cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
-//! // activate the [use-proj] feature in cargo.toml in order to access proj functions
+//! # 高级示例：使用 `PROJ` 进行可失败的几何坐标转换
+//! ```
+//! #![cfg_attr(feature = "use-proj", doc = "```")]
+//! #![cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
+//! // 在 cargo.toml 中激活 [use-proj] 功能以访问 proj 函数
 //! use approx::assert_relative_eq;
 //! use geo::{Coord, Point};
 //! use geo::MapCoords;
 //! use proj::{Coord as ProjCoord, Proj, ProjError};
-//! // GeoJSON uses the WGS 84 coordinate system
+//! // GeoJSON 使用 WGS 84 坐标系
 //! let from = "EPSG:4326";
-//! // The NAD83 / California zone 6 (ftUS) coordinate system
+//! // NAD83 / California zone 6 (ftUS) 坐标系
 //! let to = "EPSG:2230";
 //! let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
 //! let transform = |c: Coord<f64>| -> Result<_, ProjError> {
-//!     // proj can accept Point, Coord, Tuple, and array values, returning a Result
+//!     // proj 可以接受 Point、Coord、元组和数组值，并返回一个 Result
 //!     let shifted = to_feet.convert(c)?;
 //!     Ok(shifted)
 //! };
@@ -27,13 +27,13 @@
 pub(crate) use crate::geometry::*;
 pub(crate) use crate::CoordNum;
 
-/// Map a function over all the coordinates in an object, returning a new one
+/// 在对象中的所有坐标上映射一个函数，返回一个新对象
 pub trait MapCoords<T, NT> {
     type Output;
 
-    /// Apply a function to all the coordinates in a geometric object, returning a new object.
+    /// 将一个函数应用于几何对象中的所有坐标，返回一个新对象。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::MapCoords;
@@ -46,11 +46,10 @@ pub trait MapCoords<T, NT> {
     /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
     ///
-    /// Note that the input and output numeric types need not match.
+    /// 请注意，输入和输出的数值类型可以不匹配。
     ///
-    /// For example, consider OpenStreetMap's coordinate encoding scheme, which, to save space,
-    /// encodes latitude/longitude as 32bit signed integers from the floating point values
-    /// to six decimal places (eg. lat/lon * 1000000).
+    /// 例如，考虑 OpenStreetMap 的坐标编码方案，为节省空间，
+    /// 它将浮点值的纬度/经度编码为32位有符号整数，精确到小数点后六位（例如，lat/lon * 1000000）。
     ///
     /// ```
     /// # use geo::{Coord, Point};
@@ -66,16 +65,15 @@ pub trait MapCoords<T, NT> {
     /// assert_eq!(fixed_point_geom.x(), 10150000);
     /// ```
     ///
-    /// If you want *only* to convert between numeric types (i32 -> f64) without further
-    /// transformation, consider using [`Convert`](crate::Convert).
+    /// 如果你只想在数值类型之间转换（i32 -> f64）而不进行进一步的转换，考虑使用 [`Convert`](crate::Convert)。
     fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output
     where
         T: CoordNum,
         NT: CoordNum;
 
-    /// Map a fallible function over all the coordinates in a geometry, returning a Result
+    /// 在几何中的所有坐标上映射一个可能失败的函数，返回一个 Result
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use approx::assert_relative_eq;
@@ -91,22 +89,22 @@ pub trait MapCoords<T, NT> {
     /// assert_relative_eq!(p2, Point::new(1010., 40.), epsilon = 1e-6);
     /// ```
     ///
-    /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
+    /// ## 高级示例：使用 `PROJ` 进行几何坐标转换
     ///
     #[cfg_attr(feature = "use-proj", doc = "```")]
     #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
     /// use approx::assert_relative_eq;
-    /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
+    /// // 在 cargo.toml 中激活 [use-proj] 功能以访问 proj 函数
     /// use geo::{Coord, Point};
     /// use geo::map_coords::MapCoords;
     /// use proj::{Coord as ProjCoord, Proj, ProjError};
-    /// // GeoJSON uses the WGS 84 coordinate system
+    /// // GeoJSON 使用 WGS 84 坐标系
     /// let from = "EPSG:4326";
-    /// // The NAD83 / California zone 6 (ftUS) coordinate system
+    /// // NAD83 / California zone 6 (ftUS) 坐标系
     /// let to = "EPSG:2230";
     /// let to_feet = Proj::new_known_crs(&from, &to, None).unwrap();
     /// let transform = |c: Coord<f64>| -> Result<_, ProjError> {
-    ///     // proj can accept Point, Coord, Tuple, and array values, returning a Result
+    ///     // proj 可以接受 Point、Coord、元组和数组值，并返回一个 Result
     ///     let shifted = to_feet.convert(c)?;
     ///     Ok(shifted)
     /// };
@@ -126,9 +124,9 @@ pub trait MapCoords<T, NT> {
 }
 
 pub trait MapCoordsInPlace<T> {
-    /// Apply a function to all the coordinates in a geometric object, in place
+    /// 将一个函数应用于几何对象中的所有坐标，直接修改其中
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::MapCoordsInPlace;
@@ -144,12 +142,11 @@ pub trait MapCoordsInPlace<T> {
     where
         T: CoordNum;
 
-    /// Map a fallible function over all the coordinates in a geometry, in place, returning a `Result`.
+    /// 在几何对象中的所有坐标上映射一个可能失败的函数，直接修改它，返回一个 `Result`。
     ///
-    /// Upon encountering an `Err` from the function, `try_map_coords_in_place` immediately returns
-    /// and the geometry is potentially left in a partially mapped state.
+    /// 如果函数返回 `Err`，`try_map_coords_in_place` 会立即返回，并且几何对象可能处于部分映射状态。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::MapCoordsInPlace;
@@ -179,7 +176,7 @@ pub trait MapCoordsInPlace<T> {
 }
 
 //-----------------------//
-// Point implementations //
+// 点(Point)实现 //
 //-----------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Point<T> {
@@ -212,7 +209,7 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Point<T> {
 }
 
 //----------------------//
-// Line implementations //
+// 线(Line)实现 //
 //----------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Line<T> {
@@ -254,7 +251,7 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Line<T> {
 }
 
 //----------------------------//
-// LineString implementations //
+// 线串(LineString)实现 //
 //----------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for LineString<T> {
@@ -298,9 +295,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for LineString<T> {
     }
 }
 
-//-------------------------//
-// Polygon implementations //
-//-------------------------//
+//------------------------//
+// Polygon实现 //
+//------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Polygon<T> {
     type Output = Polygon<NT>;
@@ -369,9 +366,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Polygon<T> {
     }
 }
 
-//----------------------------//
-// MultiPoint implementations //
-//----------------------------//
+//--------------------------//
+// MultiPoint实现 //
+//--------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPoint<T> {
     type Output = MultiPoint<NT>;
@@ -411,9 +408,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for MultiPoint<T> {
     }
 }
 
-//---------------------------------//
-// MultiLineString implementations //
-//---------------------------------//
+//------------------------------//
+// MultiLineString实现 //
+//------------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiLineString<T> {
     type Output = MultiLineString<NT>;
@@ -453,9 +450,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for MultiLineString<T> {
     }
 }
 
-//------------------------------//
-// MultiPolygon implementations //
-//------------------------------//
+//-----------------------------//
+// MultiPolygon实现 //
+//-----------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for MultiPolygon<T> {
     type Output = MultiPolygon<NT>;
@@ -495,9 +492,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for MultiPolygon<T> {
     }
 }
 
-//--------------------------//
-// Geometry implementations //
-//--------------------------//
+//-------------------------//
+// Geometry实现 //
+//-------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Geometry<T> {
     type Output = Geometry<NT>;
@@ -575,9 +572,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Geometry<T> {
     }
 }
 
-//------------------------------------//
-// GeometryCollection implementations //
-//------------------------------------//
+//-----------------------------------//
+// GeometryCollection实现 //
+//-----------------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for GeometryCollection<T> {
     type Output = GeometryCollection<NT>;
@@ -617,9 +614,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for GeometryCollection<T> {
     }
 }
 
-//----------------------//
-// Rect implementations //
-//----------------------//
+//------------------------//
+// Rect实现 //
+//------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Rect<T> {
     type Output = Rect<NT>;
@@ -652,9 +649,9 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Rect<T> {
     }
 }
 
-//--------------------------//
-// Triangle implementations //
-//--------------------------//
+//-------------------------//
+// Triangle实现 //
+//-------------------------//
 
 impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
     type Output = Triangle<NT>;
@@ -725,15 +722,14 @@ mod test {
     #[test]
     fn rect_inplace_normalized() {
         let mut rect = Rect::new((2, 2), (3, 3));
-        // Rect's enforce that rect.min is up and left of p2.  Here we test that the points are
-        // normalized into a valid rect, regardless of the order they are mapped.
+        // Rect 确保 rect.min 在 p2 的左上方。我们在这里测试无论映射顺序如何，这些点都能被规范化为一个有效的矩形。
         rect.map_coords_in_place(|pt| {
             match pt.x_y() {
-                // old min point maps to new max point
+                // 旧的最小点映射到新的最大点
                 (2, 2) => (4, 4).into(),
-                // old max point maps to new min point
+                // 旧的最大点映射到新的最小点
                 (3, 3) => (1, 1).into(),
-                _ => panic!("unexpected point"),
+                _ => panic!("unexpected point"), // 遇到意外的点则出错
             }
         });
 
@@ -765,15 +761,14 @@ mod test {
     #[test]
     fn rect_try_map_coords_normalized() {
         let rect = Rect::new((2, 2), (3, 3));
-        // Rect's enforce that rect.min is up and left of p2.  Here we test that the points are
-        // normalized into a valid rect, regardless of the order they are mapped.
+        // Rect 确保 rect.min 在 p2 的左上方。我们在这里测试无论映射顺序如何，这些点都能被规范化为一个有效的矩形。
         let result: Result<_, std::convert::Infallible> = rect.try_map_coords(|pt| {
             match pt.x_y() {
-                // old min point maps to new max point
+                // 旧的最小点映射到新的最大点
                 (2, 2) => Ok((4, 4).into()),
-                // old max point maps to new min point
+                // 旧的最大点映射到新的最小点
                 (3, 3) => Ok((1, 1).into()),
-                _ => panic!("unexpected point"),
+                _ => panic!("unexpected point"), // 遇到意外的点则出错
             }
         });
         let new_rect = result.unwrap();
@@ -969,14 +964,14 @@ mod test {
                 Err("Ugh")
             }
         };
-        // this should produce an error
+        // 这应该产生一个错误
         let bad_ls: LineString<_> = vec![
             Point::new(1.0, 1.0),
             Point::new(2.0, 2.0),
             Point::new(3.0, 3.0),
         ]
         .into();
-        // this should be fine
+        // 这应该没问题
         let good_ls: LineString<_> = vec![
             Point::new(1.0, 1.0),
             Point::new(2.1, 2.0),
@@ -1002,8 +997,7 @@ mod test {
     fn rect_map_invert_coords() {
         let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. });
 
-        // This call should not panic even though Rect::new
-        // constructor panics if min coords > max coords
+        // 即使 Rect::new 构造函数在 min 坐标 > max 坐标时会出现恐慌，此调用也不应该恐慌
         rect.map_coords(|Coord { x, y }| (-x, -y).into());
     }
 }

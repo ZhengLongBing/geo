@@ -5,26 +5,25 @@ use geo_types::{Coord, CoordNum, Rect};
 
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 
-/// A trait for accessing data from a generic Rect.
+/// 从通用矩形访问数据的特征。
 ///
-/// A Rect is an _axis-aligned_ bounded 2D rectangle whose area is
-/// defined by minimum and maximum [`Point`s][CoordTrait].
+/// 矩形是一个_轴对齐_的有界二维矩形，其面积由最小和最大[`点`][CoordTrait]定义。
 pub trait RectTrait {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying coordinate, which implements [CoordTrait]
+    /// 每个底层坐标的类型，实现[CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// The minimum coordinate of this Rect
+    /// 此矩形的最小坐标
     fn min(&self) -> Self::CoordType<'_>;
 
-    /// The maximum coordinate of this Rect
+    /// 此矩形的最大坐标
     fn max(&self) -> Self::CoordType<'_>;
 }
 
@@ -70,10 +69,9 @@ impl<'a, T: CoordNum + 'a> RectTrait for &'a Rect<T> {
     }
 }
 
-/// An empty struct that implements [RectTrait].
+/// 实现[RectTrait]的空结构体。
 ///
-/// This can be used as the `RectType` of the `GeometryTrait` by implementations that don't
-/// have a Rect concept
+/// 这可以被没有矩形概念的实现用作`GeometryTrait`的`RectType`
 pub struct UnimplementedRect<T>(PhantomData<T>);
 
 impl<T> RectTrait for UnimplementedRect<T> {

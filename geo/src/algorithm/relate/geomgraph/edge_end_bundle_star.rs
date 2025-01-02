@@ -5,12 +5,11 @@ use super::{
 use crate::coordinate_position::{CoordPos, CoordinatePosition};
 use crate::{Coord, GeoFloat, GeometryCow};
 
-/// An ordered list of [`EdgeEndBundle`]s around a [`RelateNodeFactory::Node`].
+/// 一个有序的[`EdgeEndBundle`]列表，围绕一个[`RelateNodeFactory::Node`]。
 ///
-/// They are maintained in CCW order (starting with the positive x-axis) around the node
-/// for efficient lookup and topology building.
+/// 它们以逆时针顺序（从正x轴开始）维护在节点周围，以便于高效查找和拓扑构建。
 ///
-/// This is based on [JTS's `EdgeEndBundleStar` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/EdgeEndBundleStar.java)
+/// 基于[JTS的`EdgeEndBundleStar`截至版本1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/operation/relate/EdgeEndBundleStar.java)
 #[derive(Clone, Debug)]
 pub(crate) struct EdgeEndBundleStar<F>
 where
@@ -39,7 +38,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
         labeled_bundle_star
     }
 
-    /// Compute a label for the star based on the labels of its EdgeEndBundles.
+    /// 基于其EdgeEndBundles的标签计算星的标签。
     fn compute_labeling(&mut self, graph_a: &GeometryGraph<F>, graph_b: &GeometryGraph<F>) {
         self.propagate_side_labels(0, graph_a);
         self.propagate_side_labels(1, graph_b);
@@ -61,18 +60,18 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                     let position: CoordPos = if *is_dimensionally_collapsed {
                         CoordPos::Outside
                     } else {
-                        // PERF: In JTS this is memoized, but that gets a little tricky with rust's
-                        // borrow checker. Let's wait to see if it's a hotspot.
+                        // 性能：在JTS中这是缓存的，但在Rust的借用检查器中做到这一点有点棘手。
+                        // 我们先观察是否成为热点。
                         let geometry = match geom_index {
                             0 => graph_a.geometry(),
                             1 => graph_b.geometry(),
-                            _ => unreachable!("invalid geom_index"),
+                            _ => unreachable!("无效的geom_index"),
                         };
                         use crate::HasDimensions;
                         if geometry.dimensions() == Dimensions::TwoDimensional {
                             geometry.coordinate_position(&coord)
                         } else {
-                            // if geometry is *not* an area, Coord is always Outside
+                            // 如果几何体不是一个面积，坐标始终为Outside
                             CoordPos::Outside
                         }
                     };
@@ -113,12 +112,12 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                     if right_position != current_position {
                         use crate::algorithm::Validation;
                         if geometry_graph.geometry().is_valid() {
-                            debug_assert!(false, "topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                            debug_assert!(false, "拓扑位置与坐标冲突——这可能发生在无效几何体上。坐标: {:?}, 右边位置: {:?}, 当前位置: {:?}", edge_ends.coordinate(), right_position, current_position);
                         } else {
-                            warn!("topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                            warn!("拓扑位置与坐标冲突——这可能发生在无效几何体上。坐标: {:?}, 右边位置: {:?}, 当前位置: {:?}", edge_ends.coordinate(), right_position, current_position);
                         }
                     }
-                    assert!(left_position.is_some(), "found single null side");
+                    assert!(left_position.is_some(), "发现单个null侧");
                     current_position = left_position.unwrap();
                 } else {
                     debug_assert!(label.position(geom_index, Direction::Left).is_none());
@@ -141,7 +140,7 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
         for edge_end_bundle in self.edge_end_bundles_iter() {
             edge_end_bundle.update_intersection_matrix(intersection_matrix);
             debug!(
-                "updated intersection_matrix: {:?} from edge_end_bundle: {:?}",
+                "更新的intersection_matrix: {:?} 来自edge_end_bundle: {:?}",
                 intersection_matrix, edge_end_bundle
             );
         }
@@ -175,23 +174,17 @@ where
         self.edge_map.values_mut()
     }
 
-    /// Compute labeling for the star's EdgeEndBundles, and use them to compute an overall label
-    /// for the star.
+    /// 计算星的EdgeEndBundles的标签，并使用它们计算星的整体标签。
     ///
-    /// Implementation Note: This is a bit of a divergence from JTS in two ways.
+    /// 实现说明：这在两个方面与JTS有所不同。
     ///
-    /// Firstly, JTS doesn't leverage optionals, and sets nullable `Label`s, whereas here we convert
-    /// to an explicitly labeled type to avoid unwrapping optionals later.
+    /// 首先，JTS不使用optionals，而是设置可为空的`Label`s，而这里我们转换为一个显式标记的类型，以避免稍后解包optionals。
     ///
-    /// Secondly, in JTS this functionality does not live directly on EdgeEndBundleStar, but rather
-    /// on it's parent class [EdgeEndStar](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/EdgeEndStar.java#L117)
+    /// 其次，在JTS中，这个功能并不直接在EdgeEndBundleStar上，而是在其父类[EdgeEndStar](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/EdgeEndStar.java#L117)上。
     ///
-    /// Since we're only using this one subclass (EdgeEndBundleStar), we skip the
-    /// complexity of mapping Java inheritance to Rust and implement this functionality
-    /// on EdgeEndBundleStar directly.
+    /// 由于我们只使用这个子类（EdgeEndBundleStar），我们跳过了将Java继承映射到Rust的复杂性，并直接在EdgeEndBundleStar上实现这个功能。
     ///
-    /// If/When we implement overlay operations we might consider extracting the superclass
-    /// behavior.
+    /// 如果/当我们实现覆盖操作时，我们可以考虑提取父类行为。
     pub(crate) fn into_labeled(
         self,
         graph_a: &GeometryGraph<F>,

@@ -3,24 +3,25 @@ use crate::{polygon, Coord, CoordNum, Line, Polygon};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A bounded 2D area whose three vertices are defined by
-/// `Coord`s. The semantics and validity are that of
-/// the equivalent [`Polygon`]; in addition, the three
-/// vertices must not be collinear and they must be distinct.
+/// 由`Coord`定义的三个顶点组成的有界2D区域。
+/// 其语义和有效性与等效的[`Polygon`]相同；
+/// 此外，三个顶点不能共线，且必须互不相同。
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
 
 impl<T: CoordNum> Triangle<T> {
-    /// Instantiate Self from the raw content value
+    /// 从原始内容值实例化Self
     pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
         Self(v1, v2, v3)
     }
 
+    /// 将三角形转换为坐标数组
     pub fn to_array(&self) -> [Coord<T>; 3] {
         [self.0, self.1, self.2]
     }
 
+    /// 将三角形转换为三条线段
     pub fn to_lines(&self) -> [Line<T>; 3] {
         [
             Line::new(self.0, self.1),
@@ -29,9 +30,9 @@ impl<T: CoordNum> Triangle<T> {
         ]
     }
 
-    /// Create a `Polygon` from the `Triangle`.
+    /// 从`Triangle`创建一个`Polygon`。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Triangle, polygon};
@@ -73,9 +74,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{point, Triangle};
@@ -120,9 +121,9 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 具有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{point, Triangle};

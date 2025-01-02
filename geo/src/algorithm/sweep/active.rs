@@ -1,16 +1,12 @@
 use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, ops::Deref};
 
-/// A segment currently active in the sweep.
+/// 当前在扫描中的线段。
 ///
-/// As the sweep-line progresses from left to right, it intersects a subset of
-/// the line-segments. These can be totally-ordered from bottom to top, and
-/// efficient access to the neighbors of a segment is a key aspect of
-/// planar-sweep algorithms.
+/// 当扫描线从左向右推进时，它会与一组线段相交。这些线段可以从下到上进行完全排序，
+/// 并且高效访问线段的邻居是平面扫描算法的关键方面。
 ///
-/// We assert `Ord` even though the inner-type is typically only `T:
-/// PartialOrd`. It is a logical error to compare two Active which cannot be
-/// compared. This is ensured by the algorithm (and cannot be inferred by the
-/// compiler?).
+/// 我们断言`Ord`，即使内部类型通常只有`T: PartialOrd`。
+/// 比较两个不能比较的Active是一个逻辑错误。这由算法确保（编译器无法推断出？）。
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(transparent)]
 pub(in crate::algorithm) struct Active<T>(pub(in crate::algorithm) T);
@@ -35,20 +31,18 @@ impl<T> Deref for Active<T> {
     }
 }
 
-/// Assert total equality.
+/// 断言完全相等。
 impl<T: PartialEq> Eq for Active<T> {}
 
-/// Assert total ordering of active segments.
+/// 断言活动线段的完全排序。
 impl<T: PartialOrd + Debug> Ord for Active<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         if let Some(c) = T::partial_cmp(self, other) {
             c
         } else {
-            warn!("could not compare segments:\n\t{self:?}\n\t{other:?}");
-            panic!("unable to compare active segments!");
+            warn!("无法比较线段:\n\t{self:?}\n\t{other:?}");
+            panic!("无法比较活动线段！");
         }
-        // T::partial_cmp(self, other).unwrap()
-        // T::partial_cmp(self, other).unwrap()
     }
 }
 
@@ -58,7 +52,7 @@ impl<T: PartialOrd + Debug> PartialOrd for Active<T> {
     }
 }
 
-/// Trait abstracting a container of active segments.
+/// 抽象出活动线段容器的特征。
 #[allow(dead_code)]
 pub(in crate::algorithm) trait ActiveSet: Default {
     type Seg;

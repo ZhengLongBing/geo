@@ -1,18 +1,17 @@
 use crate::BoundingRect;
 use crate::*;
 
-/// Checks if the geometry Self intersects the geometry Rhs.
-/// More formally, either boundary or interior of Self has
-/// non-empty (set-theoretic) intersection with the boundary
-/// or interior of Rhs. In other words, the [DE-9IM]
-/// intersection matrix for (Self, Rhs) is _not_ `FF*FF****`.
+/// 检查几何对象Self是否与几何对象Rhs相交。
+/// 更正式地，Self的边界或内部与Rhs的边界或内部
+/// 具有非空（集合论）交集。换句话说，（Self, Rhs）的[DE-9IM]
+/// 交集矩阵不是`FF*FF****`。
 ///
-/// This predicate is symmetric: `a.intersects(b)` iff
-/// `b.intersects(a)`.
+/// 这个谓词是对称的：`a.intersects(b)`当且仅当
+/// `b.intersects(a)`。
 ///
 /// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::Intersects;
@@ -40,16 +39,14 @@ pub trait Intersects<Rhs = Self> {
     fn intersects(&self, rhs: &Rhs) -> bool;
 }
 
-// Since `Intersects` is symmetric, we use a macro to
-// implement `T: Intersects<S>` if `S: Intersects<T>` is
-// available.
+// 由于`Intersects`是对称的，我们使用一个宏来实现
+// `T: Intersects<S>`，如果`S: Intersects<T>`是可用的。
 //
-// As a convention, we typically provide explicit impl.
-// whenever the Rhs is a "simpler geometry" than the target
-// type, and use the macro for the reverse impl. However,
-// when there is a blanket implementations (eg. Point from
-// Coord, MultiPoint from Point), we need to provide
-// the reverse (where Self is "simpler" than Rhs).
+// 作为一个惯例，我们通常在Rhs比目标类型是"更简单的几何"
+// 时提供显式实现，并使用宏来进行反向实现。
+// 但是，当有通用实现时（例如从Coord实现的Point，
+// 从Point实现的MultiPoint），我们需要提供反向实现
+// （其中Self比Rhs "更简单"）。
 macro_rules! symmetric_intersects_impl {
     ($t:ty, $k:ty) => {
         impl<T> $crate::Intersects<$k> for $t
@@ -73,8 +70,8 @@ mod polygon;
 mod rect;
 mod triangle;
 
-// Helper function to check value lies between min and max.
-// Only makes sense if min <= max (or always false)
+// 辅助函数用于检查值是否在min和max之间。
+// 只有当min <= max时才有意义（否则总是false）
 #[inline]
 fn value_in_range<T>(value: T, min: T, max: T) -> bool
 where
@@ -83,8 +80,8 @@ where
     value >= min && value <= max
 }
 
-// Helper function to check value lies between two bounds,
-// where the ordering of the bounds is not known
+// 辅助函数用于检查值是否在两个边界之间，
+// 边界的顺序未知
 #[inline]
 pub(crate) fn value_in_between<T>(value: T, bound_1: T, bound_2: T) -> bool
 where
@@ -97,8 +94,8 @@ where
     }
 }
 
-// Helper function to check point lies inside rect given by
-// bounds.  The first bound need not be min.
+// 辅助函数用于检查点是否在由边界给定的矩形内部。
+// 第一个边界不需要是min。
 #[inline]
 pub(crate) fn point_in_rect<T>(value: Coord<T>, bound_1: Coord<T>, bound_2: Coord<T>) -> bool
 where
@@ -108,7 +105,7 @@ where
         && value_in_between(value.y, bound_1.y, bound_2.y)
 }
 
-// A cheap bbox check to see if we can skip the more expensive intersection computation
+// 一个便宜的边界框检查，以查看我们是否可以跳过更昂贵的交集计算
 fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
 where
     T: CoordNum,
@@ -134,7 +131,7 @@ mod test {
         MultiPolygon, Point, Polygon, Rect,
     };
 
-    /// Tests: intersection LineString and LineString
+    /// 测试：LineString和LineString的相交
     #[test]
     fn empty_linestring1_test() {
         let linestring = line_string![(x: 3., y: 2.), (x: 7., y: 6.)];
@@ -162,7 +159,7 @@ mod test {
         let ls2 = line_string![(x: 3., y: 1.), (x: 7., y: 5.)];
         assert!(!ls1.intersects(&ls2));
     }
-    /// Tests: intersection LineString and Polygon
+    /// 测试：LineString和Polygon的相交
     #[test]
     fn linestring_in_polygon_test() {
         let poly = polygon![
@@ -231,6 +228,7 @@ mod test {
     }
     #[test]
     fn linestring_in_inner_with_2_inner_polygon_test() {
+        // 图示：
         //                                        (8,9)
         //     (2,8)                                |                                      (14,8)
         //      ------------------------------------|------------------------------------------
@@ -329,7 +327,7 @@ mod test {
     }
     #[test]
     fn polygon_intersects_bounding_rect_test() {
-        // Polygon poly =
+        // 多边形 poly =
         //
         // (0,8)               (12,8)
         //  ┌──────────────────────┐
@@ -362,15 +360,15 @@ mod test {
         let b2 = Rect::new(coord! { x: 2., y: 2. }, coord! { x: 8., y: 5. });
         let b3 = Rect::new(coord! { x: 8., y: 5. }, coord! { x: 10., y: 6. });
         let b4 = Rect::new(coord! { x: 1., y: 1. }, coord! { x: 3., y: 3. });
-        // overlaps
+        // 重叠
         assert!(poly.intersects(&b1));
-        // contained in exterior, overlaps with hole
+        // 外部包含，轮廓与孔重叠
         assert!(poly.intersects(&b2));
-        // completely contained in the hole
+        // 完全包含在孔中
         assert!(!poly.intersects(&b3));
-        // completely contained in the polygon
+        // 完全包含在多边形内
         assert!(poly.intersects(&b4));
-        // conversely,
+        // 反之亦然，
         assert!(b1.intersects(&poly));
         assert!(b2.intersects(&poly));
         assert!(!b3.intersects(&poly));
@@ -382,7 +380,7 @@ mod test {
             Rect::new(coord! { x: -100., y: -200. }, coord! { x: 100., y: 200. });
         let bounding_rect_sm = Rect::new(coord! { x: -10., y: -20. }, coord! { x: 10., y: 20. });
         let bounding_rect_s2 = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 20., y: 30. });
-        // confirmed using GEOS
+        // 使用GEOS确认
         assert!(bounding_rect_xl.intersects(&bounding_rect_sm));
         assert!(bounding_rect_sm.intersects(&bounding_rect_xl));
         assert!(bounding_rect_sm.intersects(&bounding_rect_s2));
@@ -422,19 +420,19 @@ mod test {
     #[test]
     fn point_intersects_line_test() {
         let p0 = Point::new(2., 4.);
-        // vertical line
+        // 竖直线
         let line1 = Line::from([(2., 0.), (2., 5.)]);
-        // point on line, but outside line segment
+        // 点在线延长线，但在线段之外
         let line2 = Line::from([(0., 6.), (1.5, 4.5)]);
-        // point on line
+        // 点在线上
         let line3 = Line::from([(0., 6.), (3., 3.)]);
-        // point above line with positive slope
+        // 点在线上方且斜率为正
         let line4 = Line::from([(1., 2.), (5., 3.)]);
-        // point below line with positive slope
+        // 点在线下方且斜率为正
         let line5 = Line::from([(1., 5.), (5., 6.)]);
-        // point above line with negative slope
+        // 点在线上方且斜率为负
         let line6 = Line::from([(1., 2.), (5., -3.)]);
-        // point below line with negative slope
+        // 点在线下方且斜率为负
         let line7 = Line::from([(1., 6.), (5., 5.)]);
         assert!(line1.intersects(&p0));
         assert!(p0.intersects(&line1));
@@ -493,7 +491,7 @@ mod test {
             LineString::from(vec![(1., -1.), (2., -1.), (2., -2.), (1., -1.)]),
             vec![],
         );
-        // line contained in the hole
+        // 线在孔中
         let poly2 = Polygon::new(
             LineString::from(vec![(-1., -1.), (-1., 10.), (10., -1.), (-1., -1.)]),
             vec![LineString::from(vec![
@@ -513,7 +511,7 @@ mod test {
         assert!(!poly2.intersects(&line0));
     }
     #[test]
-    // See https://github.com/georust/geo/issues/419
+    // 参考 https://github.com/georust/geo/issues/419
     fn rect_test_419() {
         let a = Rect::new(
             coord! {
@@ -541,8 +539,7 @@ mod test {
 
     #[test]
     fn compile_test_geom_geom() {
-        // This test should check existence of all
-        // combinations of geometry types.
+        // 此测试应检查所有几何类型组合的存在。
         let geom: Geometry<_> = Line::from([(0.5, 0.5), (2., 1.)]).into();
         assert!(geom.intersects(&geom));
     }

@@ -1,10 +1,8 @@
-//! This module provides rhumb-line (a.k.a. loxodrome) geometry operations.
-//! The distance, destination, and bearing implementations are adapted in part
-//! from their equivalents in [Turf.js](https://turfjs.org/), which in turn are
-//! adapted from the Movable Type
-//! [spherical geodesy tools](https://www.movable-type.co.uk/scripts/latlong.html).
-//! Turf.js is copyright its authors and the geodesy tools are copyright Chris
-//! Veness; both are available under an MIT license.
+//! 此模块提供恒向线（亦称罗经线）几何操作。
+//! 距离、目的地和方位角实现部分改编自[Turf.js](https://turfjs.org/)中的等效实现，
+//! 而Turf.js又是改编自Movable Type的
+//! [球面大地测量工具](https://www.movable-type.co.uk/scripts/latlong.html)。
+//! Turf.js的版权归其作者所有，球面大地测量工具的版权归Chris Veness所有；两者均在MIT许可证下提供。
 
 use crate::{point, utils::normalize_longitude, CoordFloat, Point};
 use num_traits::FromPrimitive;
@@ -47,7 +45,7 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         let phi1 = from.y().to_radians();
         let phi2 = to.y().to_radians();
         let mut delta_lambda = (to.x() - from.x()).to_radians();
-        // if delta_lambda is over 180° take shorter rhumb line across the anti-meridian:
+        // 如果delta_lambda超过180°，则穿越反子午线取较短的恒向线
         if delta_lambda > pi {
             delta_lambda = delta_lambda - (two * pi);
         }
@@ -143,7 +141,7 @@ pub(crate) fn calculate_destination<T: CoordFloat + FromPrimitive>(
     let delta_phi = delta * theta.cos();
     let mut phi2 = phi1 + delta_phi;
 
-    // check for some daft bugger going past the pole, normalise latitude if so
+    // 检查超出极点的情况，并规范化纬度
     if phi2.abs() > pi / two {
         phi2 = if phi2 > T::zero() {
             pi - phi2
@@ -153,7 +151,7 @@ pub(crate) fn calculate_destination<T: CoordFloat + FromPrimitive>(
     }
 
     let delta_psi = ((phi2 / two + pi / four).tan() / (phi1 / two + pi / four).tan()).ln();
-    // E-W course becomes ill-conditioned with 0/0
+    // 东西航向0/0导致的不良状态处理
     let q = if delta_psi.abs() > threshold {
         delta_phi / delta_psi
     } else {

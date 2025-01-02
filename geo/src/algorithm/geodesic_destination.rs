@@ -4,29 +4,29 @@ use geo_types::CoordNum;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Geodesic::destination` method from the `Destination` trait instead"
+    note = "请改用 `Destination` 特征中的 `Geodesic::destination` 方法。"
 )]
-/// Returns a new Point using the distance to the existing Point and a bearing for the direction on a geodesic.
+/// 返回一个新点，使用现有点的距离和测地线上方向的方位角。
 ///
-/// This uses the geodesic methods given by [Karney (2013)].
+/// 这使用了 [Karney (2013)] 提供的测地方法。
 ///
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicDestination<T: CoordNum> {
-    /// Returns a new Point using distance to the existing Point and a bearing for the direction.
+    /// 返回一个新点，使用现有点的距离和方向的方位角。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `bearing`: degrees, zero degrees is north
-    /// - `distance`: meters
+    /// - `bearing`：度，零度为北
+    /// - `distance`：米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// # #[allow(deprecated)]
     /// use geo::GeodesicDestination;
     /// use geo::Point;
     ///
-    /// // Determine the point 10000 km NE of JFK.
+    /// // 确定JFK东北方向10000公里的点。
     /// let jfk = Point::new(-73.78, 40.64);
     /// let northeast_bearing = 45.0;
     /// let distance = 10e6;

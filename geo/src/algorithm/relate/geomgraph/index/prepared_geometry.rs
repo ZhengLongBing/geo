@@ -9,8 +9,7 @@ use std::rc::Rc;
 
 use rstar::{RTree, RTreeNum};
 
-/// A `PreparedGeometry` can be more efficient than a plain Geometry when performing
-/// multiple topological comparisons against the `PreparedGeometry`.
+/// `PreparedGeometry` 在进行多次拓扑比较时，比普通的 Geometry 更有效。
 ///
 /// ```
 /// use geo::{Relate, PreparedGeometry, wkt};
@@ -158,8 +157,7 @@ mod conversions {
             let mut geometry_graph = GeometryGraph::new(0, geometry);
             geometry_graph.set_tree(Rc::new(geometry_graph.build_tree()));
 
-            // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
-            // and the type (Robust) shouldn't be hard coded here.
+            // TODO: 这里不应该传入线段相交器 - 理论上我们希望使用可插拔的线段相交器，其类型（稳健）不应该在此硬编码。
             geometry_graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
 
             Self { geometry_graph }
@@ -177,8 +175,7 @@ where
 }
 
 impl<F: GeoFloat> Relate<F> for PreparedGeometry<'_, F> {
-    /// Efficiently builds a [`GeometryGraph`] which can then be used for topological
-    /// computations.
+    /// 高效地构建一个 [`GeometryGraph`]，可以用于拓扑计算。
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F> {
         self.geometry_graph.clone_for_arg_index(arg_index)
     }

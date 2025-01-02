@@ -1,13 +1,11 @@
-/// Checks if `rhs` is completely contained within `self`.
-/// More formally, the interior of `rhs` has non-empty
-/// (set-theoretic) intersection but neither the interior,
-/// nor the boundary of `rhs` intersects the exterior of
-/// `self`. In other words, the [DE-9IM] intersection matrix
-/// of `(rhs, self)` is `T*F**F***`.
+/// 检查 `rhs` 是否完全包含在 `self` 内部。
+/// 更正式地说，`rhs` 的内部与 `self` 形成非空的（集合理论上的）交集，
+/// 但 `rhs` 的内部和边界都不与 `self` 的外部相交。
+/// 换句话说，`(rhs, self)` 的 [DE-9IM] 交集矩阵为 `T*F**F***`。
 ///
 /// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::Contains;
@@ -23,13 +21,13 @@
 ///
 /// let polygon = Polygon::new(line_string.clone(), vec![]);
 ///
-/// // Point in Point
+/// // 点包含在点中
 /// assert!(point!(x: 2., y: 0.).contains(&point!(x: 2., y: 0.)));
 ///
-/// // Point in Linestring
+/// // 点包含在线串中
 /// assert!(line_string.contains(&point!(x: 2., y: 0.)));
 ///
-/// // Point in Polygon
+/// // 点包含在多边形中
 /// assert!(polygon.contains(&point!(x: 1., y: 1.)));
 /// ```
 pub trait Contains<Rhs = Self> {
@@ -88,7 +86,7 @@ macro_rules! impl_contains_geometry_for {
 pub(crate) use impl_contains_geometry_for;
 
 // ┌───────┐
-// │ Tests │
+// │ 测试  │
 // └───────┘
 
 #[cfg(test)]
@@ -99,14 +97,14 @@ mod test {
     use crate::{coord, Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle};
 
     #[test]
-    // see https://github.com/georust/geo/issues/452
+    // 查看 https://github.com/georust/geo/issues/452
     fn linestring_contains_point() {
         let line_string = LineString::from(vec![(0., 0.), (3., 3.)]);
         let point_on_line = Point::new(1., 1.);
         assert!(line_string.contains(&point_on_line));
     }
     #[test]
-    // V doesn't contain rect because two of its edges intersect with V's exterior boundary
+    // V 不包含 rect，因为它的两条边与 V 的外部边界相交
     fn polygon_does_not_contain_polygon() {
         let v = Polygon::new(
             vec![
@@ -135,7 +133,7 @@ mod test {
         assert!(!v.contains(&rect));
     }
     #[test]
-    // V contains rect because all its vertices are contained, and none of its edges intersect with V's boundaries
+    // V 包含 rect，因为 rect 的所有顶点都被包含，并且没有它的边与 V 的边界相交
     fn polygon_contains_polygon() {
         let v = Polygon::new(
             vec![
@@ -164,7 +162,7 @@ mod test {
         assert!(v.contains(&rect));
     }
     #[test]
-    // LineString is fully contained
+    // LineString 被完全包含
     fn linestring_fully_contained_in_polygon() {
         let poly = Polygon::new(
             LineString::from(vec![(0., 0.), (5., 0.), (5., 6.), (0., 6.), (0., 0.)]),
@@ -173,7 +171,7 @@ mod test {
         let ls = LineString::from(vec![(3.0, 0.5), (3.0, 3.5)]);
         assert!(poly.contains(&ls));
     }
-    /// Tests: Point in LineString
+    /// 测试：点在 LineString 中
     #[test]
     fn empty_linestring_test() {
         let linestring = LineString::new(Vec::new());
@@ -182,8 +180,7 @@ mod test {
     #[test]
     fn linestring_point_is_vertex_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
-        // Note: the end points of a linestring are not
-        // considered to be "contained"
+        // 注意：LineString 的终点不被视为“包含”
         assert!(linestring.contains(&Point::new(2., 0.)));
         assert!(!linestring.contains(&Point::new(0., 0.)));
         assert!(!linestring.contains(&Point::new(2., 2.)));
@@ -193,7 +190,7 @@ mod test {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.)]);
         assert!(linestring.contains(&Point::new(1., 0.)));
     }
-    /// Tests: Point in Polygon
+    /// 测试：点在多边形中
     #[test]
     fn empty_polygon_test() {
         let linestring = LineString::new(Vec::new());
@@ -272,7 +269,7 @@ mod test {
         assert!(!poly.contains(&Point::new(1.5, 1.)));
     }
 
-    /// Tests: Point in MultiPolygon
+    /// 测试：多边形中包含点
     #[test]
     fn empty_multipolygon_test() {
         let multipoly = MultiPolygon::new(Vec::new());
@@ -315,7 +312,7 @@ mod test {
         assert!(!multipoly.contains(&Point::new(3., 2.)));
         assert!(!multipoly.contains(&Point::new(7., 2.)));
     }
-    /// Tests: LineString in Polygon
+    /// 测试：LineString 在多边形中
     #[test]
     fn linestring_in_polygon_with_linestring_is_boundary_test() {
         let linestring = LineString::from(vec![(0., 0.), (2., 0.), (2., 2.), (0., 2.), (0., 0.)]);
@@ -360,11 +357,11 @@ mod test {
     fn point_in_line_test() {
         let c = |x, y| coord! { x: x, y: y };
         let p0 = c(2., 4.);
-        // vertical line
+        // 垂直线
         let line1 = Line::new(c(2., 0.), c(2., 5.));
-        // point on line, but outside line segment
+        // 点在直线上，但在线段之外
         let line2 = Line::new(c(0., 6.), c(1.5, 4.5));
-        // point on line
+        // 点在直线上
         let line3 = Line::new(c(0., 6.), c(3., 3.));
         assert!(line1.contains(&Point::from(p0)));
         assert!(!line2.contains(&Point::from(p0)));
@@ -374,11 +371,11 @@ mod test {
     fn line_in_line_test() {
         let c = |x, y| coord! { x: x, y: y };
         let line0 = Line::new(c(0., 1.), c(3., 4.));
-        // first point on line0, second not
+        // 第一个点在线 line0 上，第二个不在
         let line1 = Line::new(c(1., 2.), c(2., 2.));
-        // co-linear, but extends past the end of line0
+        // 共线，但延伸超出 line0 的末端
         let line2 = Line::new(c(1., 2.), c(4., 5.));
-        // contained in line0
+        // 包含在 line0 中
         let line3 = Line::new(c(1., 2.), c(3., 4.));
         assert!(!line0.contains(&line1));
         assert!(!line0.contains(&line2));
@@ -387,17 +384,17 @@ mod test {
     #[test]
     fn linestring_in_line_test() {
         let line = Line::from([(0, 10), (30, 40)]);
-        // linestring0 in line
+        // linestring0 在 line 中
         let linestring0 = LineString::from(vec![(1, 11), (10, 20), (15, 25)]);
-        // linestring1 starts and ends in line, but wanders in the middle
+        // linestring1 的起点和终点在线上，但中间部分偏离
         let linestring1 = LineString::from(vec![(1, 11), (20, 20), (15, 25)]);
-        // linestring2 is co-linear, but extends beyond line
+        // linestring2 是共线的，但超出了 line 的范围
         let linestring2 = LineString::from(vec![(1, 11), (10, 20), (40, 50)]);
-        // no part of linestring3 is contained in line
+        // linestring3 的任何部分都不在线上
         let linestring3 = LineString::from(vec![(11, 11), (20, 20), (25, 25)]);
-        // a linestring with singleton interior on the boundary of the line
+        // 一个内点在直线上边界的 linestring
         let linestring4 = LineString::from(vec![(0, 10), (0, 10), (0, 10)]);
-        // a linestring with singleton interior that is contained in the line
+        // 一个内点包含在直线内的 linestring
         let linestring5 = LineString::from(vec![(1, 11), (1, 11), (1, 11)]);
         assert!(line.contains(&linestring0));
         assert!(!line.contains(&linestring1));
@@ -431,11 +428,10 @@ mod test {
     }
     #[test]
     fn line_in_polygon_edgecases_test() {
-        // Some DE-9IM edge cases for checking line is
-        // inside polygon The end points of the line can be
-        // on the boundary of the polygon.
+        // 某些 DE-9IM 边界情形用于检查线是否在多边形中 线的终点可以
+        // 在多边形的边界上。
         let c = |x, y| coord! { x: x, y: y };
-        // A non-convex polygon
+        // 非凸多边形
         let linestring0 = line_string![
             c(0.0, 0.0),
             c(1.0, 1.0),
@@ -462,9 +458,9 @@ mod test {
     #[test]
     fn line_in_linestring_test() {
         let line0 = Line::from([(1., 1.), (2., 2.)]);
-        // line0 is completely contained in the second segment
+        // line0 完全包含在第二段中
         let linestring0 = LineString::from(vec![(0., 0.5), (0.5, 0.5), (3., 3.)]);
-        // line0 is contained in the last three segments
+        // line0 包含在最后三段中
         let linestring1 = LineString::from(vec![
             (0., 0.5),
             (0.5, 0.5),
@@ -472,7 +468,7 @@ mod test {
             (1.5, 1.5),
             (3., 3.),
         ]);
-        // line0 endpoints are contained in the linestring, but the fourth point is off the line
+        // line0 的端点在 linestring 中，但第四点不在线上
         let linestring2 = LineString::from(vec![
             (0., 0.5),
             (0.5, 0.5),

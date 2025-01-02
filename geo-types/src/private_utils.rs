@@ -1,7 +1,6 @@
-// To implement RStar’s traits in the geo-types crates, we need to access to a
-// few geospatial algorithms, which are included in this hidden module. This
-// hidden module is public so the geo crate can reuse these algorithms to
-// prevent duplication. These functions are _not_ meant for public consumption.
+// 为了在 geo-types crates 中实现 RStar 的特性，我们需要访问一些地理空间算法，
+// 这些算法包含在这个隐藏模块中。这个隐藏模块是公开的，以便 geo crate 可以重用这些算法
+// 以防止重复。这些函数 _不_ 是为公共使用而设计的。
 
 use crate::{Coord, CoordFloat, CoordNum, Line, LineString, Point, Rect};
 
@@ -95,7 +94,7 @@ pub fn point_line_string_euclidean_distance<T>(p: Point<T>, l: &LineString<T>) -
 where
     T: CoordFloat,
 {
-    // No need to continue if the point is on the LineString, or it's empty
+    // 如果点在 LineString 上或 LineString 为空，则无需继续
     if line_string_contains_point(l, p) || l.0.is_empty() {
         return T::zero();
     }
@@ -124,20 +123,20 @@ pub fn line_string_contains_point<T>(line_string: &LineString<T>, point: Point<T
 where
     T: CoordFloat,
 {
-    // LineString without points
+    // 没有点的 LineString
     if line_string.0.is_empty() {
         return false;
     }
-    // LineString with one point equal p
+    // 只有一个点等于 p 的 LineString
     if line_string.0.len() == 1 {
         return point_contains_point(Point::from(line_string[0]), point);
     }
-    // check if point is a vertex
+    // 检查点是否是顶点
     if line_string.0.contains(&point.0) {
         return true;
     }
     for line in line_string.lines() {
-        // This is a duplicate of the line-contains-point logic in the "intersects" module
+        // 这是 "intersects" 模块中线包含点逻辑的副本
         let tx = if line.dx() == T::zero() {
             None
         } else {
@@ -150,19 +149,19 @@ where
         };
         let contains = match (tx, ty) {
             (None, None) => {
-                // Degenerate line
+                // 退化线
                 point.0 == line.start
             }
             (Some(t), None) => {
-                // Horizontal line
+                // 水平线
                 point.y() == line.start.y && T::zero() <= t && t <= T::one()
             }
             (None, Some(t)) => {
-                // Vertical line
+                // 垂直线
                 point.x() == line.start.x && T::zero() <= t && t <= T::one()
             }
             (Some(t_x), Some(t_y)) => {
-                // All other lines
+                // 所有其他线
                 (t_x - t_y).abs() <= T::epsilon() && T::zero() <= t_x && t_x <= T::one()
             }
         };

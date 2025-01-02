@@ -2,40 +2,38 @@ use crate::{Distance, Geodesic, Point};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Geodesic::distance` method from the `Distance` trait instead"
+    note = "请使用 `Distance` 特征中的 `Geodesic::distance` 方法"
 )]
-/// Determine the distance between two geometries on an ellipsoidal model of the earth.
+/// 确定地球椭球模型上两个几何体之间的距离。
 ///
-/// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
-/// like Vincenty, this method is accurate to a few nanometers and always converges.
+/// 这使用 [Karney (2013)] 提供的大地测量方法。与 Vincenty 等较旧的方法不同，此方法精确到几纳米并且总能收敛。
 ///
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicDistance<T, Rhs = Self> {
-    /// Determine the distance between two geometries on an ellipsoidal model of the earth.
+    /// 确定地球椭球模型上两个几何体之间的距离。
     ///
-    /// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
-    /// like Vincenty, this method is accurate to a few nanometers and always converges.
+    /// 这使用 [Karney (2013)] 提供的大地测量方法。与 Vincenty 等较旧的方法不同，此方法精确到几纳米并且总能收敛。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meters
+    /// - 返回值：米
     ///
-    /// # Examples
+    /// # 示例
     /// ```rust
     /// use geo::prelude::*;
     /// use geo::point;
     ///
-    /// // New York City
+    /// // 纽约
     /// let p1 = point!(x: -74.006, y: 40.7128);
     ///
-    /// // London
+    /// // 伦敦
     /// let p2 = point!(x: -0.1278, y: 51.5074);
     ///
     /// # #[allow(deprecated)]
     /// let distance = p1.geodesic_distance(&p2);
     ///
     /// assert_eq!(
-    ///     5_585_234., // meters
+    ///     5_585_234., // 米
     ///     distance.round()
     /// );
     /// ```

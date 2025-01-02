@@ -3,16 +3,16 @@ use crate::line_measures::{Distance, Euclidean};
 use crate::{GeoFloat, LineString};
 use num_traits::FromPrimitive;
 
-/// Determine the similarity between two `LineStrings` using the [Frechet distance].
+/// 使用[Frechet距离]确定两个`LineString`之间的相似度。
 ///
-/// Based on [Computing Discrete Frechet Distance] by T. Eiter and H. Mannila.
+/// 基于T. Eiter和H. Mannila的[计算离散Frechet距离]。
 ///
-/// [Frechet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
-/// [Computing Discrete Frechet Distance]: http://www.kr.tuwien.ac.at/staff/eiter/et-archive/cdtr9464.pdf
+/// [Frechet距离]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
+/// [计算离散Frechet距离]: http://www.kr.tuwien.ac.at/staff/eiter/et-archive/cdtr9464.pdf
 pub trait FrechetDistance<T, Rhs = Self> {
-    /// Determine the similarity between two `LineStrings` using the [Frechet distance].
+    /// 使用[Frechet距离]确定两个`LineString`之间的相似度。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::FrechetDistance;
@@ -37,7 +37,7 @@ pub trait FrechetDistance<T, Rhs = Self> {
     /// assert_eq!(2., distance);
     /// ```
     ///
-    /// [Frechet distance]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
+    /// [Frechet距离]: https://en.wikipedia.org/wiki/Fr%C3%A9chet_distance
     fn frechet_distance(&self, rhs: &Rhs) -> T;
 }
 
@@ -72,7 +72,7 @@ impl<T> Data<'_, T>
 where
     T: GeoFloat + FromPrimitive,
 {
-    /// [Reference implementation]: https://github.com/joaofig/discrete-frechet/tree/master
+    /// [参考实现]: https://github.com/joaofig/discrete-frechet/tree/master
     fn compute_linear(&mut self) -> T {
         let columns_count = self.ls_b.coords_count();
 
@@ -102,6 +102,7 @@ mod test {
 
     #[test]
     fn test_single_point_in_linestring() {
+        // 测试单个点的情况
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
         assert_relative_eq!(
@@ -112,6 +113,7 @@ mod test {
 
     #[test]
     fn test_identical_linestrings() {
+        // 测试完全相同的LineString
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
         let ls_b = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
         assert_relative_eq!(0., ls_a.frechet_distance(&ls_b));
@@ -119,6 +121,7 @@ mod test {
 
     #[test]
     fn different_dimensions_linestrings() {
+        // 测试不同维度的LineString
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(2., 2.), (0., 1.)]);
         assert_relative_eq!(2f64.sqrt(), ls_a.frechet_distance(&ls_b));
@@ -126,6 +129,7 @@ mod test {
 
     #[test]
     fn test_frechet_1() {
+        // 测试具体的Frechet距离计算示例1
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.)]);
         let ls_b = LineString::from(vec![(2., 2.), (2., 3.)]);
         assert_relative_eq!(2., ls_a.frechet_distance(&ls_b));
@@ -133,13 +137,15 @@ mod test {
 
     #[test]
     fn test_frechet_2() {
+        // 测试具体的Frechet距离计算示例2
         let ls_a = LineString::from(vec![(1., 1.), (2., 1.), (2., 2.)]);
         let ls_b = LineString::from(vec![(2., 2.), (0., 1.), (2., 4.)]);
         assert_relative_eq!(2., ls_a.frechet_distance(&ls_b));
     }
 
-    #[test] // comparing long linestrings should not panic or abort due to stack overflow
+    #[test] // 比较长的LineString时,不应因为堆栈溢出而发生恐慌或中止
     fn test_frechet_long_linestrings() {
+        // 测试非常长的LineString
         let ls: LineString = {
             let delta = 0.01;
 

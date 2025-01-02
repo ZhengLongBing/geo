@@ -5,11 +5,11 @@ use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidTriangle {
-    /// A valid [`Triangle`] must have finite coordinates.
+    /// 一个有效的 [`Triangle`] 必须具有有限的坐标。
     NonFiniteCoord(CoordIndex),
-    /// A valid [`Triangle`] must have distinct points.
+    /// 一个有效的 [`Triangle`] 必须具有不同的点。
     IdenticalCoords(CoordIndex, CoordIndex),
-    /// A valid [`Triangle`] must have non-collinear points.
+    /// 一个有效的 [`Triangle`] 必须具有非共线的点。
     CollinearCoords,
 }
 
@@ -17,16 +17,12 @@ impl fmt::Display for InvalidTriangle {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InvalidTriangle::NonFiniteCoord(idx) => {
-                write!(f, "coordinate at index {} is non-finite", idx.0)
+                write!(f, "坐标在索引 {} 处不是有限的", idx.0)
             }
             InvalidTriangle::IdenticalCoords(idx1, idx2) => {
-                write!(
-                    f,
-                    "coordinates at indices {} and {} are identical",
-                    idx1.0, idx2.0
-                )
+                write!(f, "坐标在索引 {} 和 {} 处是相同的", idx1.0, idx2.0)
             }
-            InvalidTriangle::CollinearCoords => write!(f, "triangle has collinear coordinates"),
+            InvalidTriangle::CollinearCoords => write!(f, "三角形具有共线的坐标"),
         }
     }
 }
@@ -40,6 +36,7 @@ impl<F: CoordFloat> Validation for Triangle<F> {
         &self,
         mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
     ) -> Result<(), T> {
+        // 检查坐标是否不是有限的
         if utils::check_coord_is_not_finite(&self.0) {
             handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(0)))?;
         }
@@ -50,7 +47,7 @@ impl<F: CoordFloat> Validation for Triangle<F> {
             handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(2)))?;
         }
 
-        // We wont check if the points are collinear if they are identical
+        // 如果点是相同的，则不会检查它们是否共线
         let mut identical = false;
 
         if self.0 == self.1 {
@@ -75,6 +72,7 @@ impl<F: CoordFloat> Validation for Triangle<F> {
             identical = true;
         }
 
+        // 检查点是否共线
         if !identical && utils::robust_check_points_are_collinear::<F>(&self.0, &self.1, &self.2) {
             handle_validation_error(InvalidTriangle::CollinearCoords)?;
         }
@@ -90,12 +88,14 @@ mod tests {
 
     #[test]
     fn test_triangle_valid() {
+        // 测试有效的三角形
         let t = Triangle((0., 0.).into(), (0., 1.).into(), (0.5, 2.).into());
         assert_valid!(t);
     }
 
     #[test]
     fn test_triangle_invalid_same_points() {
+        // 测试具有相同点的无效三角形
         let t = Triangle((0., 0.).into(), (0., 1.).into(), (0., 1.).into());
         assert_validation_errors!(
             t,
@@ -108,6 +108,7 @@ mod tests {
 
     #[test]
     fn test_triangle_invalid_points_collinear() {
+        // 测试具有共线点的无效三角形
         let t = Triangle((0., 0.).into(), (1., 1.).into(), (2., 2.).into());
         assert_validation_errors!(t, vec![InvalidTriangle::CollinearCoords]);
     }

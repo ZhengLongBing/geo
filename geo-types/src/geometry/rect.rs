@@ -3,24 +3,16 @@ use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Polygon};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// An _axis-aligned_ bounded 2D rectangle whose area is
-/// defined by minimum and maximum `Coord`s.
+/// 一个 _轴对齐_ 的 2D 矩形，其面积由最小和最大 `Coord` 定义。
 ///
-/// The constructors and setters ensure the maximum
-/// `Coord` is greater than or equal to the minimum.
-/// Thus, a `Rect`s width, height, and area is guaranteed to
-/// be greater than or equal to zero.
+/// 构造函数和设置器确保最大 `Coord` 大于或等于最小值。
+/// 因此，`Rect` 的宽度、高度和面积保证大于或等于零。
 ///
-/// **Note.** While `Rect` implements `MapCoords` and
-/// `RotatePoint` algorithmic traits, the usage is expected
-/// to maintain the axis alignment. In particular, only
-/// rotation by integer multiples of 90 degrees, will
-/// preserve the original shape. In other cases, the min,
-/// and max points are rotated or transformed, and a new
-/// rectangle is created (with coordinate swaps to ensure
-/// min < max).
+/// **注意。** 虽然 `Rect` 实现了 `MapCoords` 和 `RotatePoint` 算法特性，
+/// 但预计的用法是保持轴对齐。特别是，只有整数倍 90 度的旋转，才会保持原始形状。
+/// 在其他情况下，最小和最大点会被旋转或变换，并创建一个新的矩形（通过坐标交换以确保 min < max）。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::{coord, Rect};
@@ -45,9 +37,9 @@ pub struct Rect<T: CoordNum = f64> {
 }
 
 impl<T: CoordNum> Rect<T> {
-    /// Creates a new rectangle from two corner coordinates.
+    /// 从两个角坐标创建一个新的矩形。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, Rect};
@@ -83,7 +75,7 @@ impl<T: CoordNum> Rect<T> {
 
     #[deprecated(
         since = "0.6.2",
-        note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
+        note = "使用 `Rect::new`，因为 `Rect::try_new` 不会出错"
     )]
     #[allow(deprecated)]
     pub fn try_new<C>(c1: C, c2: C) -> Result<Rect<T>, InvalidRectCoordinatesError>
@@ -93,9 +85,9 @@ impl<T: CoordNum> Rect<T> {
         Ok(Rect::new(c1, c2))
     }
 
-    /// Returns the minimum `Coord` of the `Rect`.
+    /// 返回 `Rect` 的最小 `Coord`。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Rect};
@@ -111,11 +103,11 @@ impl<T: CoordNum> Rect<T> {
         self.min
     }
 
-    /// Set the `Rect`’s minimum coordinate.
+    /// 设置 `Rect` 的最小坐标。
     ///
-    /// # Panics
+    /// # 可能的错误
     ///
-    /// Panics if `min`’s x/y is greater than the maximum coordinate’s x/y.
+    /// 如果 `min` 的 x/y 大于最大坐标的 x/y，程序会崩溃。
     pub fn set_min<C>(&mut self, min: C)
     where
         C: Into<Coord<T>>,
@@ -124,9 +116,9 @@ impl<T: CoordNum> Rect<T> {
         self.assert_valid_bounds();
     }
 
-    /// Returns the maximum `Coord` of the `Rect`.
+    /// 返回 `Rect` 的最大 `Coord`。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Rect};
@@ -142,11 +134,11 @@ impl<T: CoordNum> Rect<T> {
         self.max
     }
 
-    /// Set the `Rect`’s maximum coordinate.
+    /// 设置 `Rect` 的最大坐标。
     ///
-    /// # Panics
+    /// # 可能的错误
     ///
-    /// Panics if `max`’s x/y is less than the minimum coordinate’s x/y.
+    /// 如果 `max` 的 x/y 小于最小坐标的 x/y，程序会崩溃。
     pub fn set_max<C>(&mut self, max: C)
     where
         C: Into<Coord<T>>,
@@ -155,9 +147,9 @@ impl<T: CoordNum> Rect<T> {
         self.assert_valid_bounds();
     }
 
-    /// Returns the width of the `Rect`.
+    /// 返回 `Rect` 的宽度。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Rect};
@@ -173,9 +165,9 @@ impl<T: CoordNum> Rect<T> {
         self.max().x - self.min().x
     }
 
-    /// Returns the height of the `Rect`.
+    /// 返回 `Rect` 的高度。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Rect};
@@ -191,9 +183,9 @@ impl<T: CoordNum> Rect<T> {
         self.max().y - self.min().y
     }
 
-    /// Create a `Polygon` from the `Rect`.
+    /// 从 `Rect` 创建一个 `Polygon`。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Rect, polygon};
@@ -269,9 +261,9 @@ impl<T: CoordNum> Rect<T> {
         ]
     }
 
-    /// Split a rectangle into two rectangles along the X-axis with equal widths.
+    /// 将矩形沿X轴拆分成两个等宽的矩形。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// let rect = geo_types::Rect::new(
@@ -305,9 +297,9 @@ impl<T: CoordNum> Rect<T> {
         ]
     }
 
-    /// Split a rectangle into two rectangles along the Y-axis with equal heights.
+    /// 将矩形沿Y轴拆分成两个等高的矩形。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// let rect = geo_types::Rect::new(
@@ -353,9 +345,9 @@ impl<T: CoordNum> Rect<T> {
 }
 
 impl<T: CoordFloat> Rect<T> {
-    /// Returns the center `Coord` of the `Rect`.
+    /// 返回 `Rect` 的中心 `Coord`。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo_types::{coord, Rect};
@@ -376,7 +368,8 @@ impl<T: CoordFloat> Rect<T> {
     }
 }
 
-static RECT_INVALID_BOUNDS_ERROR: &str = "Failed to create Rect: 'min' coordinate's x/y value must be smaller or equal to the 'max' x/y value";
+static RECT_INVALID_BOUNDS_ERROR: &str =
+    "无法创建 Rect: 'min' 坐标的 x/y 值必须小于或等于 'max' 的 x/y 值";
 
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Rect<T>
@@ -388,9 +381,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内进行相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::Rect;
@@ -433,9 +426,9 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 在绝对限制内进行相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{point, Rect};
@@ -462,7 +455,7 @@ where
 
 #[deprecated(
     since = "0.6.2",
-    note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
+    note = "使用 `Rect::new`，因为 `Rect::try_new` 不会出错"
 )]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct InvalidRectCoordinatesError;

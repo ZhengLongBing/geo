@@ -30,11 +30,11 @@ fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
 
 fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + RelativeEq>(wkt: &str) {
     init_log();
-    eprintln!("input: {wkt}");
+    eprintln!("输入: {wkt}");
     let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
     let area = twice_polygon_area(&input);
     let subdivisions = monotone_subdivision([input.clone()]);
-    eprintln!("Got {} subdivisions", subdivisions.len());
+    eprintln!("得到{}个细分", subdivisions.len());
 
     let mut sub_area = T::zero();
     for (i, d1) in subdivisions.iter().enumerate() {
@@ -53,9 +53,9 @@ fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + Relati
         let (mut top, bot) = div.into_ls_pair();
         top.0.extend(bot.0.into_iter().rev().skip(1));
         if !top.is_closed() {
-            // This branch is for debugging
-            // It will never be reached unless assertions elsewhere are commented.
-            error!("Got an unclosed line string");
+            // 该分支用于调试
+            // 除非注释掉其他地方的断言，否则永远不会到达这里。
+            error!("得到未闭合的线串");
             error!("{}", top.to_wkt());
         } else {
             let poly = Polygon::new(top, vec![]);

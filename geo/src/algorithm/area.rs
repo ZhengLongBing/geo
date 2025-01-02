@@ -5,28 +5,21 @@ pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
 where
     T: CoordNum,
 {
-    // LineString with less than 3 points is empty, or a
-    // single point, or is not closed.
+    // 如果 LineString 的点少于 3 个，则该线是空的，或者是一个单个点，或者未闭合。
     if linestring.0.len() < 3 {
         return T::zero();
     }
 
-    // Above test ensures the vector has at least 2 elements.
-    // We check if linestring is closed, and return 0 otherwise.
+    // 上面的测试确保了向量至少有 2 个元素。
+    // 我们检查 linestring 是否闭合，否则返回 0。
     if linestring.0.first().unwrap() != linestring.0.last().unwrap() {
         return T::zero();
     }
 
-    // Use a reasonable shift for the line-string coords
-    // to avoid numerical-errors when summing the
-    // determinants.
+    // 使用合理的偏移量来减少累加行列式时的数值误差。
     //
-    // Note: we can't use the `Centroid` trait as it
-    // requires `T: Float` and in fact computes area in the
-    // implementation. Another option is to use the average
-    // of the coordinates, but it is not fool-proof to
-    // divide by the length of the linestring (eg. a long
-    // line-string with T = u8)
+    // 注意：我们不能使用 `Centroid` trait，因为它要求 `T: Float` 并且在实现中实际上计算了面积。
+    // 另一种选择是使用坐标的平均值，但通过 linestring 的长度除以并不总是可靠的方法（比如 T = u8 的长 linestring）。
     let shift = linestring.0[0];
 
     let mut tmp = T::zero();
@@ -39,9 +32,9 @@ where
     tmp
 }
 
-/// Signed and unsigned planar area of a geometry.
+/// 几何形状的有符号和无符号的平面面积。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::polygon;
@@ -74,7 +67,7 @@ where
     fn unsigned_area(&self) -> T;
 }
 
-// Calculation of simple (no interior holes) Polygon area
+// 简单（没有内部孔）多边形的面积计算
 pub(crate) fn get_linestring_area<T>(linestring: &LineString<T>) -> T
 where
     T: CoordFloat,
@@ -121,9 +114,7 @@ where
     }
 }
 
-/// **Note.** The implementation handles polygons whose
-/// holes do not all have the same orientation. The sign of
-/// the output is the same as that of the exterior shell.
+/// **注意。** 此实现处理孔不全具有相同方向的多边形。输出的符号与外部框一致。
 impl<T> Area<T> for Polygon<T>
 where
     T: CoordFloat,
@@ -131,8 +122,7 @@ where
     fn signed_area(&self) -> T {
         let area = get_linestring_area(self.exterior());
 
-        // We could use winding order here, but that would
-        // result in computing the shoelace formula twice.
+        // 我们可以在这里使用绕组顺序，但这将导致计算两次鞋带公式。
         let is_negative = area < T::zero();
 
         let area = self.interiors().iter().fold(area.abs(), |total, next| {
@@ -177,12 +167,8 @@ where
     }
 }
 
-/// **Note.** The implementation is a straight-forward
-/// summation of the signed areas of the individual
-/// polygons. In particular, `unsigned_area` is not
-/// necessarily the sum of the `unsigned_area` of the
-/// constituent polygons unless they are all oriented the
-/// same.
+/// **注意。** 实现的方式是直接对各个多边形的有符号面积求和。特别是，`unsigned_area` 不一定是组成多边形的 `unsigned_area` 之和，
+/// 除非它们的方向都相同。
 impl<T> Area<T> for MultiPolygon<T>
 where
     T: CoordFloat,
@@ -200,7 +186,7 @@ where
     }
 }
 
-/// Because a `Rect` has no winding order, the area will always be positive.
+/// 因为 `Rect` 没有绕组顺序，所以面积总是正的。
 impl<T> Area<T> for Rect<T>
 where
     T: CoordNum,
@@ -264,7 +250,7 @@ mod test {
     use crate::Area;
     use crate::{coord, polygon, wkt, Line, MultiPolygon, Polygon, Rect, Triangle};
 
-    // Area of the polygon
+    // 多边形的面积
     #[test]
     fn area_empty_polygon_test() {
         let poly: Polygon<f32> = polygon![];
@@ -519,7 +505,7 @@ mod test {
                 ]
             ],
         ];
-        // Value from shapely
+        // 从 shapely 得到的值
         assert_relative_eq!(
             poly.unsigned_area(),
             0.006547948219252177,

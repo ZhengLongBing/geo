@@ -1,13 +1,13 @@
 use geo_types::{CoordFloat, Point};
 
-/// Calculate the bearing between two points.
+/// 计算两个点之间的方位角。
 pub trait Bearing<F: CoordFloat> {
-    /// Calculate the bearing from `origin` to `destination` in degrees.
+    /// 计算从`origin`到`destination`的方位角，单位为度。
     ///
-    /// See [specific implementations](#implementors) for details.
+    /// 详见[具体实现](#implementors)。
     ///
-    /// # Units
-    /// - `origin`, `destination`: Point where the units of x/y depend on the [trait implementation](#implementors).
-    /// - returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
+    /// # 单位
+    /// - `origin`, `destination`: 点，其中x/y的单位取决于[特性实现](#implementors)。
+    /// - 返回值: 角度，其中：北方: 0°，东方: 90°，南方: 180°，西方: 270°
     fn bearing(origin: Point<F>, destination: Point<F>) -> F;
 }

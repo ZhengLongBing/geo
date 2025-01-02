@@ -1,17 +1,16 @@
 use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNum, Rect};
 
-/// An affine transformation which scales a geometry up or down by a factor.
+/// 一个仿射变换，用于按比例缩放几何图形。
 ///
-/// ## Performance
+/// ## 性能
 ///
-/// If you will be performing multiple transformations, like [`Scale`],
-/// [`Skew`](crate::Skew), [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
-/// efficient to compose the transformations and apply them as a single operation using the
-/// [`AffineOps`] trait.
+/// 如果要执行多个变换，比如 [`Scale`],
+/// [`Skew`](crate::Skew), [`Translate`](crate::Translate), 或者 [`Rotate`](crate::Rotate)，
+/// 那么通过使用 [`AffineOps`] 特征将这些变换组合成一个操作来应用会更高效。
 pub trait Scale<T: CoordNum> {
-    /// Scale a geometry from it's bounding box center.
+    /// 从几何图形的边界框中心进行缩放。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Scale;
@@ -29,13 +28,12 @@ pub trait Scale<T: CoordNum> {
     #[must_use]
     fn scale(&self, scale_factor: T) -> Self;
 
-    /// Mutable version of [`scale`](Self::scale)
+    /// [`scale`](Self::scale) 的可变版本
     fn scale_mut(&mut self, scale_factor: T);
 
-    /// Scale a geometry from it's bounding box center, using different values for `x_factor` and
-    /// `y_factor` to distort the geometry's [aspect ratio](https://en.wikipedia.org/wiki/Aspect_ratio).
+    /// 从几何图形的边界框中心进行缩放，使用不同的 `x_factor` 和 `y_factor` 来扭曲几何图形的[纵横比](https://en.wikipedia.org/wiki/Aspect_ratio)。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Scale;
@@ -53,16 +51,15 @@ pub trait Scale<T: CoordNum> {
     #[must_use]
     fn scale_xy(&self, x_factor: T, y_factor: T) -> Self;
 
-    /// Mutable version of [`scale_xy`](Self::scale_xy).
+    /// [`scale_xy`](Self::scale_xy) 的可变版本。
     fn scale_xy_mut(&mut self, x_factor: T, y_factor: T);
 
-    /// Scale a geometry around a point of `origin`.
+    /// 围绕`origin`点缩放几何图形。
     ///
-    /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, in
-    /// which case you can just use [`scale`](Self::scale) or [`scale_xy`](Self::scale_xy), but
-    /// this method allows you to specify any point.
+    /// 原点*通常*为几何图形的二维边界框中心，这种情况下，你可以直接使用 [`scale`](Self::scale) 或 [`scale_xy`](Self::scale_xy)，
+    /// 但此方法允许你指定任意点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Scale;
@@ -80,7 +77,7 @@ pub trait Scale<T: CoordNum> {
     #[must_use]
     fn scale_around_point(&self, x_factor: T, y_factor: T, origin: impl Into<Coord<T>>) -> Self;
 
-    /// Mutable version of [`scale_around_point`](Self::scale_around_point).
+    /// [`scale_around_point`](Self::scale_around_point) 的可变版本。
     fn scale_around_point_mut(&mut self, x_factor: T, y_factor: T, origin: impl Into<Coord<T>>);
 }
 
@@ -101,8 +98,7 @@ where
     fn scale_xy(&self, x_factor: T, y_factor: T) -> Self {
         let origin = match self.bounding_rect().into() {
             Some(rect) => rect.center(),
-            // Empty geometries have no bounding rect, but in that case
-            // transforming is a no-op anyway.
+            // 空几何图形没有边界矩形，但在这种情况下，变换是无操作的。
             None => return self.clone(),
         };
         self.scale_around_point(x_factor, y_factor, origin)
@@ -111,8 +107,7 @@ where
     fn scale_xy_mut(&mut self, x_factor: T, y_factor: T) {
         let origin = match self.bounding_rect().into() {
             Some(rect) => rect.center(),
-            // Empty geometries have no bounding rect, but in that case
-            // transforming is a no-op anyway.
+            // 空几何图形没有边界矩形，但在这种情况下，变换是无操作的。
             None => return,
         };
         self.scale_around_point_mut(x_factor, y_factor, origin);

@@ -4,33 +4,32 @@ use crate::{Coord, GeoFloat, Line};
 
 use std::collections::BTreeSet;
 
-/// An `Edge` represents a one dimensional line in a geometry.
+/// `Edge` 表示几何体中的一维线。
 ///
-/// This is based on [JTS's `Edge` as of 1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/Edge.java)
+/// 这是基于[JTS的`Edge`截至版本1.18.1](https://github.com/locationtech/jts/blob/jts-1.18.1/modules/core/src/main/java/org/locationtech/jts/geomgraph/Edge.java)
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) struct Edge<F: GeoFloat> {
-    /// `coordinates` of the line geometry
+    /// 线的几何坐标
     coords: Vec<Coord<F>>,
 
-    /// an edge is "isolated" if no other edge touches it
+    /// 如果没有其他边与之接触，则边是"隔离的"
     is_isolated: bool,
 
-    /// other edges that this edge intersects with
+    /// 与此边相交的其他边
     edge_intersections: BTreeSet<EdgeIntersection<F>>,
 
-    /// where the line's topological classification to the two geometries is recorded
+    /// 记录该线相对于两个几何体的拓扑分类
     label: Label,
 }
 
 impl<F: GeoFloat> Edge<F> {
-    /// Create a new Edge.
+    /// 创建一个新的Edge。
     ///
-    /// - `coords` a *non-empty* Vec of Coords
-    /// - `label` an appropriately dimensioned topology label for the Edge. See [`TopologyPosition`]
-    ///    for details
+    /// - `coords` 一个非空的`Vec`类型的坐标
+    /// - `label` Edge的适当维度的拓扑标签。详情参阅[`TopologyPosition`]
     pub(crate) fn new(mut coords: Vec<Coord<F>>, label: Label) -> Edge<F> {
-        assert!(!coords.is_empty(), "Can't add empty edge");
-        // Once set, `edge.coords` never changes length.
+        assert!(!coords.is_empty(), "不能添加空边");
+        // 一旦设定，`edge.coords`的长度不再改变。
         coords.shrink_to_fit();
         Edge {
             coords,
@@ -48,9 +47,8 @@ impl<F: GeoFloat> Edge<F> {
         &mut self.label
     }
 
-    /// When comparing two prepared geometries, we cache each geometry's topology graph. Depending
-    /// on the order of the operation - `a.relate(b)` vs `b.relate(a)` - we may need to swap the
-    /// label.
+    /// 比较两个准备好的几何体时，我们缓存每个几何体的拓扑图。
+    /// 根据操作的顺序 - `a.relate(b)` vs `b.relate(a)` - 可能需要交换标签。
     pub fn swap_label_args(&mut self) {
         self.label.swap_args()
     }
@@ -92,8 +90,7 @@ impl<F: GeoFloat> Edge<F> {
         self.coords().first() == self.coords().last()
     }
 
-    /// Adds EdgeIntersections for one or both intersections found for a segment of an edge to the
-    /// edge intersection list.
+    /// 为边的一个段中找到的一个或两个相交点添加EdgeIntersections到边的相交列表中。
     pub fn add_intersections(
         &mut self,
         intersection: LineIntersection<F>,
@@ -111,10 +108,9 @@ impl<F: GeoFloat> Edge<F> {
         }
     }
 
-    /// Add an EdgeIntersection for `intersection`.
+    /// 为`intersection`添加一个EdgeIntersection。
     ///
-    /// An intersection that falls exactly on a vertex of the edge is normalized to use the higher
-    /// of the two possible `segment_index`
+    /// 落在边的顶点上的相交点被归一化为使用可能的`segment_index`中较大的一个
     pub fn add_intersection(
         &mut self,
         intersection_coord: Coord<F>,
@@ -140,9 +136,9 @@ impl<F: GeoFloat> Edge<F> {
         ));
     }
 
-    /// Update the IM with the contribution for this component.
+    /// 用此组件的贡献更新相交矩阵(IM)。
     ///
-    /// A component only contributes if it has a labelling for both parent geometries
+    /// 仅当组件为两个父几何体都有标签时，才贡献。
     pub fn update_intersection_matrix(label: &Label, intersection_matrix: &mut IntersectionMatrix) {
         intersection_matrix.set_at_least_if_in_both(
             label.position(0, Direction::On),

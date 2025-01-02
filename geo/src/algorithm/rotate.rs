@@ -2,22 +2,20 @@ use crate::algorithm::{AffineOps, AffineTransform, BoundingRect, Centroid};
 use crate::geometry::*;
 use crate::CoordFloat;
 
-/// Rotate a geometry around a point by an angle, in degrees.
+/// 旋转几何图形绕某一点按角度（以度为单位）。
 ///
-/// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+/// 正角度为逆时针旋转，负角度为顺时针旋转。
 ///
-/// ## Performance
+/// ## 性能
 ///
-/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-/// [`Skew`](crate::Skew), [`Translate`](crate::Translate) or [`Rotate`], it is more
-/// efficient to compose the transformations and apply them as a single operation using the
-/// [`AffineOps`] trait.
+/// 如果您将执行多个转换，如 [`Scale`](crate::Scale)、[`Skew`](crate::Skew)、[`Translate`](crate::Translate)
+/// 或 [`Rotate`], 使用 [`AffineOps`] 特征组合转换并将其作为单个操作应用效率更高。
 pub trait Rotate<T: CoordFloat> {
-    /// Rotate a geometry around its [centroid](Centroid) by an angle, in degrees
+    /// 旋转几何图形绕其[重心](Centroid)按角度（以度为单位）
     ///
-    /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    /// 正角度为逆时针旋转，负角度为顺时针旋转。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Rotate;
@@ -43,25 +41,24 @@ pub trait Rotate<T: CoordFloat> {
     #[must_use]
     fn rotate_around_centroid(&self, degrees: T) -> Self;
 
-    /// Mutable version of [`Self::rotate_around_centroid`]
+    /// [`Self::rotate_around_centroid`]的可变版本
     fn rotate_around_centroid_mut(&mut self, degrees: T);
 
-    /// Rotate a geometry around the center of its [bounding box](BoundingRect) by an angle, in
-    /// degrees.
+    /// 旋转几何图形绕其[边界框](BoundingRect)的中心按角度（以度为单位）。
     ///
-    /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    /// 正角度为逆时针旋转，负角度为顺时针旋转。
     ///
     #[must_use]
     fn rotate_around_center(&self, degrees: T) -> Self;
 
-    /// Mutable version of [`Self::rotate_around_center`]
+    /// [`Self::rotate_around_center`]的可变版本
     fn rotate_around_center_mut(&mut self, degrees: T);
 
-    /// Rotate a Geometry around an arbitrary point by an angle, given in degrees
+    /// 旋转几何图形绕任意点按角度（以度为单位）
     ///
-    /// Positive angles are counter-clockwise, and negative angles are clockwise rotations.
+    /// 正角度为逆时针旋转，负角度为顺时针旋转。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Rotate;
@@ -87,7 +84,7 @@ pub trait Rotate<T: CoordFloat> {
     #[must_use]
     fn rotate_around_point(&self, degrees: T, point: Point<T>) -> Self;
 
-    /// Mutable version of [`Self::rotate_around_point`]
+    /// [`Self::rotate_around_point`]的可变版本
     fn rotate_around_point_mut(&mut self, degrees: T, point: Point<T>);
 }
 
@@ -101,7 +98,7 @@ where
     fn rotate_around_centroid(&self, degrees: T) -> Self {
         let point = match self.centroid().into() {
             Some(coord) => coord,
-            // geometry was empty, so there's nothing to rotate
+            // 几何体是空的，所以没有什么可旋转的
             None => return self.clone(),
         };
         Rotate::rotate_around_point(self, degrees, point)
@@ -110,7 +107,7 @@ where
     fn rotate_around_centroid_mut(&mut self, degrees: T) {
         let point = match self.centroid().into() {
             Some(coord) => coord,
-            // geometry was empty, so there's nothing to rotate
+            // 几何体是空的，所以没有什么可旋转的
             None => return,
         };
         self.rotate_around_point_mut(degrees, point)
@@ -119,7 +116,7 @@ where
     fn rotate_around_center(&self, degrees: T) -> Self {
         let point = match self.bounding_rect().into() {
             Some(rect) => Point(rect.center()),
-            // geometry was empty, so there's nothing to rotate
+            // 几何体是空的，所以没有什么可旋转的
             None => return self.clone(),
         };
         Rotate::rotate_around_point(self, degrees, point)
@@ -128,7 +125,7 @@ where
     fn rotate_around_center_mut(&mut self, degrees: T) {
         let point = match self.bounding_rect().into() {
             Some(rect) => Point(rect.center()),
-            // geometry was empty, so there's nothing to rotate
+            // 几何体是空的，所以没有什么可旋转的
             None => return,
         };
         self.rotate_around_point_mut(degrees, point)
@@ -156,7 +153,7 @@ mod test {
     fn test_rotate_around_point() {
         let p = point!(x: 1.0, y: 5.0);
         let rotated = p.rotate_around_centroid(30.0);
-        // results agree with Shapely / GEOS
+        // 结果与 Shapely / GEOS 一致
         assert_eq!(rotated, Point::new(1.0, 5.0));
     }
 
@@ -166,8 +163,8 @@ mod test {
         let rotated_center = point.rotate_around_center(30.);
         let rotated_centroid = point.rotate_around_centroid(30.);
 
-        // results agree with Shapely / GEOS
-        // a rotated point should always equal itself
+        // 结果与 Shapely / GEOS 一致
+        // 旋转点应该总是等于自身
         assert_eq!(point, rotated_center);
         assert_eq!(point, rotated_centroid);
     }
@@ -180,7 +177,7 @@ mod test {
             point!(x: 2., y: 1.),
         ]);
 
-        // Results match shapely for `centroid`
+        // `centroid`的结果与 shapely 匹配
         let expected_for_centroid = MultiPoint::new(vec![
             point!(x: 0.7642977396044841, y: -0.5118446353109125),
             point!(x: 0.7642977396044842, y:  0.9023689270621824),
@@ -191,7 +188,7 @@ mod test {
             expected_for_centroid
         );
 
-        // Results match shapely for `center`
+        // `center`的结果与 shapely 匹配
         let expected_for_center = MultiPoint::new(vec![
             point!(x: 0.6464466094067262, y: -0.5606601717798212),
             point!(x: 0.6464466094067263, y: 0.8535533905932737),
@@ -212,7 +209,7 @@ mod test {
             (x: 5.0, y: 10.0)
         ];
 
-        // results agree with Shapely / GEOS for `centroid`
+        // `centroid`的结果与 Shapely / GEOS 一致
         let rotated_around_centroid = linestring.rotate_around_centroid(-45.0);
         assert_relative_eq!(
             rotated_around_centroid,
@@ -223,7 +220,7 @@ mod test {
             ]
         );
 
-        // results agree with Shapely / GEOS for `center`
+        // `center`的结果与 Shapely / GEOS 一致
         let rotated_around_center = linestring.rotate_around_center(-45.0);
         assert_relative_eq!(
             rotated_around_center,
@@ -260,7 +257,7 @@ mod test {
             (x: 5.594734345490753, y: 0.9217017380151372),
             (x: 4.6288085192016855, y: 1.1805207831176578)
         ];
-        // results agree with Shapely / GEOS
+        // 结果与 Shapely / GEOS 一致
         assert_eq!(rotated, correct);
     }
     #[test]
@@ -293,7 +290,7 @@ mod test {
             ],
         ];
 
-        // now rotate around center
+        // 现在绕中心旋转
         let center_expected = polygon![
             exterior: [
                 (x: 4.628808519201685, y: 1.180520783117658),
@@ -326,7 +323,7 @@ mod test {
 
         assert_relative_eq!(rotated_around_center, center_expected, epsilon = 1e-12);
 
-        // now rotate around centroid
+        // 现在绕重心旋转
         let centroid_expected = polygon![
             exterior: [
                 (x: 4.615388272418591, y: 1.182287592124891),
@@ -389,7 +386,7 @@ mod test {
         ];
         let multi_line_string: MultiLineString = MultiLineString::new(vec![ls1, ls2]);
 
-        // Results match with Shapely for `centroid`
+        // `centroid`的结果与 Shapely 匹配
         let expected_around_centroid = MultiLineString::new(vec![
             line_string![
                 (x: -5.062519283392216, y: 19.72288595632566),
@@ -408,7 +405,7 @@ mod test {
             epsilon = 1e-12
         );
 
-        // Results match with Shapely for `center`
+        // `center`的结果与 Shapely 匹配
         let expected_around_center: MultiLineString = MultiLineString::new(vec![
             line_string![
                 (x: -1.213203435596426, y: 17.07106781186548),
@@ -474,8 +471,8 @@ mod test {
         ]
         .into();
 
-        // results agree with Shapely / GEOS
-        // (relaxing the epsilon a bit)
+        // 结果与 Shapely / GEOS 一致
+        // (放松一下epsilon)
         assert_relative_eq!(
             multipolygon.rotate_around_centroid(45.),
             expected_centroid,
@@ -539,7 +536,7 @@ mod test {
         ]
         .into();
 
-        // results agree with Shapely / GEOS
+        // 结果与 Shapely / GEOS 一致
         assert_relative_eq!(
             multipolygon.rotate_around_center(-15.),
             expected_center,
@@ -554,22 +551,22 @@ mod test {
 
     #[test]
     fn test_rotate_empty_geometries_error_gracefully() {
-        // line string
+        // 线字符串
         let empty_linestring: LineString = line_string![];
         let rotated_empty_linestring = empty_linestring.rotate_around_centroid(90.);
         assert_eq!(empty_linestring, rotated_empty_linestring);
 
-        // multi line string
+        // 多线字符串
         let empty_multilinestring: MultiLineString = MultiLineString::new(vec![]);
         let rotated_empty_multilinestring = empty_multilinestring.rotate_around_centroid(90.);
         assert_eq!(empty_multilinestring, rotated_empty_multilinestring);
 
-        // polygon
+        // 多边形
         let empty_polygon: Polygon<f64> = polygon![];
         let rotated_empty_polygon = empty_polygon.rotate_around_centroid(90.);
         assert_eq!(empty_polygon, rotated_empty_polygon);
 
-        // multi polygon
+        // 多个多边形
         let empty_multipolygon: MultiPolygon = Vec::<Polygon<f64>>::new().into();
         let rotated_empty_multipolygon = empty_multipolygon.rotate_around_centroid(90.);
         assert_eq!(empty_multipolygon, rotated_empty_multipolygon);

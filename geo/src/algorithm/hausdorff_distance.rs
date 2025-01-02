@@ -4,13 +4,12 @@ use crate::GeoFloat;
 use geo_types::{Coord, Point};
 use num_traits::Bounded;
 
-/// Determine the distance between two geometries using the [Hausdorff distance formula].
+/// 使用 [Hausdorff 距离公式] 确定两个几何体之间的距离。
 ///
-/// Hausdorff distance is used to compare two point sets. It measures the maximum euclidean
-/// distance of a point in one set to the nearest point in another set. Hausdorff distance
-/// is often used to measure the amount of mismatch between two sets.
+/// Hausdorff 距离用于比较两个点集。它测量一个集合中的点到另一个集合中最近点的最大欧几里德距离。
+/// Hausdorff 距离常用于测量两个集合之间的不匹配程度。
 ///
-/// [Hausdorff distance formula]: https://en.wikipedia.org/wiki/Hausdorff_distance
+/// [Hausdorff 距离公式]: https://en.wikipedia.org/wiki/Hausdorff_distance
 pub trait HausdorffDistance<T>
 where
     T: GeoFloat,
@@ -29,7 +28,7 @@ where
     where
         Rhs: CoordsIter<Scalar = T>,
     {
-        // calculate from A -> B
+        // 从 A -> B 计算距离
         let hd1 = self
             .coords_iter()
             .map(|c| {
@@ -39,7 +38,7 @@ where
             })
             .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val));
 
-        // Calculate from B -> A
+        // 从 B -> A 计算距离
         let hd2 = rhs
             .coords_iter()
             .map(|c| {
@@ -49,13 +48,13 @@ where
             })
             .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val));
 
-        // The max of the two
+        // 取两者最大值
         hd1.max(hd2)
     }
 }
 
 // ┌───────────────────────────┐
-// │ Implementations for Coord │
+// │ Coord 的实现 │
 // └───────────────────────────┘
 
 impl<T> HausdorffDistance<T> for Coord<T>

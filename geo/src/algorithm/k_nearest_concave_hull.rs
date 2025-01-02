@@ -8,31 +8,24 @@ use std::cmp::max;
 
 const K_MULTIPLIER: f32 = 1.5;
 
-/// Another approach for [concave hull](trait.algorithm.ConcaveHull.html). This algorithm is based
-/// on a [k nearest neighbours approach](https://pdfs.semanticscholar.org/2397/17005c3ebd5d6a42fc833daf97a0edee1ce4.pdf)
-/// by Adriano Moreira and Maribel Santos.
+/// 另一种针对[凹包络线](trait.algorithm.ConcaveHull.html)的方法。该算法基于
+/// Adriano Moreira 和 Maribel Santos 的[k最近邻方法](https://pdfs.semanticscholar.org/2397/17005c3ebd5d6a42fc833daf97a0edee1ce4.pdf)。
 ///
-/// The idea of the algorithm is simple:
-/// 1. Find a point on a future hull (e. g. a point with the smallest Y coordinate).
-/// 2. Find K nearest neighbours to the chosen point.
-/// 3. As the next point on the hull chose one of the nearest points, that would make the largest
-///    left hand turn from the previous segment.
-/// 4. Repeat 2-4.
+/// 该算法的基本思想简单：
+/// 1. 找到一个未来包络线上的点（例如，具有最小Y坐标的点）。
+/// 2. 找到该点的K个最近邻点。
+/// 3. 选择最近的点之一作为包络线的下一个点，该点会使与前一个线段形成最大左转弯。
+/// 4. 重复步骤2-4。
 ///
-/// In cases when the hull cannot be calculated for the given K, a larger value is chosen and
-/// calculation starts from the beginning.
+/// 当给定的K无法计算包络线时，会选择更大的值并从头开始计算。
 ///
-/// In the worst case scenario, when no K can be found to build a correct hull, the convex hull is
-/// returned.
+/// 在最坏的情况下，当找不到合适的K来构建正确的包络线时，将返回凸包络线。
 ///
-/// This algorithm is generally several times slower then the one used in the
-/// [ConcaveHull](trait.algorithm.ConcaveHull.html) trait, but gives better results and
-/// does not require manual coefficient adjustment.
+/// 通常该算法比用于[凹包络线](trait.algorithm.ConcaveHull.html)特性的算法慢几倍，但效果更好，并且
+/// 不需要手动调整系数。
 ///
-/// The larger K is given to the algorithm, the more "smooth" the hull will generally be, but the
-/// longer calculation may take. If performance is not critical, K=3 is a safe value to set
-/// (lower values do not make sense for this algorithm). If K is equal or larger than the number of
-/// input points, the convex hull will be produced.
+/// 赋予算法的K值越大，包络线通常会越“平滑”，但计算时间可能会更长。如果性能不是至关重要的，K=3是一个安全的值
+/// （对于该算法，较小的值没有意义）。如果K等于或大于输入点的数量，将生成凸包络线。
 pub trait KNearestConcaveHull {
     type Scalar: CoordNum;
     fn k_nearest_concave_hull(&self, k: u32) -> Polygon<Self::Scalar>;
@@ -98,7 +91,7 @@ where
 
 const DELTA: f32 = 0.000000001;
 
-/// Removes duplicate coords from the dataset.
+/// 从数据集中删除重复的坐标。
 fn prepare_dataset<'a, T>(coords: impl Iterator<Item = &'a Coord<T>>) -> rstar::RTree<Coord<T>>
 where
     T: 'a + GeoFloat + RTreeNum,
@@ -118,8 +111,7 @@ where
     dataset
 }
 
-/// The points are considered equal, if both coordinate values are same with 0.0000001% range
-/// (see the value of DELTA constant).
+/// 如果两个坐标值在0.0000001%范围内相同，则两个点被认为是相等的（见DELTA常量的值）。
 fn coords_are_equal<T>(c1: &Coord<T>, c2: &Coord<T>) -> bool
 where
     T: GeoFloat + RTreeNum,
@@ -131,9 +123,7 @@ fn float_equal<T>(a: T, b: T) -> bool
 where
     T: GeoFloat,
 {
-    let da = a * T::from(DELTA)
-        .expect("Conversion from constant is always valid.")
-        .abs();
+    let da = a * T::from(DELTA).expect("从常量转换始终有效。").abs();
     b > (a - da) && b < (a + da)
 }
 
@@ -145,7 +135,7 @@ where
 
     let mut coords: Vec<Coord<T>> = dataset.iter().cloned().collect();
     if !coords.is_empty() {
-        // close the linestring provided it's not empty
+        // 关闭线串，只要它不为空
         coords.push(coords[0]);
     }
 
@@ -177,6 +167,7 @@ where
     let mut curr_step = 2;
     while (current_coord != first_coord || curr_step == 2) && dataset.size() > 0 {
         if curr_step == 5 {
+            // 插入第一个坐标以闭合环
             dataset.insert(first_coord);
         }
 
@@ -236,7 +227,7 @@ where
     let mut result = coord_set
         .iter()
         .next()
-        .expect("We checked that there are more then 3 coords in the set before.");
+        .expect("我们之前检查过集中的坐标数大于3。");
 
     for coord in coord_set.iter() {
         if coord.y < min_y {
@@ -301,7 +292,7 @@ fn intersects<T>(hull: &[Coord<T>], line: &[&Coord<T>; 2]) -> bool
 where
     T: GeoFloat,
 {
-    // This is the case of finishing the contour.
+    // 这是完成轮廓的情况。
     if *line[1] == hull[0] {
         return false;
     }

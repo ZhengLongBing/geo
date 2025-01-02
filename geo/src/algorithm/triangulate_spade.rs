@@ -9,16 +9,14 @@ use crate::{
 };
 use crate::{Centroid, Contains};
 
-// ======== Config ============
+// ======== 配置 ============
 
-/// Collection of parameters that influence the precision of the algorithm in some sense (see
-/// explanations on fields of this struct)
+/// 一组参数，影响算法的精度（参见此结构体字段上的说明）
 ///
-/// This implements the `Default` trait and you can just use it most of the time
+/// 这实现了 `Default` 特质，你可以在大多数情况下直接使用它。
 #[derive(Debug, Clone)]
 pub struct SpadeTriangulationConfig<T: SpadeTriangulationFloat> {
-    /// Coordinates within this radius are snapped to the same position. For any two `Coords` there's
-    /// no real way to influence the decision when choosing the snapper and the snappee
+    /// 在此半径内的坐标会被吸附到相同的位置。对于任何两个 `Coords`，在选择哪个是吸附者和哪个被吸附者时没有办法影响决定。
     pub snap_radius: T,
 }
 
@@ -33,7 +31,7 @@ where
     }
 }
 
-// ====== Error ========
+// ====== 错误 ========
 
 #[derive(Debug)]
 pub enum TriangulationError {
@@ -52,17 +50,16 @@ impl std::error::Error for TriangulationError {}
 
 pub type TriangulationResult<T> = Result<T, TriangulationError>;
 
-// ======= Float trait ========
+// ======= 浮点特质 ========
 
 pub trait SpadeTriangulationFloat: GeoFloat + SpadeNum {}
 impl<T: GeoFloat + SpadeNum> SpadeTriangulationFloat for T {}
 
-// ======= Triangulation trait =========
+// ======= 三角化特质 ========
 
 pub type Triangles<T> = Vec<Triangle<T>>;
 
-// seal the trait that needs to be implemented for TriangulateSpade to be implemented. This is done
-// so that we don't leak these weird methods on the public interface.
+// 密封特质，需实现才能实现 TriangulateSpade。这样做是为了不在公共接口上泄漏这些奇怪的方法。
 mod private {
     use super::*;
 
@@ -72,25 +69,20 @@ mod private {
     where
         T: SpadeTriangulationFloat,
     {
-        /// collect all the lines that are relevant for triangulations from the geometric object that
-        /// should be triangulated.
+        /// 从待进行三角剖分的几何对象中收集所有与三角剖分相关的线。
         ///
-        /// intersecting lines are allowed
+        /// 允许相交的线
         fn lines(&'a self) -> Vec<Line<T>>;
-        /// collect all the coords that are relevant for triangulations from the geometric object that
-        /// should be triangulated
+        /// 从待进行三角剖分的几何对象中收集所有与三角剖分相关的坐标
         fn coords(&'a self) -> CoordsIter<'a, T>;
-        /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
+        /// 定义一个谓词来判断点是否在对象内部（用于约束三角剖分）
         fn contains_point(&'a self, p: Point<T>) -> bool;
 
-        // processing of the lines that prepare the lines for triangulation.
+        // 准备进行三角剖分的线的处理。
         //
-        // `spade` has the general limitation that constraint lines cannot intersect or else it
-        // will panic. This is why we need to manually split up the lines into smaller parts at the
-        // intersection point
+        // `spade` 有限制，不能有交叉的约束线，否则会引发异常。这就是为什么需要在交点处将线手动分割成更小的部分。
         //
-        // there's also a preprocessing step which tries to minimize the risk of failure of the algo
-        // through edge cases (thin/flat triangles are prevented as much as possible & lines are deduped, ...)
+        // 还有一个预处理步骤，试图通过边缘情况最小化算法失败的风险（尽量避免薄的/平的三角形，去重线等）
         fn cleanup_lines(lines: Vec<Line<T>>, snap_radius: T) -> TriangulationResult<Vec<Line<T>>> {
             let (known_coords, lines) = preprocess_lines(lines, snap_radius);
             prepare_intersection_contraint(lines, known_coords, snap_radius)
@@ -98,23 +90,18 @@ mod private {
     }
 }
 
-/// Triangulate polygons using a [Delaunay
-/// Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
+/// 使用[Delaunay三角剖分](https://en.wikipedia.org/wiki/Delaunay_triangulation)对多边形进行三角剖分
 ///
-/// This trait contains both constrained and unconstrained triangulation methods. To read more
-/// about the differences of these methods also consult [this
-/// page](https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation)
+/// 此特质既包含约束三角剖分也包含非约束三角剖分方法。要了解这些方法之间的区别，请参阅[此页面](https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation)
 pub trait TriangulateSpade<'a, T>: private::TriangulationRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
 {
-    /// returns a triangulation that's solely based on the points of the geometric object
+    /// 返回一个仅基于几何对象的点的三角剖分
     ///
-    /// The triangulation is guaranteed to be Delaunay
+    /// 三角剖分保证是Delaunay的
     ///
-    /// Note that the lines of the triangulation don't necessarily follow the lines of the input
-    /// geometry. If you wish to achieve that take a look at the `constrained_triangulation` and the
-    /// `constrained_outer_triangulation` functions.
+    /// 请注意，三角剖分的线不一定遵循输入几何的线。如果你希望实现这一点，请查看 `constrained_triangulation` 和 `constrained_outer_triangulation` 函数。
     ///
     /// ```rust
     /// use geo::TriangulateSpade;
@@ -149,13 +136,11 @@ where
             .map(triangulation_to_triangles)
     }
 
-    /// returns triangulation that's based on the points of the geometric object and also
-    /// incorporates the lines of the input geometry
+    /// 返回基于几何对象的点并且也结合了输入几何体的线的三角剖分
     ///
-    /// The triangulation is not guaranteed to be Delaunay because of the constraint lines
+    /// 由于约束线的原因，三角剖分不能保证是 Delaunay 的
     ///
-    /// This outer triangulation also contains triangles that are not included in the input
-    /// geometry if it wasn't convex. Here's an example:
+    /// 如果输入几何体不是凸的，这个外部三角剖分还包含不在输入几何体中的三角形。以下是一个例子：
     ///
     /// ```text
     /// ┌──────────────────┐
@@ -189,15 +174,14 @@ where
     ///     ]),
     ///     vec![],
     /// );
-    /// // we use the default [`SpadeTriangulationConfig`] here
+    /// // 我们在这里使用默认的 [`SpadeTriangulationConfig`]
     /// let constrained_outer_triangulation =
     /// u_shape.constrained_outer_triangulation(Default::default()).unwrap();
     /// let num_triangles = constrained_outer_triangulation.len();
     /// assert_eq!(num_triangles, 8);
     /// ```
     ///
-    /// The outer triangulation of the top down U-shape contains extra triangles marked
-    /// with ":". If you want to exclude those, take a look at `constrained_triangulation`
+    /// 自上而下的 U 形状的外部三角剖分包含额外的三角形，标记为“:”。如果你想排除这些，请查看 `constrained_triangulation`
     fn constrained_outer_triangulation(
         &'a self,
         config: SpadeTriangulationConfig<T>,
@@ -212,7 +196,7 @@ where
                 |mut cdt, [start, end]| {
                     let start = cdt.insert(start).map_err(TriangulationError::SpadeError)?;
                     let end = cdt.insert(end).map_err(TriangulationError::SpadeError)?;
-                    // safety check (to prevent panic) whether we can add the line
+                    // 安全检查（以防止恐慌）检查我们是否可以添加这条线
                     if !cdt.can_add_constraint(start, end) {
                         return Err(TriangulationError::ConstraintFailure);
                     }
@@ -223,13 +207,11 @@ where
             .map(triangulation_to_triangles)
     }
 
-    /// returns triangulation that's based on the points of the geometric object and also
-    /// incorporates the lines of the input geometry
+    /// 返回基于几何对象的点并且也结合了输入几何体的线的三角剖分
     ///
-    /// The triangulation is not guaranteed to be Delaunay because of the constraint lines
+    /// 由于约束线的原因，三角剖分不能保证是 Delaunay 的
     ///
-    /// This triangulation only contains triangles that are included in the input geometry.
-    /// Here's an example:
+    ///此三角剖分仅包含输入几何体内的三角形。以下是一个例子：
     ///
     /// ```text
     /// ┌──────────────────┐
@@ -263,14 +245,13 @@ where
     ///     ]),
     ///     vec![],
     /// );
-    /// // we use the default [`SpadeTriangulationConfig`] here
+    /// // 我们在这里使用默认的 [`SpadeTriangulationConfig`]
     /// let constrained_triangulation = u_shape.constrained_triangulation(Default::default()).unwrap();
     /// let num_triangles = constrained_triangulation.len();
     /// assert_eq!(num_triangles, 6);
     /// ```
     ///
-    /// Compared to the `constrained_outer_triangulation` it only includes the triangles
-    /// inside of the input geometry
+    /// 与 `constrained_outer_triangulation` 相比，它只包括输入几何体内部的三角形。
     fn constrained_triangulation(
         &'a self,
         config: SpadeTriangulationConfig<T>,
@@ -288,7 +269,7 @@ where
     }
 }
 
-/// conversion from spade triangulation back to geo triangles
+/// 从 spade 三角剖分转换回 geo 三角形
 fn triangulation_to_triangles<T, F>(triangulation: T) -> Triangles<F>
 where
     T: Triangulation<Vertex = Point2<F>>,
@@ -302,9 +283,9 @@ where
         .collect::<Vec<_>>()
 }
 
-// ========== Triangulation trait impls ============
+// ========== Triangulation 特质实现 ============
 
-// everything that satisfies the requirement methods automatically implements the triangulation
+// 任何满足要求的方法都自动实现三角剖分
 impl<'a, T, G> TriangulateSpade<'a, T> for G
 where
     T: SpadeTriangulationFloat,
@@ -331,8 +312,7 @@ where
     }
 }
 
-// it would be cool to impl the trait for GS: AsRef<[G]> but I wasn't able to get this to compile
-// (yet)
+// 实现特质 GS: AsRef<[G]> 会很酷，但我暂时无法让它编译。
 
 impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for Vec<G>
 where
@@ -370,17 +350,15 @@ where
     }
 }
 
-// ========== Triangulation trait impl helpers ============
+// ========== Triangulation 特质实现助手 ============
 
 fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
     mut lines: Vec<Line<T>>,
     mut known_points: Vec<Coord<T>>,
     snap_radius: T,
 ) -> Result<Vec<Line<T>>, TriangulationError> {
-    // Rule 2 of "Power of 10" rules (NASA)
-    // safety net. We can't prove that the `while let` loop isn't going to run infinitely, so
-    // we abort after a fixed amount of iterations. In case that the iteration seems to loop
-    // indefinitely this check will return an Error indicating the infinite loop.
+    // "Power of 10" 规则 2 (NASA)
+    // 安全网。我们无法证明 `while let` 循环不会无限运行，因此在固定的迭代次数之后终止。万一迭代似乎无限循环，此检查将返回一个指示无限循环的错误。
     let mut loop_count = 1000;
     let mut loop_check = || {
         loop_count -= 1;
@@ -404,7 +382,7 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
     Ok(lines)
 }
 
-/// iterates over all combinations (a,b) of lines in a vector where a != b
+/// 在向量中迭代所有组合 (a,b)，其中 a != b
 fn iter_line_pairs<T: SpadeTriangulationFloat>(
     lines: &[Line<T>],
 ) -> impl Iterator<Item = [(usize, &Line<T>); 2]> {
@@ -418,21 +396,20 @@ fn iter_line_pairs<T: SpadeTriangulationFloat>(
     })
 }
 
-/// checks whether two lines are intersecting and if so, checks the intersection to not be ill
-/// formed
+/// 检查两条线是否相交，如果是，则检查交点是否不规整
 ///
-/// returns
-/// - [usize;2] : sorted indexes of lines, smaller one comes first
-/// - intersection : type of intersection
+/// 返回
+/// - [usize;2] : 排序后的线索引，较小的在前
+/// - intersection : 交叉点类型
 fn find_intersecting_lines_fn<T: SpadeTriangulationFloat>(
     [(idx0, line0), (idx1, line1)]: [(usize, &Line<T>); 2],
 ) -> Option<([usize; 2], LineIntersection<T>)> {
     line_intersection(*line0, *line1)
         .filter(|intersection| {
             match intersection {
-                // intersection is not located in both lines
+                // 交点不在两条线上
                 LineIntersection::SinglePoint { is_proper, .. } if !is_proper => false,
-                // collinear intersection is length zero line
+                // 共线交点是零长度线
                 LineIntersection::Collinear { intersection }
                     if intersection.start == intersection.end =>
                 {
@@ -444,9 +421,7 @@ fn find_intersecting_lines_fn<T: SpadeTriangulationFloat>(
         .map(|intersection| ([idx0, idx1], intersection))
 }
 
-/// removes two lines by index in a safe way since the second index can be invalidated after
-/// the first line was removed (remember `.remove(idx)` returns the element and shifts the tail
-/// of the vector in direction of its start to close the gap)
+/// 通过索引移除两条线，以安全的方式，因为在移除第一条线后，第二个索引可能无效（记住 `.remove(idx)` 返回元素并将向量的尾部朝起始方向移动以填补空缺）
 fn remove_lines_by_index<T: SpadeTriangulationFloat>(
     mut indices: [usize; 2],
     lines: &mut Vec<Line<T>>,
@@ -458,11 +433,10 @@ fn remove_lines_by_index<T: SpadeTriangulationFloat>(
     [l0, l1]
 }
 
-/// split lines based on intersection kind:
+/// 根据交叉类型划分线：
 ///
-/// - intersection point: create 4 new lines from the existing line's endpoints to the intersection
-///   point
-/// - collinear: create 3 new lines (before overlap, overlap, after overlap)
+/// - 交点：从现有线的端点到交点创建4条新线
+/// - 共线：创建3条新线（重叠之前，重叠，重叠之后）
 fn split_lines<T: SpadeTriangulationFloat>(
     [l0, l1]: [Line<T>; 2],
     intersection: LineIntersection<T>,
@@ -478,17 +452,13 @@ fn split_lines<T: SpadeTriangulationFloat>(
         .to_vec(),
         LineIntersection::Collinear { .. } => {
             let mut points = [l0.start, l0.end, l1.start, l1.end];
-            // sort points by their coordinate values to resolve ambiguities
+            // 根据它们的坐标值对点进行排序，以解决歧义
             points.sort_by(|a, b| {
                 a.x.partial_cmp(&b.x)
-                    .expect("sorting points by coordinate x failed")
-                    .then_with(|| {
-                        a.y.partial_cmp(&b.y)
-                            .expect("sorting points by coordinate y failed")
-                    })
+                    .expect("根据坐标x排序点失败")
+                    .then_with(|| a.y.partial_cmp(&b.y).expect("根据坐标y排序点失败"))
             });
-            // since all points are on one line we can just create new lines from consecutive
-            // points after sorting
+            // 由于所有点在一条线上，排序后创建连续点的新线
             points
                 .windows(2)
                 .map(|win| Line::new(win[0], win[1]))
@@ -497,8 +467,7 @@ fn split_lines<T: SpadeTriangulationFloat>(
     }
 }
 
-/// new lines from the `split_lines` function may contain a variety of ill formed lines, this
-/// function cleans all of these cases up
+/// 来自 `split_lines` 函数的新线可能包含多种不当形成的线，此函数清理所有这些情况
 fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
     lines_need_check: Vec<Line<T>>,
     existing_lines: &[Line<T>],
@@ -518,9 +487,9 @@ fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
         .collect::<Vec<_>>()
 }
 
-/// snap point to the nearest existing point if it's close enough
+/// 如果非常接近，则将点吸附到最近的现有点上
 ///
-/// snap_radius can be configured via the third parameter of this function
+/// 吸附半径可以通过此函数的第三个参数进行配置
 fn snap_or_register_point<T: SpadeTriangulationFloat>(
     point: Coord<T>,
     known_points: &mut Vec<Coord<T>>,
@@ -528,23 +497,23 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
 ) -> Coord<T> {
     known_points
         .iter()
-        // find closest
+        // 找到最接近的
         .min_by(|a, b| {
             Euclidean::distance(**a, point)
                 .partial_cmp(&Euclidean::distance(**b, point))
-                .expect("Couldn't compare coordinate distances")
+                .expect("无法比较坐标距离")
         })
-        // only snap if closest is within epsilon range
+        // 仅当最近的在误差范围内时才吸附
         .filter(|nearest_point| Euclidean::distance(**nearest_point, point) < snap_radius)
         .cloned()
-        // otherwise register and use input point
+        // 否则注册并使用输入点
         .unwrap_or_else(|| {
             known_points.push(point);
             point
         })
 }
 
-/// preprocesses lines so that we're less likely to hit issues when using the spade triangulation
+/// 在使用spade三角剖分时，预处理线以减少问题
 fn preprocess_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
     snap_radius: T,
@@ -554,15 +523,15 @@ fn preprocess_lines<T: SpadeTriangulationFloat>(
     let lines = lines
         .into_iter()
         .fold(Vec::with_capacity(capacity), |mut lines, mut line| {
-            // deduplicating:
+            // 去重：
 
-            // 1. snap coords of lines to existing coords
+            // 1. 吸附线的坐标到现有坐标
             line.start = snap_or_register_point(line.start, &mut known_coords, snap_radius);
             line.end = snap_or_register_point(line.end, &mut known_coords, snap_radius);
             if
-            // 2. make sure line isn't degenerate (no length when start == end)
+            // 2. 确保线段不是退化的（当起点=终点时，不存在长度）
             line.start != line.end
-                // 3. make sure line or flipped line wasn't already added
+                // 3. 确保线或翻转后的线尚未添加
                 && !lines.contains(&line)
                 && !lines.contains(&Line::new(line.end, line.start))
             {
@@ -574,12 +543,12 @@ fn preprocess_lines<T: SpadeTriangulationFloat>(
     (known_coords, lines)
 }
 
-/// converts Line to something somewhat similar in the spade world
+/// 将Line转换为某个在spade世界中类似的东西
 fn to_spade_line<T: SpadeTriangulationFloat>(line: Line<T>) -> [Point2<T>; 2] {
     [to_spade_point(line.start), to_spade_point(line.end)]
 }
 
-/// converts Coord to something somewhat similar in the spade world
+/// 将Coord转换为某个在spade世界中类似的东西
 fn to_spade_point<T: SpadeTriangulationFloat>(coord: Coord<T>) -> Point2<T> {
     Point2::new(coord.x, coord.y)
 }
@@ -597,7 +566,7 @@ mod spade_triangulation {
             triangulation
                 .as_ref()
                 .map(|tris| tris.len())
-                .expect("triangulation success"),
+                .expect("三角剖分成功"),
             num
         )
     }

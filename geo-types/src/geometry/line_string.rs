@@ -7,32 +7,31 @@ use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
 
-/// An ordered collection of [`Coord`]s, representing a path between locations.
-/// To be valid, a `LineString` must be empty, or have two or more coords.
+/// [`Coord`]的有序集合，表示位置之间的路径。
+/// 要有效，`LineString`必须为空，或者有两个或更多的坐标。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// 1. A [`LineString`] is _closed_ if it is empty, **or** if the first and last coordinates are the same.
-/// 2. The _boundary_ of a [`LineString`] is either:
-///     - **empty** if it is _closed_ (see **1**) **or**
-///     - contains the **start** and **end** coordinates.
-/// 3. The _interior_ is the (infinite) set of all coordinates along the [`LineString`], _not including_ the boundary.
-/// 4. A [`LineString`] is _simple_ if it does not intersect except **optionally** at the first and last coordinates (in which case it is also _closed_, see **1**).
-/// 5. A _simple_ **and** _closed_ [`LineString`] is a `LinearRing` as defined in the OGC-SFA (but is not defined as a separate type in this crate).
+/// 1. 如果[`LineString`]为空，**或者**第一个和最后一个坐标相同，则它是_闭合的_。
+/// 2. [`LineString`]的_边界_是：
+///     - 如果它是_闭合的_（见**1**），则为**空**，**或者**
+///     - 包含**起始**和**结束**坐标。
+/// 3. _内部_是沿[`LineString`]的所有坐标的（无限）集合，_不包括_边界。
+/// 4. 如果[`LineString`]除了**可选地**在第一个和最后一个坐标处（在这种情况下它也是_闭合的_，见**1**）之外不相交，则它是_简单的_。
+/// 5. _简单的_**且**_闭合的_[`LineString`]是OGC-SFA中定义的`LinearRing`（但在这个crate中没有定义为单独的类型）。
 ///
-/// # Validity
+/// # 有效性
 ///
-/// A [`LineString`] is valid if it is either empty or
-/// contains 2 or more coordinates.
+/// 如果[`LineString`]为空或包含2个或更多坐标，则它是有效的。
 ///
-/// Further, a closed [`LineString`] **must not** self-intersect. Note that its
-/// validity is **not** enforced, and operations and
-/// predicates are **undefined** on invalid `LineString`s.
+/// 此外，闭合的[`LineString`]**不能**自相交。注意，它的
+/// 有效性**不**被强制执行，对无效的`LineString`进行操作和
+/// 谓词是**未定义的**。
 ///
-/// # Examples
-/// ## Creation
+/// # 示例
+/// ## 创建
 ///
-/// Create a [`LineString`] by calling it directly:
+/// 通过直接调用来创建[`LineString`]：
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -43,7 +42,7 @@ use core::ops::{Index, IndexMut};
 /// ]);
 /// ```
 ///
-/// Create a [`LineString`] with the [`line_string!`][`crate::line_string!`] macro:
+/// 使用[`line_string!`][`crate::line_string!`]宏创建[`LineString`]：
 ///
 /// ```
 /// use geo_types::line_string;
@@ -54,7 +53,7 @@ use core::ops::{Index, IndexMut};
 /// ];
 /// ```
 ///
-/// By converting from a [`Vec`] of coordinate-like things:
+/// 通过转换坐标类对象的[`Vec`]：
 ///
 /// ```
 /// use geo_types::LineString;
@@ -68,7 +67,7 @@ use core::ops::{Index, IndexMut};
 /// let line_string: LineString = vec![[0., 0.], [10., 0.]].into();
 /// ```
 //
-/// Or by `collect`ing from a [`Coord`] iterator
+/// 或者通过从[`Coord`]迭代器`collect`：
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -79,8 +78,8 @@ use core::ops::{Index, IndexMut};
 /// let line_string: LineString<f32> = coords_iter.collect();
 /// ```
 ///
-/// ## Iteration
-/// [`LineString`] provides five iterators: [`coords`](LineString::coords), [`coords_mut`](LineString::coords_mut), [`points`](LineString::points), [`lines`](LineString::lines), and [`triangles`](LineString::triangles):
+/// ## 迭代
+/// [`LineString`]提供五个迭代器：[`coords`](LineString::coords)、[`coords_mut`](LineString::coords_mut)、[`points`](LineString::points)、[`lines`](LineString::lines)和[`triangles`](LineString::triangles)：
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -97,7 +96,7 @@ use core::ops::{Index, IndexMut};
 /// }
 /// ```
 ///
-/// Note that its [`IntoIterator`] impl yields [`Coord`]s when looping:
+/// 注意，它的[`IntoIterator`]实现在循环时会产生[`Coord`]：
 ///
 /// ```
 /// use geo_types::{coord, LineString};
@@ -116,9 +115,9 @@ use core::ops::{Index, IndexMut};
 /// }
 ///
 /// ```
-/// ## Decomposition
+/// ## 分解
 ///
-/// You can decompose a [`LineString`] into a [`Vec`] of [`Coord`]s or [`Point`]s:
+/// 你可以将[`LineString`]分解为[`Coord`]或[`Point`]的[`Vec`]：
 /// ```
 /// use geo_types::{coord, LineString, Point};
 ///
@@ -136,7 +135,7 @@ use core::ops::{Index, IndexMut};
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LineString<T: CoordNum = f64>(pub Vec<Coord<T>>);
 
-/// A [`Point`] iterator returned by the `points` method
+/// 由`points`方法返回的[`Point`]迭代器
 #[derive(Debug)]
 pub struct PointsIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
@@ -164,7 +163,7 @@ impl<T: CoordNum> DoubleEndedIterator for PointsIter<'_, T> {
     }
 }
 
-/// A [`Coord`] iterator used by the `into_iter` method on a [`LineString`]
+/// 由[`LineString`]的`into_iter`方法使用的[`Coord`]迭代器
 #[derive(Debug)]
 pub struct CoordinatesIter<'a, T: CoordNum + 'a>(::core::slice::Iter<'a, Coord<T>>);
 
@@ -193,46 +192,45 @@ impl<T: CoordNum> DoubleEndedIterator for CoordinatesIter<'_, T> {
 }
 
 impl<T: CoordNum> LineString<T> {
-    /// Instantiate Self from the raw content value
+    /// 从原始内容值实例化Self
     pub fn new(value: Vec<Coord<T>>) -> Self {
         Self(value)
     }
 
-    /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
-    #[deprecated(note = "Use points() instead")]
+    /// 返回一个迭代器，产生[`LineString`]的坐标作为[`Point`]
+    #[deprecated(note = "使用points()代替")]
     pub fn points_iter(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
     }
 
-    /// Return an iterator yielding the coordinates of a [`LineString`] as [`Point`]s
+    /// 返回一个迭代器，产生[`LineString`]的坐标作为[`Point`]
     pub fn points(&self) -> PointsIter<T> {
         PointsIter(self.0.iter())
     }
 
-    /// Return an iterator yielding the members of a [`LineString`] as [`Coord`]s
+    /// 返回一个迭代器，产生[`LineString`]的成员作为[`Coord`]
     pub fn coords(&self) -> impl DoubleEndedIterator<Item = &Coord<T>> {
         self.0.iter()
     }
 
-    /// Return an iterator yielding the coordinates of a [`LineString`] as mutable [`Coord`]s
+    /// 返回一个迭代器，产生[`LineString`]的坐标作为可变的[`Coord`]
     pub fn coords_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut Coord<T>> {
         self.0.iter_mut()
     }
 
-    /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Point`]s
+    /// 将[`LineString`]的坐标作为[`Point`]的[`Vec`]返回
     pub fn into_points(self) -> Vec<Point<T>> {
         self.0.into_iter().map(Point::from).collect()
     }
 
-    /// Return the coordinates of a [`LineString`] as a [`Vec`] of [`Coord`]s
+    /// 将[`LineString`]的坐标作为[`Coord`]的[`Vec`]返回
     pub fn into_inner(self) -> Vec<Coord<T>> {
         self.0
     }
 
-    /// Return an iterator yielding one [Line] for each line segment
-    /// in the [`LineString`].
+    /// 返回一个迭代器，为[`LineString`]中的每个线段产生一个[Line]。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, Line, LineString};
@@ -259,15 +257,15 @@ impl<T: CoordNum> LineString<T> {
     /// ```
     pub fn lines(&'_ self) -> impl ExactSizeIterator<Item = Line<T>> + '_ {
         self.0.windows(2).map(|w| {
-            // slice::windows(N) is guaranteed to yield a slice with exactly N elements
+            // slice::windows(N)保证产生一个恰好有N个元素的切片
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
         })
     }
 
-    /// An iterator which yields the coordinates of a [`LineString`] as [Triangle]s
+    /// 一个迭代器，产生[`LineString`]的坐标作为[Triangle]
     pub fn triangles(&'_ self) -> impl ExactSizeIterator<Item = Triangle<T>> + '_ {
         self.0.windows(3).map(|w| {
-            // slice::windows(N) is guaranteed to yield a slice with exactly N elements
+            // slice::windows(N)保证产生一个恰好有N个元素的切片
             unsafe {
                 Triangle::new(
                     *w.get_unchecked(0),
@@ -278,20 +276,20 @@ impl<T: CoordNum> LineString<T> {
         })
     }
 
-    /// Close the [`LineString`]. Specifically, if the [`LineString`] has at least one [`Coord`], and
-    /// the value of the first [`Coord`] **does not** equal the value of the last [`Coord`], then a
-    /// new [`Coord`] is added to the end with the value of the first [`Coord`].
+    /// 闭合[`LineString`]。具体来说，如果[`LineString`]至少有一个[`Coord`]，
+    /// 且第一个[`Coord`]的值**不等于**最后一个[`Coord`]的值，
+    /// 则在末尾添加一个新的[`Coord`]，其值等于第一个[`Coord`]。
     pub fn close(&mut self) {
         if !self.is_closed() {
-            // by definition, we treat empty LineString's as closed.
+            // 根据定义，我们将空的LineString视为闭合。
             debug_assert!(!self.0.is_empty());
             self.0.push(self.0[0]);
         }
     }
 
-    /// Return the number of coordinates in the [`LineString`].
+    /// 返回[`LineString`]中的坐标数量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::LineString;
@@ -304,16 +302,15 @@ impl<T: CoordNum> LineString<T> {
     /// assert_eq!(3, line_string.num_coords());
     /// # }
     /// ```
-    #[deprecated(note = "Use geo::CoordsIter::coords_count instead")]
+    #[deprecated(note = "使用geo::CoordsIter::coords_count代替")]
     pub fn num_coords(&self) -> usize {
         self.0.len()
     }
 
-    /// Checks if the linestring is closed; i.e. it is
-    /// either empty or, the first and last points are the
-    /// same.
+    /// 检查linestring是否闭合；即它是
+    /// 空的或者第一个和最后一个点相同。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::LineString;
@@ -323,21 +320,27 @@ impl<T: CoordNum> LineString<T> {
     /// assert!(line_string.is_closed());
     /// ```
     ///
-    /// Note that we diverge from some libraries ([JTS](https://locationtech.github.io/jts/javadoc/org/locationtech/jts/geom/LinearRing.html) et al), which have a `LinearRing` type,
-    /// separate from [`LineString`]. Those libraries treat an empty `LinearRing` as **closed** by
-    /// definition, while treating an empty `LineString` as **open**. Since we don't have a separate
-    /// `LinearRing` type, and use a [`LineString`] in its place, we adopt the JTS `LinearRing` `is_closed`
-    /// behavior in all places: that is, **we consider an empty [`LineString`] as closed**.
+    /// 注意，我们与一些库（[JTS](https://locationtech.github.io/jts/javadoc/org/locationtech/jts/geom/LinearRing.html)等）有所不同，
+    /// 这些库有一个单独的`LinearRing`类型，与[`LineString`]分开。这些库将空的`LinearRing`定义为**闭合**，
+    /// 而将空的`LineString`视为**开放**。由于我们没有单独的`LinearRing`类型，
+    /// 而是在其位置使用[`LineString`]，我们在所有地方采用JTS `LinearRing` `is_closed`
+    /// 行为：也就是说，**我们将空的[`LineString`]视为闭合**。
     ///
-    /// This is expected when used in the context of a [`Polygon.exterior`](crate::Polygon::exterior) and elsewhere; And there
-    /// seems to be no reason to maintain the separate behavior for [`LineString`]s used in
-    /// non-`LinearRing` contexts.
+    /// 这在用作[`Polygon.exterior`](crate::Polygon::exterior)和其他地方时是预期的；
+    /// 注意，我们与一些库（如[JTS](https://locationtech.github.io/jts/javadoc/org/locationtech/jts/geom/LinearRing.html)等）有所不同，
+    /// 这些库有一个单独的`LinearRing`类型，与[`LineString`]分开。这些库将空的`LinearRing`定义为**闭合**，
+    /// 而将空的`LineString`视为**开放**。由于我们没有单独的`LinearRing`类型，
+    /// 而是在其位置使用[`LineString`]，我们在所有地方采用JTS `LinearRing` `is_closed`
+    /// 行为：也就是说，**我们将空的[`LineString`]视为闭合**。
+    ///
+    /// 这在用作[`Polygon.exterior`](crate::Polygon::exterior)和其他地方时是预期的；并且
+    /// 似乎没有理由为在非`LinearRing`上下文中使用的[`LineString`]保持单独的行为。
     pub fn is_closed(&self) -> bool {
         self.0.first() == self.0.last()
     }
 }
 
-/// Turn a [`Vec`] of [`Point`]-like objects into a [`LineString`].
+/// 将[`Point`]类对象的[`Vec`]转换为[`LineString`]。
 impl<T: CoordNum, IC: Into<Coord<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         Self(v.into_iter().map(|c| c.into()).collect())
@@ -356,14 +359,14 @@ impl<T: CoordNum> From<&Line<T>> for LineString<T> {
     }
 }
 
-/// Turn an iterator of [`Point`]-like objects into a [`LineString`].
+/// 将[`Point`]类对象的迭代器转换为[`LineString`]。
 impl<T: CoordNum, IC: Into<Coord<T>>> FromIterator<IC> for LineString<T> {
     fn from_iter<I: IntoIterator<Item = IC>>(iter: I) -> Self {
         Self(iter.into_iter().map(|c| c.into()).collect())
     }
 }
 
-/// Iterate over all the [`Coord`]s in this [`LineString`].
+/// 遍历此[`LineString`]中的所有[`Coord`]。
 impl<T: CoordNum> IntoIterator for LineString<T> {
     type Item = Coord<T>;
     type IntoIter = ::alloc::vec::IntoIter<Coord<T>>;
@@ -382,7 +385,7 @@ impl<'a, T: CoordNum> IntoIterator for &'a LineString<T> {
     }
 }
 
-/// Mutably iterate over all the [`Coord`]s in this [`LineString`]
+/// 可变地遍历此[`LineString`]中的所有[`Coord`]
 impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     type Item = &'a mut Coord<T>;
     type IntoIter = ::core::slice::IterMut<'a, Coord<T>>;
@@ -416,9 +419,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::LineString;
@@ -462,9 +465,9 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for LineString<T> {
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 具有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::LineString;
@@ -556,11 +559,11 @@ mod test {
 
     #[test]
     fn test_exact_size() {
-        // see https://github.com/georust/geo/issues/762
+        // 参见 https://github.com/georust/geo/issues/762
         let first = coord! { x: 0., y: 0. };
         let ls = LineString::new(vec![first, coord! { x: 10., y: 0. }]);
 
-        // reference to force the `impl IntoIterator for &LineString` impl, giving a `CoordinatesIter`
+        // 引用以强制使用 `impl IntoIterator for &LineString` 实现，得到 `CoordinatesIter`
         for c in (&ls).into_iter().rev().skip(1).rev() {
             assert_eq!(&first, c);
         }
@@ -586,12 +589,12 @@ mod test {
         assert!(ls.abs_diff_eq(&ls_y, 1e-2));
         assert!(ls.abs_diff_ne(&ls_y, 1e-12));
 
-        // Undersized, but otherwise equal.
+        // 长度不足，但其他方面相等。
         let coords_x = vec![(0., 0.), (5., 0.)];
         let ls_under: LineString<f32> = coords_x.into_iter().collect();
         assert!(ls.abs_diff_ne(&ls_under, 1.));
 
-        // Oversized, but otherwise equal.
+        // 长度过长，但其他方面相等。
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
         let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
         assert!(ls.abs_diff_ne(&ls_oversized, 1.));
@@ -614,12 +617,12 @@ mod test {
         assert!(ls.relative_eq(&ls_y, 1e-2, 1e-2));
         assert!(ls.relative_ne(&ls_y, 1e-12, 1e-12));
 
-        // Undersized, but otherwise equal.
+        // 长度不足，但其他方面相等。
         let coords_x = vec![(0., 0.), (5., 0.)];
         let ls_under: LineString<f32> = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_under, 1., 1.));
 
-        // Oversized, but otherwise equal.
+        // 长度过长，但其他方面相等。
         let coords_x = vec![(0., 0.), (5., 0.), (10., 10.), (10., 100.)];
         let ls_oversized: LineString<f32> = coords_x.into_iter().collect();
         assert!(ls.relative_ne(&ls_oversized, 1., 1.));

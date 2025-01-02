@@ -3,9 +3,12 @@ use geo::algorithm::{ConvexHull, Distance, Euclidean};
 use geo::{polygon, Polygon};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
+    // 为“Polygon Euclidean distance RTree f64”创建基准测试
     c.bench_function("Polygon Euclidean distance RTree f64", |bencher| {
+        // 获取挪威非凸壳的线串
         let ls = geo_test_fixtures::norway_nonconvex_hull::<f64>();
         let poly1 = Polygon::new(ls, vec![]);
+        // 定义第二个多边形
         let poly2 = polygon![
             (x: -6.064453, y: 68.49604),
             (x: -7.426758, y: 68.544315),
@@ -36,16 +39,20 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             (x: -4.833984, y: 67.958148),
             (x: -6.064453, y: 68.49604),
         ];
+        // 在基准测试迭代中计算两个多边形的欧几里得距离
         bencher.iter(|| {
             criterion::black_box(Euclidean::distance(&poly1, &poly2));
         });
     });
 
+    // 为“Polygon Euclidean distance rotating calipers f64”创建基准测试
     c.bench_function(
         "Polygon Euclidean distance rotating calipers f64",
         |bencher| {
+            // 获取挪威凸壳的线串
             let ls = geo_test_fixtures::norway_convex_hull::<f64>();
             let poly1 = Polygon::new(ls, vec![]).convex_hull();
+            // 定义第二个多边形并计算其凸壳
             let poly2 = polygon![
                 (x: -6.064453, y: 68.49604),
                 (x: -7.426758, y: 68.688521),
@@ -78,6 +85,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
                 (x: -6.064453, y: 68.49604),
             ]
             .convex_hull();
+            // 在基准测试迭代中计算凸壳的欧几里得距离
             bencher.iter(|| {
                 criterion::black_box(Euclidean::distance(&poly1, &poly2));
             });
@@ -85,5 +93,6 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     );
 }
 
+// 定义基准组和入口
 criterion_group!(benches, criterion_benchmark);
 criterion_main!(benches);

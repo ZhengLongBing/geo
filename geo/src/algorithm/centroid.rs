@@ -6,20 +6,19 @@ use crate::geometry::*;
 use crate::line_measures::{Euclidean, Length};
 use crate::GeoFloat;
 
-/// Calculation of the centroid.
-/// The centroid is the arithmetic mean position of all points in the shape.
-/// Informally, it is the point at which a cutout of the shape could be perfectly
-/// balanced on the tip of a pin.
-/// The geometric centroid of a convex object always lies in the object.
-/// A non-convex object might have a centroid that _is outside the object itself_.
+/// 计算质心。
+/// 质心是形状中所有点的算术平均位置。
+/// 非正式地说，它是可以使形状的剪影在针尖上完美平衡的点。
+/// 凸对象的几何质心总是位于对象内部。
+/// 非凸对象可能有一个质心，该质心在对象本身之外。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::Centroid;
 /// use geo::{point, polygon};
 ///
-/// // rhombus shaped polygon
+/// // 菱形的多边形
 /// let polygon = polygon![
 ///     (x: -2., y: 1.),
 ///     (x: 1., y: 3.),
@@ -36,9 +35,9 @@ use crate::GeoFloat;
 pub trait Centroid {
     type Output;
 
-    /// See: <https://en.wikipedia.org/wiki/Centroid>
+    /// 参见：<https://en.wikipedia.org/wiki/Centroid>
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -63,9 +62,9 @@ where
 {
     type Output = Point<T>;
 
-    /// The Centroid of a [`Line`] is its middle point
+    /// [`Line`] 的质心是它的中间点
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -93,10 +92,9 @@ where
 {
     type Output = Option<Point<T>>;
 
-    // The Centroid of a [`LineString`] is the mean of the middle of the segment
-    // weighted by the length of the segments.
+    // [`LineString`] 的质心是段中点的平均值，按段的长度加权。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -127,19 +125,18 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`MultiLineString`] is the mean of the centroids of all the constituent linestrings,
-    /// weighted by the length of each linestring
+    /// [`MultiLineString`] 的质心是所有组成线字符串的质心的平均值，按每个线字符串的长度加权。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
     /// use geo::{MultiLineString, line_string, point};
     ///
     /// let multi_line_string = MultiLineString::new(vec![
-    ///     // centroid: (2.5, 2.5)
+    ///     // 质心: (2.5, 2.5)
     ///     line_string![(x: 1.0f32, y: 1.0), (x: 2.0, y: 2.0), (x: 4.0, y: 4.0)],
-    ///     // centroid: (4.0, 4.0)
+    ///     // 质心: (4.0, 4.0)
     ///     line_string![(x: 1.0, y: 1.0), (x: 3.0, y: 3.0), (x: 7.0, y: 7.0)],
     /// ]);
     ///
@@ -162,9 +159,9 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`Polygon`] is the mean of its points
+    /// [`Polygon`] 的质心是其所有点的平均值
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -195,24 +192,23 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`MultiPolygon`] is the mean of the centroids of its polygons, weighted
-    /// by the area of the polygons
+    /// [`MultiPolygon`] 的质心是其多边形质心的平均值，按多边形的面积加权。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
     /// use geo::{MultiPolygon, polygon, point};
     ///
     /// let multi_polygon = MultiPolygon::new(vec![
-    ///   // centroid (1.0, 0.5)
+    ///   // 质心 (1.0, 0.5)
     ///   polygon![
     ///     (x: 0.0f32, y: 0.0),
     ///     (x: 2.0, y: 0.0),
     ///     (x: 2.0, y: 1.0),
     ///     (x: 0.0, y: 1.0),
     ///   ],
-    ///   // centroid (-0.5, 0.0)
+    ///   // 质心 (-0.5, 0.0)
     ///   polygon![
     ///     (x: 1.0, y: 1.0),
     ///     (x: -2.0, y: 1.0),
@@ -240,9 +236,9 @@ where
 {
     type Output = Point<T>;
 
-    /// The Centroid of a [`Rect`] is the mean of its [`Point`]s
+    /// [`Rect`] 的质心是其 [`Point`] 的平均值
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -269,9 +265,9 @@ where
 {
     type Output = Point<T>;
 
-    /// The Centroid of a [`Triangle`] is the mean of its [`Point`]s
+    /// [`Triangle`] 的质心是其 [`Point`] 的平均值
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -303,9 +299,9 @@ where
 {
     type Output = Point<T>;
 
-    /// The Centroid of a [`Point`] is the point itself
+    /// [`Point`] 的质心就是该点本身
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -329,9 +325,9 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`MultiPoint`] is the mean of all [`Point`]s
+    /// [`MultiPoint`] 的质心是所有 [`Point`] 的平均值
     ///
-    /// # Example
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -358,9 +354,9 @@ where
     type Output = Option<Point<T>>;
 
     crate::geometry_delegate_impl! {
-        /// The Centroid of a [`Geometry`] is the centroid of its enum variant
+        /// [`Geometry`] 的质心是其枚举变体的质心
         ///
-        /// # Examples
+        /// # 示例
         ///
         /// ```
         /// use geo::Centroid;
@@ -392,13 +388,11 @@ where
 {
     type Output = Option<Point<T>>;
 
-    /// The Centroid of a [`GeometryCollection`] is the mean of the centroids of elements, weighted
-    /// by the area of its elements.
+    /// [`GeometryCollection`] 的质心是元素质心的平均值，按其元素的面积加权。
     ///
-    /// Note that this means, that elements which have no area are not considered when calculating
-    /// the centroid.
+    /// 请注意，这意味着在计算质心时，不考虑没有面积的元素。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Centroid;
@@ -500,10 +494,8 @@ impl<T: GeoFloat> CentroidOperation<T> {
     }
 
     fn add_polygon(&mut self, polygon: &Polygon<T>) {
-        // Polygons which are completely covered by their interior rings have zero area, and
-        // represent a unique degeneracy into a line_string which cannot be handled by accumulating
-        // directly into `self`. Instead, we perform a sub-operation, inspect the result, and only
-        // then incorporate the result into `self.
+        // 完全被其内部环覆盖的多边形，面积为零，并且表示一种独特的退化线字符串，无法通过对 `self` 的累加来处理。
+        // 相反，我们执行一个子操作，检查结果，然后仅将结果合并到 `self` 中。
 
         let mut exterior_operation = CentroidOperation::new();
         exterior_operation.add_ring(polygon.exterior());
@@ -518,7 +510,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
             if let Some(interior_weighted_centroid) = interior_operation.0 {
                 poly_weighted_centroid.sub_assign(interior_weighted_centroid);
                 if poly_weighted_centroid.weight.is_zero() {
-                    // A polygon with no area `interiors` completely covers `exterior`, degenerating to a linestring
+                    // 一个面积为零的多边形，其内部完全覆盖其外部，退化为线字符串
                     self.add_line_string(polygon.exterior());
                     return;
                 }
@@ -553,7 +545,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         match rect.dimensions() {
             ZeroDimensional => self.add_coord(rect.min()),
             OneDimensional => {
-                // Degenerate rect is a line, treat it the same way we treat flat polygons
+                // 退化矩形是线条，将其与处理平面多边形的方式相同
                 self.add_line(&Line::new(rect.min(), rect.min()));
                 self.add_line(&Line::new(rect.min(), rect.max()));
                 self.add_line(&Line::new(rect.max(), rect.max()));
@@ -570,8 +562,7 @@ impl<T: GeoFloat> CentroidOperation<T> {
         match triangle.dimensions() {
             ZeroDimensional => self.add_coord(triangle.0),
             OneDimensional => {
-                // Degenerate triangle is a line, treat it the same way we treat flat
-                // polygons
+                // 退化三角形是线，将其与处理平面多边形的方式相同
                 let l0_1 = Line::new(triangle.0, triangle.1);
                 let l1_2 = Line::new(triangle.1, triangle.2);
                 let l2_0 = Line::new(triangle.2, triangle.0);
@@ -608,17 +599,17 @@ impl<T: GeoFloat> CentroidOperation<T> {
         let area = get_linestring_area(ring);
         if area == T::zero() {
             match ring.dimensions() {
-                // empty ring doesn't contribute to centroid
+                // 空环不对质心有贡献
                 Empty => {}
-                // degenerate ring is a point
+                // 退化环是点
                 ZeroDimensional => self.add_coord(ring[0]),
-                // zero-area ring is a line string
+                // 零面积环是线字符串
                 _ => self.add_line_string(ring),
             }
             return;
         }
 
-        // Since area is non-zero, we know the ring has at least one point
+        // 由于面积非零，我们知道环至少有一个点
         let shift = ring.0[0];
 
         let accumulated_coord = ring.lines().fold(Coord::zero(), |accum, line| {
@@ -650,20 +641,17 @@ impl<T: GeoFloat> CentroidOperation<T> {
     }
 }
 
-// Aggregated state for accumulating the centroid of a geometry or collection of geometries.
+// 用于累加几何体质心或集合几何体质心的聚合状态。
 struct WeightedCentroid<T: GeoFloat> {
     weight: T,
     accumulated: Coord<T>,
-    /// Collections of Geometries can have different dimensionality. Centroids must be considered
-    /// separately by dimensionality.
+    /// 几何体集合可以有不同的维度。质心必须根据维度单独考虑。
     ///
-    /// e.g. If I have several Points, adding a new `Point` will affect their centroid.
+    /// 例如，如果我有几个点，添加一个新的 `Point` 将影响它们的质心。
     ///
-    /// However, because a Point is zero dimensional, it is infinitely small when compared to
-    /// any 2-D Polygon. Thus a Point will not affect the centroid of any GeometryCollection
-    /// containing a 2-D Polygon.
+    /// 然而，由于一个点是零维的，与任何 2D 多边形相比，它是无限小的。因此，点不会影响包含 2D 多边形的任何 GeometryCollection 的质心。
     ///
-    /// So, when accumulating a centroid, we must track the dimensionality of the centroid
+    /// 因此，在累积一个质心时，我们必须跟踪质心的维度。
     dimensions: Dimensions,
 }
 
@@ -696,17 +684,17 @@ mod test {
     use super::*;
     use crate::{coord, line_string, point, polygon, wkt};
 
-    /// small helper to create a coordinate
+    /// 用于创建坐标的小帮助函数
     fn c<T: GeoFloat>(x: T, y: T) -> Coord<T> {
         coord! { x: x, y: y }
     }
 
-    /// small helper to create a point
+    /// 用于创建点的小帮助函数
     fn p<T: GeoFloat>(x: T, y: T) -> Point<T> {
         point! { x: x, y: y }
     }
 
-    // Tests: Centroid of LineString
+    // 测试：LineString 的质心
     #[test]
     fn empty_linestring_test() {
         let linestring: LineString<f32> = line_string![];
@@ -744,7 +732,7 @@ mod test {
         let mls = MultiLineString::new(vec![l1, l2]);
         assert_eq!(mls.centroid(), Some(p(1.5, 1.5)));
     }
-    // Tests: Centroid of MultiLineString
+    // 测试：MultiLineString 的质心
     #[test]
     fn empty_multilinestring_test() {
         let mls: MultiLineString = MultiLineString::new(vec![]);
@@ -797,7 +785,7 @@ mod test {
             point![x: -1.9097834383655845, y: -37.683866439745714]
         );
     }
-    // Tests: Centroid of Polygon
+    // 测试：多边形的质心
     #[test]
     fn empty_polygon_test() {
         let poly: Polygon<f32> = polygon![];
@@ -859,7 +847,7 @@ mod test {
     }
     #[test]
     fn polygon_hole_test() {
-        // hexagon
+        // 六边形
         let p1 = wkt! { POLYGON(
             (5.0 1.0,4.0 2.0,4.0 3.0,5.0 4.0,6.0 4.0,7.0 3.0,7.0 2.0,6.0 1.0,5.0 1.0),
             (5.0 1.3,5.5 2.0,6.0 1.3,5.0 1.3),
@@ -900,9 +888,8 @@ mod test {
     }
     #[test]
     fn multi_poly_with_one_ring_and_one_real_poly() {
-        // if the multipolygon is composed of a 'normal' polygon (with an area not null)
-        // and a ring (a polygon with a null area)
-        // the centroid of the multipolygon is the centroid of the 'normal' polygon
+        // 如果多边形是由一个“正常”多边形（面积不为空）和一个环（面积为空的多边形）组成的
+        // 多边形的质心是“正常”多边形的质心
         let normal = Polygon::new(
             LineString::from(vec![p(1., 1.), p(1., 3.), p(3., 1.), p(1., 1.)]),
             vec![],
@@ -938,15 +925,15 @@ mod test {
     }
     #[test]
     fn polygon_cell_test() {
-        // test the centroid of polygon with a null area
-        // this one a polygon with 2 interior polygon that makes a partition of the exterior
+        // 测试面积为零的多边形的质心
+        // 这是一个包含两个内部多边形，使外部划分的多边形
         let square = LineString::from(vec![p(0., 0.), p(0., 2.), p(2., 2.), p(2., 0.), p(0., 0.)]);
         let bottom = LineString::from(vec![p(0., 0.), p(2., 0.), p(2., 1.), p(0., 1.), p(0., 0.)]);
         let top = LineString::from(vec![p(0., 1.), p(2., 1.), p(2., 2.), p(0., 2.), p(0., 1.)]);
         let poly = Polygon::new(square, vec![top, bottom]);
         assert_eq!(poly.centroid(), Some(p(1., 1.)));
     }
-    // Tests: Centroid of MultiPolygon
+    // 测试：多重多边形的质心
     #[test]
     fn empty_multipolygon_polygon_test() {
         assert!(MultiPolygon::<f64>::new(Vec::new()).centroid().is_none());
@@ -1012,31 +999,31 @@ mod test {
     }
     #[test]
     fn triangles() {
-        // boring triangle
+        // 普通三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 0.), c(1.5, 3.)).centroid(),
             point!(x: 1.5, y: 1.0)
         );
 
-        // flat triangle
+        // 平面三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 0.), c(1., 0.)).centroid(),
             point!(x: 1.5, y: 0.0)
         );
 
-        // flat triangle that's not axis-aligned
+        // 非轴对齐的平面三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(3., 3.), c(1., 1.)).centroid(),
             point!(x: 1.5, y: 1.5)
         );
 
-        // triangle with some repeated points
+        // 带有一些重复点的三角形
         assert_eq!(
             Triangle::new(c(0., 0.), c(0., 0.), c(1., 0.)).centroid(),
             point!(x: 0.5, y: 0.0)
         );
 
-        // triangle with all repeated points
+        // 所有点重复的三角形
         assert_eq!(
             Triangle::new(c(0., 0.5), c(0., 0.5), c(0., 0.5)).centroid(),
             point!(x: 0., y: 0.5)
@@ -1069,44 +1056,44 @@ mod test {
 
     #[test]
     fn rectangles() {
-        // boring rect
+        // 普通矩形
         assert_eq!(
             Rect::new(c(0., 0.), c(4., 4.)).centroid(),
             point!(x: 2.0, y: 2.0)
         );
 
-        // flat rect
+        // 平面矩形
         assert_eq!(
             Rect::new(c(0., 0.), c(4., 0.)).centroid(),
             point!(x: 2.0, y: 0.0)
         );
 
-        // rect with all repeated points
+        // 所有点都重复的矩形
         assert_eq!(
             Rect::new(c(4., 4.), c(4., 4.)).centroid(),
             point!(x: 4., y: 4.)
         );
 
-        // collection with rect
+        // 带矩形的集合
         let mut collection = GeometryCollection::new_from(vec![
             p(0., 0.).into(),
             p(6., 0.).into(),
             p(6., 6.).into(),
         ]);
-        // sanity check
+        // 合理性检查
         assert_eq!(collection.centroid().unwrap(), point!(x: 4., y: 2.));
 
-        // 0-d rect treated like point
+        // 将 0 维矩形视作点
         collection.0.push(Rect::new(c(0., 6.), c(0., 6.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 3., y: 3.));
 
-        // 1-d rect treated like line. Since a line has higher dimensions than the rest of the
-        // collection, its centroid clobbers everything else in the collection.
+        // 将 1 维矩形视作线。因为线在整个集合中有更高的维度，
+        // 它的质心会覆盖集合中的其他元素。
         collection.0.push(Rect::new(c(0., 0.), c(0., 2.)).into());
         assert_eq!(collection.centroid().unwrap(), point!(x: 0., y: 1.));
 
-        // 2-d has higher dimensions than the rest of the collection, so its centroid clobbers
-        // everything else in the collection.
+        // 2 维具有比集合中其他内容更高的维度，因此其质心覆盖
+        // 集合中的其他元素。
         collection
             .0
             .push(Rect::new(c(10., 10.), c(11., 11.)).into());

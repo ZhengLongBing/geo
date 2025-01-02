@@ -2,10 +2,9 @@ use crate::geometry::*;
 use crate::Orientation::Collinear;
 use crate::{CoordNum, GeoNum, GeometryCow};
 
-/// Geometries can have 0, 1, or two dimensions. Or, in the case of an [`empty`](#is_empty)
-/// geometry, a special `Empty` dimensionality.
+/// 几何体可以有0, 1或两个维度。或者，在几何体是[`empty`](#is_empty)的情况下，存在一个特殊的`Empty`维度。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::{Point, Rect, line_string};
@@ -23,23 +22,21 @@ use crate::{CoordNum, GeoNum, GeometryCow};
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Dimensions {
-    /// Some geometries, like a `MultiPoint` or `GeometryCollection` may have no elements - thus no
-    /// dimensions. Note that this is distinct from being `ZeroDimensional`, like a `Point`.
+    /// 某些几何体，如`MultiPoint`或`GeometryCollection`可能没有元素 - 因此没有维度。注意，这与像`Point`这样的`ZeroDimensional`是不同的。
     Empty,
-    /// Dimension of a point
+    /// 点的维度
     ZeroDimensional,
-    /// Dimension of a line or curve
+    /// 线或曲线的维度
     OneDimensional,
-    /// Dimension of a surface
+    /// 表面的维度
     TwoDimensional,
 }
 
-/// Operate on the dimensionality of geometries.
+/// 操作几何体的维度。
 pub trait HasDimensions {
-    /// Some geometries, like a `MultiPoint`, can have zero coordinates - we call these `empty`.
+    /// 某些几何体，如`MultiPoint`，可以没有坐标 - 我们称这些为`empty`。
     ///
-    /// Types like `Point` and `Rect`, which have at least one coordinate by construction, can
-    /// never be considered empty.
+    /// 像`Point`和`Rect`这样的类型，由于构造上至少有一个坐标，因此永远不会被视为空。
     /// ```
     /// use geo_types::{Point, coord, LineString};
     /// use geo::HasDimensions;
@@ -58,69 +55,65 @@ pub trait HasDimensions {
     /// ```
     fn is_empty(&self) -> bool;
 
-    /// The dimensions of some geometries are fixed, e.g. a Point always has 0 dimensions. However
-    /// for others, the dimensionality depends on the specific geometry instance - for example
-    /// typical `Rect`s are 2-dimensional, but it's possible to create degenerate `Rect`s which
-    /// have either 1 or 0 dimensions.
+    /// 某些几何体的维度是固定的，例如一个点总是有0维。但是对于其他类型，维度取决于特定的几何体实例 - 例如，典型的`Rect`是2维的，但可以创建退化的`Rect`，它们可能具有1或0维。
     ///
-    /// ## Examples
+    /// ## 示例
     ///
     /// ```
     /// use geo_types::{GeometryCollection, Rect, Point};
     /// use geo::dimensions::{Dimensions, HasDimensions};
     ///
-    /// // normal rectangle
+    /// // 正常矩形
     /// let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
     /// assert_eq!(Dimensions::TwoDimensional, rect.dimensions());
     ///
-    /// // "rectangle" with zero height degenerates to a line
+    /// // 高度为零的“矩形”退化为一条线
     /// let degenerate_line_rect = Rect::new((0.0, 10.0), (10.0, 10.0));
     /// assert_eq!(Dimensions::OneDimensional, degenerate_line_rect.dimensions());
     ///
-    /// // "rectangle" with zero height and zero width degenerates to a point
+    /// // 高度和宽度都为零的“矩形”退化为一点
     /// let degenerate_point_rect = Rect::new((10.0, 10.0), (10.0, 10.0));
     /// assert_eq!(Dimensions::ZeroDimensional, degenerate_point_rect.dimensions());
     ///
-    /// // collections inherit the greatest dimensionality of their elements
+    /// // 集合继承其元素的最大维度
     /// let geometry_collection = GeometryCollection::new_from(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
     /// assert_eq!(Dimensions::OneDimensional, geometry_collection.dimensions());
     ///
     /// let point = Point::new(10.0, 10.0);
     /// assert_eq!(Dimensions::ZeroDimensional, point.dimensions());
     ///
-    /// // An `Empty` dimensionality is distinct from, and less than, being 0-dimensional
+    /// // `Empty`维度与0维是不同的，并且小于0维
     /// let empty_collection = GeometryCollection::<f32>::new_from(vec![]);
     /// assert_eq!(Dimensions::Empty, empty_collection.dimensions());
     /// assert!(empty_collection.dimensions() < point.dimensions());
     /// ```
     fn dimensions(&self) -> Dimensions;
 
-    /// The dimensions of the `Geometry`'s boundary, as used by OGC-SFA.
+    /// OGC-SFA中使用的`Geometry`边界的维度。
     ///
-    /// ## Examples
+    /// ## 示例
     ///
     /// ```
     /// use geo_types::{GeometryCollection, Rect, Point};
     /// use geo::dimensions::{Dimensions, HasDimensions};
     ///
-    /// // a point has no boundary
+    /// // 点没有边界
     /// let point = Point::new(10.0, 10.0);
     /// assert_eq!(Dimensions::Empty, point.boundary_dimensions());
     ///
-    /// // a typical rectangle has a *line* (one dimensional) boundary
+    /// // 一个典型的矩形有一个*线*（一维）的边界
     /// let rect = Rect::new((0.0, 0.0), (10.0, 10.0));
     /// assert_eq!(Dimensions::OneDimensional, rect.boundary_dimensions());
     ///
-    /// // a "rectangle" with zero height degenerates to a line, whose boundary is two points
+    /// // 高度为零的“矩形”退化为一条线，其边界为两个点
     /// let degenerate_line_rect = Rect::new((0.0, 10.0), (10.0, 10.0));
     /// assert_eq!(Dimensions::ZeroDimensional, degenerate_line_rect.boundary_dimensions());
     ///
-    /// // a "rectangle" with zero height and zero width degenerates to a point,
-    /// // and points have no boundary
+    /// // 高度和宽度都为零的“矩形”退化为一点，点没有边界
     /// let degenerate_point_rect = Rect::new((10.0, 10.0), (10.0, 10.0));
     /// assert_eq!(Dimensions::Empty, degenerate_point_rect.boundary_dimensions());
     ///
-    /// // collections inherit the greatest dimensionality of their elements
+    /// // 集合继承其元素的最大维度
     /// let geometry_collection = GeometryCollection::new_from(vec![degenerate_line_rect.into(), degenerate_point_rect.into()]);
     /// assert_eq!(Dimensions::ZeroDimensional, geometry_collection.boundary_dimensions());
     ///
@@ -167,7 +160,7 @@ impl<C: CoordNum> HasDimensions for Line<C> {
 
     fn dimensions(&self) -> Dimensions {
         if self.start == self.end {
-            // degenerate line is a point
+            // 退化线是一个点
             Dimensions::ZeroDimensional
         } else {
             Dimensions::OneDimensional
@@ -176,7 +169,7 @@ impl<C: CoordNum> HasDimensions for Line<C> {
 
     fn boundary_dimensions(&self) -> Dimensions {
         if self.start == self.end {
-            // degenerate line is a point, which has no boundary
+            // 退化线是一个点，点没有边界
             Dimensions::Empty
         } else {
             Dimensions::ZeroDimensional
@@ -198,7 +191,7 @@ impl<C: CoordNum> HasDimensions for LineString<C> {
         if self.0.iter().any(|&coord| first != coord) {
             Dimensions::OneDimensional
         } else {
-            // all coords are the same - i.e. a point
+            // 所有坐标都相同 - 即一个点
             Dimensions::ZeroDimensional
         }
     }
@@ -221,7 +214,7 @@ impl<C: CoordNum> HasDimensions for LineString<C> {
         match self.dimensions() {
             Dimensions::Empty | Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
-            Dimensions::TwoDimensional => unreachable!("line_string cannot be 2 dimensional"),
+            Dimensions::TwoDimensional => unreachable!("line_string不能是二维的"),
         }
     }
 }
@@ -236,17 +229,17 @@ impl<C: CoordNum> HasDimensions for Polygon<C> {
         let mut coords = self.exterior_coords_iter();
 
         let Some(first) = coords.next() else {
-            // No coordinates - the polygon is empty
+            // 没有坐标 - 多边形为空
             return Dimensions::Empty;
         };
 
         let Some(second) = coords.find(|next| *next != first) else {
-            // All coordinates in the polygon are the same point
+            // 多边形内所有坐标都是相同的点
             return Dimensions::ZeroDimensional;
         };
 
         let Some(_third) = coords.find(|next| *next != first && *next != second) else {
-            // There are only two distinct coordinates in the Polygon - it's collapsed to a line
+            // 多边形中只有两个不同的坐标 - 它已退化为一条线
             return Dimensions::OneDimensional;
         };
 
@@ -292,11 +285,10 @@ impl<C: CoordNum> HasDimensions for MultiLineString<C> {
                 Dimensions::Empty => {}
                 Dimensions::ZeroDimensional => max = Dimensions::ZeroDimensional,
                 Dimensions::OneDimensional => {
-                    // return early since we know multi line string dimensionality cannot exceed
-                    // 1-d
+                    // 提前返回因为我们知道多线字符串的维度不能超过1维
                     return Dimensions::OneDimensional;
                 }
-                Dimensions::TwoDimensional => unreachable!("MultiLineString cannot be 2d"),
+                Dimensions::TwoDimensional => unreachable!("MultiLineString不能是二维"),
             }
         }
         max
@@ -310,7 +302,7 @@ impl<C: CoordNum> HasDimensions for MultiLineString<C> {
         match self.dimensions() {
             Dimensions::Empty | Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
-            Dimensions::TwoDimensional => unreachable!("line_string cannot be 2 dimensional"),
+            Dimensions::TwoDimensional => unreachable!("line_string不能是二维"),
         }
     }
 }
@@ -325,7 +317,7 @@ impl<C: CoordNum> HasDimensions for MultiPolygon<C> {
         for geom in self {
             let dimensions = geom.dimensions();
             if dimensions == Dimensions::TwoDimensional {
-                // short-circuit since we know none can be larger
+                // 短路，因为我们知道没有更大的可能性
                 return Dimensions::TwoDimensional;
             }
             max = max.max(dimensions)
@@ -356,7 +348,7 @@ impl<C: GeoNum> HasDimensions for GeometryCollection<C> {
         for geom in self {
             let dimensions = geom.dimensions();
             if dimensions == Dimensions::TwoDimensional {
-                // short-circuit since we know none can be larger
+                // 短路，因为我们知道没有更大的可能性
                 return Dimensions::TwoDimensional;
             }
             max = max.max(dimensions)
@@ -386,10 +378,10 @@ impl<C: CoordNum> HasDimensions for Rect<C> {
 
     fn dimensions(&self) -> Dimensions {
         if self.min() == self.max() {
-            // degenerate rectangle is a point
+            // 退化矩形是一个点
             Dimensions::ZeroDimensional
         } else if self.min().x == self.max().x || self.min().y == self.max().y {
-            // degenerate rectangle is a line
+            // 退化矩形是一条线
             Dimensions::OneDimensional
         } else {
             Dimensions::TwoDimensional
@@ -399,7 +391,7 @@ impl<C: CoordNum> HasDimensions for Rect<C> {
     fn boundary_dimensions(&self) -> Dimensions {
         match self.dimensions() {
             Dimensions::Empty => {
-                unreachable!("even a degenerate rect should be at least 0-Dimensional")
+                unreachable!("即使是退化的矩形也应该至少是0维")
             }
             Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
@@ -417,10 +409,10 @@ impl<C: GeoNum> HasDimensions for Triangle<C> {
         use crate::Kernel;
         if Collinear == C::Ker::orient2d(self.0, self.1, self.2) {
             if self.0 == self.1 && self.1 == self.2 {
-                // degenerate triangle is a point
+                // 退化三角形是一个点
                 Dimensions::ZeroDimensional
             } else {
-                // degenerate triangle is a line
+                // 退化三角形是一条线
                 Dimensions::OneDimensional
             }
         } else {
@@ -431,7 +423,7 @@ impl<C: GeoNum> HasDimensions for Triangle<C> {
     fn boundary_dimensions(&self) -> Dimensions {
         match self.dimensions() {
             Dimensions::Empty => {
-                unreachable!("even a degenerate triangle should be at least 0-dimensional")
+                unreachable!("即使是退化的三角形也应该至少是0维")
             }
             Dimensions::ZeroDimensional => Dimensions::Empty,
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,

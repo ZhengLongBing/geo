@@ -2,13 +2,11 @@ use crate::{Coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A line segment made up of exactly two
-/// [`Coord`]s.
+/// 由恰好两个 [`Coord`] 组成的线段。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// The _interior_ and _boundary_ are defined as with a
-/// `LineString` with the two end points.
+/// _内部_ 和 _边界_ 的定义与具有两个端点的 `LineString` 相同。
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Line<T: CoordNum = f64> {
@@ -17,9 +15,9 @@ pub struct Line<T: CoordNum = f64> {
 }
 
 impl<T: CoordNum> Line<T> {
-    /// Creates a new line segment.
+    /// 创建一个新的线段。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, Line};
@@ -39,14 +37,14 @@ impl<T: CoordNum> Line<T> {
         }
     }
 
-    /// Calculate the difference in coordinates (Δx, Δy).
+    /// 计算坐标差异 (Δx, Δy)。
     pub fn delta(&self) -> Coord<T> {
         self.end - self.start
     }
 
-    /// Calculate the difference in ‘x’ components (Δx).
+    /// 计算 'x' 分量的差异 (Δx)。
     ///
-    /// Equivalent to:
+    /// 等价于：
     ///
     /// ```rust
     /// # use geo_types::{Line, point};
@@ -63,9 +61,9 @@ impl<T: CoordNum> Line<T> {
         self.delta().x
     }
 
-    /// Calculate the difference in ‘y’ components (Δy).
+    /// 计算 'y' 分量的差异 (Δy)。
     ///
-    /// Equivalent to:
+    /// 等价于：
     ///
     /// ```rust
     /// # use geo_types::{Line, point};
@@ -82,9 +80,9 @@ impl<T: CoordNum> Line<T> {
         self.delta().y
     }
 
-    /// Calculate the slope (Δy/Δx).
+    /// 计算斜率 (Δy/Δx)。
     ///
-    /// Equivalent to:
+    /// 等价于：
     ///
     /// ```rust
     /// # use geo_types::{Line, point};
@@ -98,7 +96,7 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// ```
     ///
-    /// Note that:
+    /// 注意：
     ///
     /// ```rust
     /// # use geo_types::{Line, point};
@@ -112,9 +110,9 @@ impl<T: CoordNum> Line<T> {
         self.dy() / self.dx()
     }
 
-    /// Calculate the [determinant](https://en.wikipedia.org/wiki/Determinant) of the line.
+    /// 计算线段的[行列式](https://en.wikipedia.org/wiki/Determinant)。
     ///
-    /// Equivalent to:
+    /// 等价于：
     ///
     /// ```rust
     /// # use geo_types::{Line, point};
@@ -128,7 +126,7 @@ impl<T: CoordNum> Line<T> {
     /// # );
     /// ```
     ///
-    /// Note that:
+    /// 注意：
     ///
     /// ```rust
     /// # use geo_types::{Line, point};
@@ -142,14 +140,17 @@ impl<T: CoordNum> Line<T> {
         self.start.x * self.end.y - self.start.y * self.end.x
     }
 
+    /// 获取起点
     pub fn start_point(&self) -> Point<T> {
         Point::from(self.start)
     }
 
+    /// 获取终点
     pub fn end_point(&self) -> Point<T> {
         Point::from(self.end)
     }
 
+    /// 获取起点和终点
     pub fn points(&self) -> (Point<T>, Point<T>) {
         (self.start_point(), self.end_point())
     }
@@ -160,6 +161,7 @@ impl<T: CoordNum> From<[(T, T); 2]> for Line<T> {
         Line::new(coord[0], coord[1])
     }
 }
+
 #[cfg(any(feature = "approx", test))]
 impl<T> RelativeEq for Line<T>
 where
@@ -170,9 +172,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, Line};
@@ -203,9 +205,9 @@ impl<T: AbsDiffEq<Epsilon = T> + CoordNum> AbsDiffEq for Line<T> {
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 带有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, Line};

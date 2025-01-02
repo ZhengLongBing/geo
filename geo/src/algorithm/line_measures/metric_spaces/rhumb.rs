@@ -4,33 +4,29 @@ use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::rhumb::RhumbCalculations;
 use crate::{CoordFloat, Point, MEAN_EARTH_RADIUS};
 
-/// Provides [rhumb line] (a.k.a. loxodrome) geometry operations. A rhumb line appears as a straight
-/// line on a Mercator projection map.
+/// 提供 [rhumb line] （亦称为等航线）几何操作。在墨卡托投影地图上，等航线呈现为直线。
 ///
-/// Rhumb distance is measured in meters.
+/// 等航线距离以米为单位测量。
 ///
-/// # References
+/// # 参考资料
 ///
-/// The distance, destination, and bearing implementations are adapted in part
-/// from their equivalents in [Turf.js](https://turfjs.org/), which in turn are
-/// adapted from the Movable Type
-/// [spherical geodesy tools](https://www.movable-type.co.uk/scripts/latlong.html).
+/// 距离、目的地和方位的实现部分借鉴自 [Turf.js](https://turfjs.org/) 中的等效实现，
+/// 这又源于 Movable Type 的 [spherical geodesy tools](https://www.movable-type.co.uk/scripts/latlong.html)。
 ///
-/// Turf.js is copyright its authors and the geodesy tools are copyright Chris
-/// Veness; both are available under an MIT license.
+/// Turf.js 版权归其作者所有，地理工具版权归 Chris Veness 所有；两者均可在MIT许可协议下使用。
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 pub struct Rhumb;
 
 impl<F: CoordFloat + FromPrimitive> Bearing<F> for Rhumb {
-    /// Returns the bearing from `origin` to `destination` in degrees along a [rhumb line].
+    /// 返回从 `origin` 到 `destination` 沿 [rhumb line] 的方位，以度为单位。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`, `destination`: Points where x/y are lon/lat degree coordinates
-    /// - returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°/
+    /// - `origin`，`destination`：x/y 为经纬度坐标的点
+    /// - 返回：度（北：0°，东：90°，南：180°，西：270°）
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -43,7 +39,7 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Rhumb {
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
     ///
-    /// # References
+    /// # 参考资料
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     ///
@@ -58,17 +54,16 @@ impl<F: CoordFloat + FromPrimitive> Bearing<F> for Rhumb {
 }
 
 impl<F: CoordFloat + FromPrimitive> Destination<F> for Rhumb {
-    /// Returns a new point having travelled the `distance` along a [rhumb line]
-    /// from the `origin` point with the given `bearing`.
+    /// 返回一个新点，该点是从 `origin` 点沿 [rhumb line] 以给定的 `bearing` 行驶了 `distance` 的结果。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`: Point where x/y are lon/lat degree coordinates
-    /// - `bearing`: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
-    /// - `distance`: meters
-    /// - returns: Point where x/y are lon/lat degree coordinates
+    /// - `origin`：x/y 为经纬度坐标的点
+    /// - `bearing`：度（北：0°，东：90°，南：180°，西：270°）
+    /// - `distance`：米
+    /// - 返回：x/y 为经纬度坐标的点
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -82,7 +77,7 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Rhumb {
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     fn destination(origin: Point<F>, bearing: F, distance: F) -> Point<F> {
-        let delta = distance / F::from(MEAN_EARTH_RADIUS).unwrap(); // angular distance in radians
+        let delta = distance / F::from(MEAN_EARTH_RADIUS).unwrap(); // 以弧度为单位的角距离
         let lambda1 = origin.x().to_radians();
         let phi1 = origin.y().to_radians();
         let theta = bearing.to_radians();
@@ -92,29 +87,29 @@ impl<F: CoordFloat + FromPrimitive> Destination<F> for Rhumb {
 }
 
 impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Rhumb {
-    /// Determine the distance along the [rhumb line] between two points.
+    /// 确定两个点之间沿 [rhumb line] 的距离。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`, `destination`: Points where x/y are lon/lat degree coordinates
-    /// - returns: meters
+    /// - `origin`，`destination`：x/y 为经纬度坐标的点
+    /// - 返回：米
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// use geo::{Rhumb, Distance};
     /// use geo::point;
     ///
-    /// // New York City
+    /// // 纽约市
     /// let p1 = point!(x: -74.006f64, y: 40.7128);
     ///
-    /// // London
+    /// // 伦敦
     /// let p2 = point!(x: -0.1278, y: 51.5074);
     ///
     /// let distance = Rhumb::distance(p1, p2);
     ///
     /// assert_eq!(
-    ///     5_794_129., // meters
+    ///     5_794_129., // 米
     ///     distance.round()
     /// );
     /// ```
@@ -126,13 +121,13 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Rhumb {
     }
 }
 
-/// Interpolate Point(s) along a [rhumb line].
+/// 沿着 [rhumb line] 插入点。
 ///
 /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
-    /// Returns a new Point along a [rhumb line] between two existing points.
+    /// 返回一个新点，该点位于两个现有点之间的 [rhumb line] 上。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -155,9 +150,9 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
         Self::destination(start, bearing, meters_from_start)
     }
 
-    /// Returns a new Point along a [rhumb line] between two existing points.
+    /// 返回一个新点，该点位于两个现有点之间的 [rhumb line] 上。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -183,13 +178,12 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Rhumb {
         calculations.intermediate(ratio_from_start)
     }
 
-    /// Interpolates `Point`s along a [rhumb line] between `start` and `end`.
+    /// 在 `start` 和 `end` 之间的 [rhumb line] 上插入 `Point`。
     ///
-    /// As many points as necessary will be added such that the distance between points
-    /// never exceeds `max_distance`. If the distance between start and end is less than
-    /// `max_distance`, no additional points will be included in the output.
+    /// 将根据需要添加多个点，以确保点之间的距离不超过 `max_distance`。
+    /// 如果起点和终点之间的距离小于 `max_distance`，则输出中不再包含额外的点。
     ///
-    /// `include_ends`: Should the start and end points be included in the output?
+    /// `include_ends`：是否应在输出中包含起始点和终点？
     ///
     /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
     fn points_along_line(
@@ -299,7 +293,7 @@ mod tests {
             let distance: f64 = MetricSpace::distance(new_york_city, london);
 
             assert_relative_eq!(
-                5_794_129., // meters
+                5_794_129., // 米
                 distance.round()
             );
         }
@@ -323,7 +317,7 @@ mod tests {
         fn points_along_line_with_endpoints() {
             let start = Point::new(10.0, 20.0);
             let end = Point::new(125.0, 25.0);
-            let max_dist = 1000000.0; // meters
+            let max_dist = 1000000.0; // 米
             let route =
                 MetricSpace::points_along_line(start, end, max_dist, true).collect::<Vec<_>>();
             assert_eq!(route.len(), 13);
@@ -339,7 +333,7 @@ mod tests {
         fn points_along_line_without_endpoints() {
             let start = Point::new(10.0, 20.0);
             let end = Point::new(125.0, 25.0);
-            let max_dist = 1000000.0; // meters
+            let max_dist = 1000000.0; // 米
             let route =
                 MetricSpace::points_along_line(start, end, max_dist, false).collect::<Vec<_>>();
             assert_eq!(route.len(), 11);

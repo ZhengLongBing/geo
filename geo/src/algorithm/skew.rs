@@ -1,19 +1,17 @@
 use crate::{AffineOps, AffineTransform, BoundingRect, Coord, CoordFloat, CoordNum, Rect};
 
-/// An affine transformation which skews a geometry, sheared by angles along x and y dimensions.
+/// 一种通过 x 和 y 维度的角度剪切几何图形的仿射变换。
 ///
-/// ## Performance
+/// ## 性能
 ///
-/// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-/// [`Skew`], [`Translate`](crate::Translate), or [`Rotate`](crate::Rotate), it is more
-/// efficient to compose the transformations and apply them as a single operation using the
-/// [`AffineOps`] trait.
+/// 如果你要执行多次变换，比如 [`Scale`](crate::Scale)、[`Skew`]、
+/// [`Translate`](crate::Translate) 或者 [`Rotate`](crate::Rotate)，
+/// 那么使用 [`AffineOps`] trait 合成变换并作为一个单一操作应用会更高效。
 ///
 pub trait Skew<T: CoordNum> {
-    /// An affine transformation which skews a geometry, sheared by a uniform angle along the x and
-    /// y dimensions.
+    /// 一种通过 x 和 y 维度的统一角度剪切几何图形的仿射变换。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Skew;
@@ -39,12 +37,12 @@ pub trait Skew<T: CoordNum> {
     #[must_use]
     fn skew(&self, degrees: T) -> Self;
 
-    /// Mutable version of [`skew`](Self::skew).
+    /// [`skew`](Self::skew) 的可变版本。
     fn skew_mut(&mut self, degrees: T);
 
-    /// An affine transformation which skews a geometry, sheared by an angle along the x and y dimensions.
+    /// 一种通过 x 和 y 维度角度剪切几何图形的仿射变换。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Skew;
@@ -70,17 +68,15 @@ pub trait Skew<T: CoordNum> {
     #[must_use]
     fn skew_xy(&self, degrees_x: T, degrees_y: T) -> Self;
 
-    /// Mutable version of [`skew_xy`](Self::skew_xy).
+    /// [`skew_xy`](Self::skew_xy) 的可变版本。
     fn skew_xy_mut(&mut self, degrees_x: T, degrees_y: T);
 
-    /// An affine transformation which skews a geometry around a point of `origin`, sheared by an
-    /// angle along the x and y dimensions.
+    /// 一种围绕 `origin` 点通过 x 和 y 维度的角度剪切几何图形的仿射变换。
     ///
-    /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, in
-    /// which case you can just use [`skew`](Self::skew) or [`skew_xy`](Self::skew_xy), but this method allows you
-    /// to specify any point.
+    /// 起始点通常设定为几何图形的2D边界框中心，在这种情况下可以直接使用
+    /// [`skew`](Self::skew) 或者 [`skew_xy`](Self::skew_xy)，但此方法允许指定任何点。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Skew;
@@ -107,7 +103,7 @@ pub trait Skew<T: CoordNum> {
     #[must_use]
     fn skew_around_point(&self, degrees_x: T, degrees_y: T, origin: impl Into<Coord<T>>) -> Self;
 
-    /// Mutable version of [`skew_around_point`](Self::skew_around_point).
+    /// [`skew_around_point`](Self::skew_around_point) 的可变版本。
     fn skew_around_point_mut(&mut self, degrees_x: T, degrees_y: T, origin: impl Into<Coord<T>>);
 }
 
@@ -128,8 +124,7 @@ where
     fn skew_xy(&self, degrees_x: T, degrees_y: T) -> Self {
         let origin = match self.bounding_rect().into() {
             Some(rect) => rect.center(),
-            // Empty geometries have no bounding rect, but in that case
-            // transforming is a no-op anyway.
+            // 空几何图形没有边界框，但在这种情况下，变换无效。
             None => return self.clone(),
         };
         self.skew_around_point(degrees_x, degrees_y, origin)
@@ -138,8 +133,7 @@ where
     fn skew_xy_mut(&mut self, degrees_x: T, degrees_y: T) {
         let origin = match self.bounding_rect().into() {
             Some(rect) => rect.center(),
-            // Empty geometries have no bounding rect, but in that case
-            // transforming is a no-op anyway.
+            // 空几何图形没有边界框，但在这种情况下，变换无效。
             None => return,
         };
         self.skew_around_point_mut(degrees_x, degrees_y, origin);

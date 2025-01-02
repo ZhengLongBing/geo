@@ -14,67 +14,66 @@ use crate::{
     UnimplementedPoint, UnimplementedPolygon, UnimplementedRect, UnimplementedTriangle,
 };
 
-/// A trait for accessing data from a generic Geometry.
+/// 用于从通用几何体访问数据的特征。
 #[allow(clippy::type_complexity)]
 pub trait GeometryTrait {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying Point, which implements [PointTrait]
+    /// 每个底层点的类型，实现 [PointTrait]
     type PointType<'a>: 'a + PointTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying LineString, which implements [LineStringTrait]
+    /// 每个底层线串的类型，实现 [LineStringTrait]
     type LineStringType<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying Polygon, which implements [PolygonTrait]
+    /// 每个底层多边形的类型，实现 [PolygonTrait]
     type PolygonType<'a>: 'a + PolygonTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying MultiPoint, which implements [MultiPointTrait]
+    /// 每个底层多点的类型，实现 [MultiPointTrait]
     type MultiPointType<'a>: 'a + MultiPointTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying MultiLineString, which implements [MultiLineStringTrait]
+    /// 每个底层多线串的类型，实现 [MultiLineStringTrait]
     type MultiLineStringType<'a>: 'a + MultiLineStringTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying MultiPolygon, which implements [MultiPolygonTrait]
+    /// 每个底层多多边形的类型，实现 [MultiPolygonTrait]
     type MultiPolygonType<'a>: 'a + MultiPolygonTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying GeometryCollection, which implements [GeometryCollectionTrait]
+    /// 每个底层几何集合的类型，实现 [GeometryCollectionTrait]
     type GeometryCollectionType<'a>: 'a + GeometryCollectionTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying Rect, which implements [RectTrait]
+    /// 每个底层矩形的类型，实现 [RectTrait]
     type RectType<'a>: 'a + RectTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying Triangle, which implements [TriangleTrait]
+    /// 每个底层三角形的类型，实现 [TriangleTrait]
     type TriangleType<'a>: 'a + TriangleTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The type of each underlying Line, which implements [LineTrait]
+    /// 每个底层线段的类型，实现 [LineTrait]
     type LineType<'a>: 'a + LineTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// Cast this geometry to a [`GeometryType`] enum, which allows for downcasting to a specific
-    /// type
+    /// 将此几何体转换为 [`GeometryType`] 枚举，允许向下转型为特定类型
     fn as_type(
         &self,
     ) -> GeometryType<
@@ -92,8 +91,7 @@ pub trait GeometryTrait {
     >;
 }
 
-/// An enumeration of all geometry types that can be contained inside a [GeometryTrait]. This is
-/// used for extracting concrete geometry types out of a [GeometryTrait].
+/// [GeometryTrait] 中可包含的所有几何类型的枚举。用于从 [GeometryTrait] 中提取具体的几何类型。
 #[derive(Debug)]
 pub enum GeometryType<'a, P, LS, Y, MP, ML, MY, GC, R, T, L>
 where
@@ -108,25 +106,25 @@ where
     T: TriangleTrait,
     L: LineTrait,
 {
-    /// A Point, which implements [PointTrait]
+    /// 实现 [PointTrait] 的点
     Point(&'a P),
-    /// A LineString, which implements [LineStringTrait]
+    /// 实现 [LineStringTrait] 的线串
     LineString(&'a LS),
-    /// A Polygon, which implements [PolygonTrait]
+    /// 实现 [PolygonTrait] 的多边形
     Polygon(&'a Y),
-    /// A MultiPoint, which implements [MultiPointTrait]
+    /// 实现 [MultiPointTrait] 的多点
     MultiPoint(&'a MP),
-    /// A MultiLineString, which implements [MultiLineStringTrait]
+    /// 实现 [MultiLineStringTrait] 的多线串
     MultiLineString(&'a ML),
-    /// A MultiPolygon, which implements [MultiPolygonTrait]
+    /// 实现 [MultiPolygonTrait] 的多多边形
     MultiPolygon(&'a MY),
-    /// A GeometryCollection, which implements [GeometryCollectionTrait]
+    /// 实现 [GeometryCollectionTrait] 的几何集合
     GeometryCollection(&'a GC),
-    /// A Rect, which implements [RectTrait]
+    /// 实现 [RectTrait] 的矩形
     Rect(&'a R),
-    /// A Triangle, which implements [TriangleTrait]
+    /// 实现 [TriangleTrait] 的三角形
     Triangle(&'a T),
-    /// A Line, which implements [LineTrait]
+    /// 实现 [LineTrait] 的线段
     Line(&'a L),
 }
 
@@ -286,7 +284,7 @@ impl<'a, T: CoordNum + 'a> GeometryTrait for &'a Geometry<T> {
     }
 }
 
-// Specialized implementations on each geo-types concrete type.
+// 对每个 geo-types 具体类型的专门实现。
 
 macro_rules! impl_specialization {
     ($geometry_type:ident) => {

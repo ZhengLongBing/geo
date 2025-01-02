@@ -3,43 +3,42 @@ use num_traits::FromPrimitive;
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Rhumb::distance` method from the `Distance` trait instead"
+    note = "请使用 `Distance` 特征中的 `Rhumb::distance` 方法代替"
 )]
-/// Determine the distance between two geometries along a [rhumb line].
+/// 确定沿着[恒向线]的两个几何体之间的距离。
 ///
-/// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+/// [恒向线]: https://en.wikipedia.org/wiki/Rhumb_line
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *注意*: 此实现使用平均地球半径6371.088公里，基于[IUGG的建议](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
 pub trait RhumbDistance<T, Rhs = Self> {
-    /// Determine the distance between along the [rhumb line] between two geometries.
+    /// 确定两个几何体之间沿着[恒向线]的距离。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meters
+    /// - 返回值：米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```rust
     /// use geo::prelude::*;
     /// use geo::point;
     ///
-    /// // New York City
+    /// // 纽约市
     /// let p1 = point!(x: -74.006f64, y: 40.7128f64);
     ///
-    /// // London
+    /// // 伦敦
     /// let p2 = point!(x: -0.1278f64, y: 51.5074f64);
     ///
     /// # #[allow(deprecated)]
     /// let distance = p1.rhumb_distance(&p2);
     ///
     /// assert_eq!(
-    ///     5_794_129., // meters
+    ///     5_794_129., // 米
     ///     distance.round()
     /// );
     /// ```
     ///
-    /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+    /// [恒向线]: https://en.wikipedia.org/wiki/Rhumb_line
     fn rhumb_distance(&self, rhs: &Rhs) -> T;
 }
 
@@ -79,7 +78,7 @@ mod test {
 
     #[test]
     fn distance3_test() {
-        // this input comes from issue #100
+        // 此输入来自问题 #100
         let a = Point::new(-77.036585, 38.897448);
         let b = Point::new(-77.009080, 38.889825);
         #[allow(deprecated)]
@@ -89,7 +88,7 @@ mod test {
 
     #[test]
     fn distance3_test_f32() {
-        // this input comes from issue #100
+        // 此输入来自问题 #100
         let a = Point::<f32>::new(-77.03658, 38.89745);
         let b = Point::<f32>::new(-77.00908, 38.889825);
         #[allow(deprecated)]

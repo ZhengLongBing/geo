@@ -4,16 +4,15 @@ use geo_types::{
 };
 use postgis::ewkb;
 
-/// Converts geometry to a PostGIS type.
+/// 将几何体转换为 PostGIS 类型。
 ///
-/// Note that PostGIS databases can include a SRID (spatial reference
-/// system identifier) for geometry stored in them. You should specify
-/// the SRID of your geometry when converting, using `to_postgis_with_srid()`,
-/// or use `to_postgis_wgs84()` if your data is standard WGS84.
+/// 请注意，PostGIS 数据库可以包含存储在其中的几何体的 SRID（空间参考系统标识符）。
+/// 在转换时，您应该指定几何体的 SRID，使用 `to_postgis_with_srid()`，
+/// 或者如果您的数据是标准的 WGS84，则使用 `to_postgis_wgs84()`。
 pub trait ToPostgis<T> {
-    /// Converts this geometry to a PostGIS type, using the supplied SRID.
+    /// 使用提供的 SRID 将此几何体转换为 PostGIS 类型。
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> T;
-    /// Converts this WGS84 geometry to a PostGIS type.
+    /// 将此 WGS84 几何体转换为 PostGIS 类型。
     fn to_postgis_wgs84(&self) -> T {
         self.to_postgis_with_srid(Some(4326))
     }
@@ -30,6 +29,7 @@ impl ToPostgis<ewkb::Point> for Point {
         ewkb::Point::new(self.x(), self.y(), srid)
     }
 }
+
 impl ToPostgis<ewkb::LineString> for Line {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::LineString {
         let points = vec![
@@ -39,6 +39,7 @@ impl ToPostgis<ewkb::LineString> for Line {
         ewkb::LineString { points, srid }
     }
 }
+
 impl ToPostgis<ewkb::Polygon> for Polygon<f64> {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Polygon {
         let rings = ::std::iter::once(self.exterior())
@@ -48,6 +49,7 @@ impl ToPostgis<ewkb::Polygon> for Polygon<f64> {
         ewkb::Polygon { rings, srid }
     }
 }
+
 macro_rules! to_postgis_impl {
     ($from:ident, $to:path, $name:ident) => {
         impl ToPostgis<$to> for $from<f64> {
@@ -62,11 +64,13 @@ macro_rules! to_postgis_impl {
         }
     };
 }
+
 to_postgis_impl!(GeometryCollection, ewkb::GeometryCollection, geometries);
 to_postgis_impl!(MultiPolygon, ewkb::MultiPolygon, polygons);
 to_postgis_impl!(MultiLineString, ewkb::MultiLineString, lines);
 to_postgis_impl!(MultiPoint, ewkb::MultiPoint, points);
 to_postgis_impl!(LineString, ewkb::LineString, points);
+
 impl ToPostgis<ewkb::Geometry> for Geometry {
     fn to_postgis_with_srid(&self, srid: Option<i32>) -> ewkb::Geometry {
         match *self {

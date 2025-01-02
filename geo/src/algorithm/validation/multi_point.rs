@@ -3,10 +3,10 @@ use crate::{GeoFloat, MultiPoint};
 
 use std::fmt;
 
-/// A [`MultiPoint`] is valid if each [`Point`](crate::Point) in it is valid.
+/// 当[`MultiPoint`]中的每个[`Point`](crate::Point)都是有效时，该[`MultiPoint`]是有效的。
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidMultiPoint {
-    /// Which element is invalid, and what was invalid about it.
+    /// 指示哪个元素无效以及无效的具体原因。
     InvalidPoint(GeometryIndex, InvalidPoint),
 }
 
@@ -14,7 +14,7 @@ impl fmt::Display for InvalidMultiPoint {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InvalidMultiPoint::InvalidPoint(idx, err) => {
-                write!(f, "point at index {} is invalid: {}", idx.0, err)
+                write!(f, "索引为 {} 的点无效: {}", idx.0, err)
             }
         }
     }

@@ -11,11 +11,11 @@ mod edge_end_builder;
 mod geomgraph;
 mod relate_operation;
 
-/// Topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
+/// 基于[DE-9IM](https://en.wikipedia.org/wiki/DE-9IM)语义拓扑地关联两个几何体。
 ///
-/// See [`IntersectionMatrix`] for details. All predicates are available on the calculated matrix.
+/// 参见 [`IntersectionMatrix`] 以获取详细信息。所有谓词都可在计算出的矩阵上使用。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::{coord, Line, Rect, line_string};
@@ -48,14 +48,14 @@ mod relate_operation;
 /// let intersection_matrix = rect.relate(&rect_boundary);
 /// assert!(intersection_matrix.is_intersects());
 /// assert!(!intersection_matrix.is_disjoint());
-/// // According to DE-9IM, polygons don't contain their own boundary
+/// // 根据 DE-9IM, 多边形不包含其自身的边界
 /// assert!(!intersection_matrix.is_contains());
 /// assert!(!intersection_matrix.is_within());
 /// ```
 ///
-/// Note: `Relate` must not be called on geometries containing `NaN` coordinates.
+/// 注意: `Relate` 不应在包含 `NaN` 坐标的几何体上调用。
 pub trait Relate<F: GeoFloat> {
-    /// Construct a [`GeometryGraph`]
+    /// 构造一个 [`GeometryGraph`]
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F>;
 
     fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {

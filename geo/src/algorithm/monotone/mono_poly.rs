@@ -5,18 +5,13 @@ use crate::{
     GeoNum, Intersects, Kernel, LineString, Orientation, Polygon, Rect,
 };
 
-/// Monotone polygon
+/// 单调多边形
 ///
-/// A monotone polygon is a polygon that can be decomposed into two monotone
-/// chains (along the X-axis). This implies any vertical line intersects the
-/// polygon at most twice (or not at all).  These polygons support
-/// point-in-polygon queries in `O(log n)` time; use the `Intersects<Coord>`
-/// trait to query.
+/// 单调多边形是可以分解为两个单调链（沿X轴）的多边形。这意味着任何垂直线与多边形最多相交两次（或完全不相交）。
+/// 这些多边形支持`O(log n)`时间复杂度的点在多边形内的查询；使用`Intersects<Coord>`特性进行查询。
 ///
-/// This structure cannot be directly constructed.  Use
-/// `crate::algorithm::monotone_subdivision` algorithm to obtain a
-/// `Vec<MonoPoly>`.  Consider using `MonotonicPolygons` instead if you are not
-/// interested in the individual monotone polygons.
+/// 这种结构不能被直接构造。使用`crate::algorithm::monotone_subdivision`算法获得`Vec<MonoPoly>`。
+/// 如果不关心单个单调多边形，可以考虑使用`MonotonicPolygons`。
 #[derive(Clone, PartialEq)]
 pub struct MonoPoly<T: GeoNum> {
     top: LineString<T>,
@@ -43,12 +38,11 @@ impl<T: GeoNum> std::fmt::Debug for MonoPoly<T> {
 }
 
 impl<T: GeoNum> MonoPoly<T> {
-    /// Create a monotone polygon from the top and bottom chains.
+    /// 从顶部和底部链创建单调多边形。
     ///
-    /// Note: each chain must be a strictly increasing sequence (in the lexicographic
-    /// order), with the same start and end points.  Further, the top chain must be
-    /// strictly above the bottom chain except at the end-points.  Not all these
-    /// conditions are checked, and the algorithm may panic if they are not met.
+    /// 注意：每个链必须是严格递增的序列（按字典顺序），具有相同的起点和终点。
+    /// 此外，顶部链除了在终点之外，必须严格高于底部链。
+    /// 并非所有这些条件都经过检查，如果不满足条件，算法可能会崩溃。
     pub(super) fn new(top: LineString<T>, bot: LineString<T>) -> Self {
         debug_assert_eq!(top.0.first(), bot.0.first());
         debug_assert_eq!(top.0.last(), bot.0.last());
@@ -57,29 +51,27 @@ impl<T: GeoNum> MonoPoly<T> {
         Self { top, bot, bounds }
     }
 
-    /// Get a reference to the mono poly's top chain.
+    /// 获取单调多边形顶部链的引用。
     #[must_use]
     pub fn top(&self) -> &LineString<T> {
         &self.top
     }
 
-    /// Get a reference to the mono poly's bottom chain.
+    /// 获取单调多边形底部链的引用。
     #[must_use]
     pub fn bot(&self) -> &LineString<T> {
         &self.bot
     }
 
-    /// Convert self to (top, bottom) pair of chains.
+    /// 将本结构转化为(顶部, 底部)链对。
     pub fn into_ls_pair(self) -> (LineString<T>, LineString<T>) {
         (self.top, self.bot)
     }
 
-    /// Get the pair of segments in the chain that intersects the line parallel
-    /// to the Y-axis at the given x-coordinate.  Ties are broken by picking the
-    /// segment with lower index, i.e. the segment closer to the start of the
-    /// chains.
+    /// 获取与给定x坐标平行于Y轴的直线相交的链中的线段对。
+    /// 如果有多个交点，则选择索引较低的线段，即距离链起点较近的段。
     pub fn bounding_segment(&self, x: T) -> Option<(Line<T>, Line<T>)> {
-        // binary search for the segment that contains the x coordinate.
+        // 二分搜索包含x坐标的线段。
         let tl_idx = self.top.0.partition_point(|c| c.x < x);
         if tl_idx == 0 && self.top.0[0].x != x {
             return None;
@@ -102,7 +94,7 @@ impl<T: GeoNum> MonoPoly<T> {
         ))
     }
 
-    /// Convert self into a [`Polygon`].
+    /// 将本结构转化为[`Polygon`]。
     pub fn into_polygon(self) -> Polygon<T> {
         let mut down = self.bot.0;
         let mut top = self.top.0;

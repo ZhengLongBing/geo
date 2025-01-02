@@ -2,21 +2,21 @@ use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::Point;
 use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
 
-/// An ellipsoidal model of the earth, using methods given by [Karney (2013)].
+/// 地球的椭球模型，使用[Karney (2013)]提供的方法。
 ///
-/// Distances are computed using [geodesic lines] and are measured in meters.
+/// 距离使用[大地测线]来计算，并以米为单位测量。
 ///
-/// [geodesic lines]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+/// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub struct Geodesic;
 
 impl Bearing<f64> for Geodesic {
-    /// Returns the bearing from `origin` to `destination` in degrees along a [geodesic line].
+    /// 返回沿[a geodesic line]从`origin`到`destination`的方位角，单位为度。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `origin`, `destination`: Point where x/y are lon/lat degree coordinates
-    /// - returns: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
+    /// - `origin`, `destination`: 以lon/lat度坐标表示的点
+    /// - 返回值: 度, 方向：北: 0°, 东: 90°, 南: 180°, 西: 270°
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -26,15 +26,15 @@ impl Bearing<f64> for Geodesic {
     /// let origin = Point::new(9.0, 10.0);
     /// let destination = Point::new(9.5, 10.1);
     /// let bearing = Geodesic::bearing(origin, destination);
-    /// // A little north of east
+    /// // 稍向东偏北
     /// assert_relative_eq!(bearing, 78.54, epsilon = 1.0e-2);
     /// ```
     ///
-    /// # References
+    /// # 参考
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn bearing(origin: Point<f64>, destination: Point<f64>) -> f64 {
         let (azi1, _, _) = geographiclib_rs::Geodesic::wgs84().inverse(
@@ -48,25 +48,24 @@ impl Bearing<f64> for Geodesic {
 }
 
 impl Destination<f64> for Geodesic {
-    /// Returns a new point having travelled the `distance` along a [geodesic line]
-    /// from the `origin` point with the given `bearing`.
+    /// 返回一个新的点，该点沿[a geodesic line]从`origin`出发，根据给定的`bearing`行进了`distance`距离。
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - `bearing`: degrees, where: North: 0°, East: 90°, South: 180°, West: 270°
-    /// - `distance`: meters
-    /// - returns: Point where x/y are lon/lat degree coordinates
+    /// - `bearing`: 度, 方向：北: 0°, 东: 90°, 南: 180°, 西: 270°
+    /// - `distance`: 米
+    /// - 返回值: 以lon/lat度坐标表示的点
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
     /// use geo::{Geodesic, Destination};
     /// use geo::Point;
     ///
-    /// // Determine the point 100 km NE of JFK airport.
+    /// // 确定位置距JFK机场东北方向100公里处的点。
     /// let jfk = Point::new(-73.78, 40.64);
     /// let northeast_bearing = 45.0;
     /// let distance = 100_000.0;
@@ -75,11 +74,11 @@ impl Destination<f64> for Geodesic {
     /// assert_relative_eq!(Point::new(-72.94, 41.27), northeast_of_jfk, epsilon = 1.0e-2);
     /// ```
     ///
-    /// # References
+    /// # 参考
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn destination(origin: Point<f64>, bearing: f64, distance: f64) -> Point<f64> {
         let (lat, lon) =
@@ -89,36 +88,36 @@ impl Destination<f64> for Geodesic {
 }
 
 impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
-    /// Determine the length of the [geodesic line] between two geometries on an ellipsoidal model of the earth.
+    /// 确定地球椭球模型上两个几何图形之间[大地测线]的长度。
     ///
-    /// # Units
-    /// - `origin`, `destination`: Point where x/y are lon/lat degree coordinates/
-    /// - returns: meters
+    /// # 单位
+    /// - `origin`, `destination`: 以lon/lat度坐标表示的点
+    /// - 返回值: 米
     ///
-    /// # Examples
+    /// # 示例
     /// ```rust
     /// use geo::{Geodesic, Distance};
     /// use geo::Point;
     ///
-    /// // New York City
+    /// // 纽约市
     /// let new_york_city = Point::new(-74.006, 40.7128);
     ///
-    /// // London
+    /// // 伦敦
     /// let london = Point::new(-0.1278, 51.5074);
     ///
     /// let distance = Geodesic::distance(new_york_city, london);
     ///
     /// assert_eq!(
-    ///     5_585_234., // meters
+    ///     5_585_234., // 米
     ///     distance.round()
     /// );
     /// ```
     ///
-    /// # References
+    /// # 参考
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn distance(origin: Point<f64>, destination: Point<f64>) -> f64 {
         geographiclib_rs::Geodesic::wgs84().inverse(
@@ -130,16 +129,16 @@ impl Distance<f64, Point<f64>, Point<f64>> for Geodesic {
     }
 }
 
-/// Interpolate Point(s) along a [geodesic line].
+/// 在[a geodesic line]上插值点。
 ///
-/// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+/// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
 impl InterpolatePoint<f64> for Geodesic {
-    /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
+    /// 返回一个新的点，该点位于地球椭球模型上两个现有点之间的[geodesic line]上。
     ///
-    /// # Units
-    /// - `meters_from_start`: meters
+    /// # 单位
+    /// - `meters_from_start`: 米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -157,11 +156,11 @@ impl InterpolatePoint<f64> for Geodesic {
     /// assert_relative_eq!(closer_to_p2, Point::new(112.20, 30.67), epsilon = 1.0e-2);
     /// ```
     ///
-    /// # References
+    /// # 参考
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn point_at_distance_between(
         start: Point<f64>,
@@ -175,9 +174,9 @@ impl InterpolatePoint<f64> for Geodesic {
         Self::destination(start, bearing, meters_from_start)
     }
 
-    /// Returns a new Point along a [geodesic line] between two existing points on an ellipsoidal model of the earth.
+    /// 返回一个新的点，该点位于地球椭球模型上两个现有点之间的[geodesic line]上。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -197,11 +196,11 @@ impl InterpolatePoint<f64> for Geodesic {
     /// assert_relative_eq!(midpoint, Point::new(65.88, 37.72), epsilon = 1.0e-2);
     /// ```
     ///
-    /// # References
+    /// # 参考
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn point_at_ratio_between(
         start: Point<f64>,
@@ -221,19 +220,19 @@ impl InterpolatePoint<f64> for Geodesic {
         Self::destination(start, azi1, distance)
     }
 
-    /// Interpolates `Point`s along a [geodesic line] between `start` and `end`.
+    /// 插值`point`在`start`和`end`之间的[geodesic line]。
     ///
-    /// As many points as necessary will be added such that the geodesic distance between points
-    /// never exceeds `max_distance`. If the distance between start and end is less than
-    /// `max_distance`, no additional points will be included in the output.
+    /// 将添加尽可能多的点，以确保点之间的地理距离
+    /// 不得超过`max_distance`。如果起点和终点之间的距离小于
+    /// `max_distance`, 则不会在输出中包含额外的点。
     ///
-    /// `include_ends`: Should the start and end points be included in the output?
+    /// `include_ends`: 是否在输出中包含起点和终点？
     ///
-    /// # References
+    /// # 参考
     ///
-    /// This uses the geodesic methods given by [Karney (2013)].
+    /// 这使用了[Karney (2013)]提供的大地线方法。
     ///
-    /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
+    /// [大地测线]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn points_along_line(
         start: Point<f64>,
@@ -365,7 +364,7 @@ mod tests {
                 let distance = MetricSpace::distance(new_york_city, london);
 
                 assert_relative_eq!(
-                    5_585_234.0, // meters
+                    5_585_234.0, // 米
                     distance.round()
                 );
             }
@@ -386,7 +385,7 @@ mod tests {
             fn points_along_line_with_endpoints() {
                 let start = Point::new(10.0, 20.0);
                 let end = Point::new(125.0, 25.0);
-                let max_dist = 1000000.0; // meters
+                let max_dist = 1000000.0; // 米
                 let route =
                     MetricSpace::points_along_line(start, end, max_dist, true).collect::<Vec<_>>();
                 assert_eq!(route.len(), 13);
@@ -399,7 +398,7 @@ mod tests {
             fn points_along_line_without_endpoints() {
                 let start = Point::new(10.0, 20.0);
                 let end = Point::new(125.0, 25.0);
-                let max_dist = 1000000.0; // meters
+                let max_dist = 1000000.0; // 米
                 let route =
                     MetricSpace::points_along_line(start, end, max_dist, false).collect::<Vec<_>>();
                 assert_eq!(route.len(), 11);

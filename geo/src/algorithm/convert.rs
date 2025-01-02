@@ -1,8 +1,8 @@
 use crate::{Coord, CoordNum, MapCoords};
 
-/// Convert (infalliby) the type of a geometry’s coordinate value.
+/// 无错误地转换几何体坐标值的类型。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```rust
 /// use geo::{Convert, LineString, line_string};
@@ -15,7 +15,6 @@ use crate::{Coord, CoordNum, MapCoords};
 ///
 /// let line_string_64: LineString<f64> = line_string_32.convert();
 /// ```
-///
 pub trait Convert<T, U> {
     type Output;
 
@@ -36,9 +35,9 @@ where
     }
 }
 
-/// Convert (fallibly) the type of a geometry’s coordinate value.
+/// 有可能出错地转换几何体坐标值的类型。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```rust
 /// use geo::{TryConvert, LineString, line_string};
@@ -51,7 +50,6 @@ where
 ///
 /// let line_string_32: Result<LineString<i32>, _> = line_string_64.try_convert();
 /// ```
-///
 pub trait TryConvert<T, U> {
     type Output;
 

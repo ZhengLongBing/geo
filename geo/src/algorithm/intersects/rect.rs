@@ -6,6 +6,7 @@ where
     T: CoordNum,
 {
     fn intersects(&self, rhs: &Coord<T>) -> bool {
+        // 检查坐标是否在矩形范围内
         rhs.x >= self.min().x
             && rhs.y >= self.min().y
             && rhs.x <= self.max().x
@@ -21,6 +22,7 @@ where
     T: CoordNum,
 {
     fn intersects(&self, other: &Rect<T>) -> bool {
+        // 确保两个矩形在所有轴上都有重叠
         if self.max().x < other.min().x {
             return false;
         }
@@ -41,8 +43,7 @@ where
     }
 }
 
-// Same logic as Polygon<T>: Intersects<Line<T>>, but avoid
-// an allocation.
+// 与 Polygon<T>::Intersects<Line<T>> 逻辑相同，但不进行分配。
 impl<T> Intersects<Line<T>> for Rect<T>
 where
     T: GeoNum,
@@ -52,7 +53,7 @@ where
         let rb = self.max();
         let lb = Coord::from((lt.x, rb.y));
         let rt = Coord::from((rb.x, lt.y));
-        // If either rhs.{start,end} lies inside Rect, then true
+        // 如果 rhs.{start,end} 的任一端点位于 Rect 内部，则返回 true
         self.intersects(&rhs.start)
             || self.intersects(&rhs.end)
             || Line::new(lt, rt).intersects(rhs)
@@ -68,6 +69,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Triangle<T>) -> bool {
+        // 将三角形转换为多边形，并检查相交性
         self.intersects(&rhs.to_polygon())
     }
 }

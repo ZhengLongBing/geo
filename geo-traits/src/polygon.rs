@@ -1,3 +1,4 @@
+/// Start of Selection
 use std::marker::PhantomData;
 
 use crate::iterator::PolygonInteriorIterator;
@@ -6,38 +7,36 @@ use crate::{Dimensions, LineStringTrait};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, LineString, Polygon};
 
-/// A trait for accessing data from a generic Polygon.
+/// 用于从通用Polygon访问数据的特征。
 ///
-/// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
-/// [`LineString`][LineStringTrait]. It may contain zero or more holes (_interior rings_), also
-/// represented by `LineString`s.
+/// `Polygon` 的外边界（_exterior ring_ ）由[`LineString`][LineStringTrait]表示。它可能包含零个或多个洞（_interior rings_ ），也由`LineString`表示。
 ///
-/// Refer to [geo_types::Polygon] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅 [geo_types::Polygon]。
 pub trait PolygonTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying ring, which implements [LineStringTrait]
+    /// 每个底层环的类型，实现 [LineStringTrait]
     type RingType<'a>: 'a + LineStringTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// The exterior ring of the polygon
+    /// 多边形的外环
     fn exterior(&self) -> Option<Self::RingType<'_>>;
 
-    /// An iterator of the interior rings of this Polygon
+    /// 此多边形的内环迭代器
     fn interiors(&self) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::RingType<'_>> {
         PolygonInteriorIterator::new(self, 0, self.num_interiors())
     }
 
-    /// The number of interior rings in this Polygon
+    /// 此多边形中内环的数量
     fn num_interiors(&self) -> usize;
 
-    /// Access to a specified interior ring in this Polygon
-    /// Will return None if the provided index is out of bounds
+    /// 访问此多边形中指定的内环
+    /// 如果提供的索引超出范围，将返回None
     fn interior(&self, i: usize) -> Option<Self::RingType<'_>> {
         if i >= self.num_interiors() {
             None
@@ -46,11 +45,11 @@ pub trait PolygonTrait: Sized {
         }
     }
 
-    /// Access to a specified interior ring in this Polygon
+    /// 访问此多边形中指定的内环
     ///
-    /// # Safety
+    /// # 安全
     ///
-    /// Accessing an index out of bounds is UB.
+    /// 访问超出范围的索引是未定义行为。
     unsafe fn interior_unchecked(&self, i: usize) -> Self::RingType<'_>;
 }
 
@@ -114,10 +113,9 @@ impl<'a, T: CoordNum> PolygonTrait for &'a Polygon<T> {
     }
 }
 
-/// An empty struct that implements [PolygonTrait].
+/// 实现 [PolygonTrait] 的空结构体。
 ///
-/// This can be used as the `PolygonType` of the `GeometryTrait` by implementations that don't have a
-/// Polygon concept
+/// 这可以被没有Polygon概念的实现用作`GeometryTrait`的`PolygonType`
 pub struct UnimplementedPolygon<T>(PhantomData<T>);
 
 impl<T> PolygonTrait for UnimplementedPolygon<T> {

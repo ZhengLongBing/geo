@@ -6,64 +6,45 @@ use num_traits::{Float, Signed};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq};
 
-/// A bounded two-dimensional area.
+/// 一个有界的二维区域。
 ///
-/// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
-/// [`LineString`]. It may contain zero or more holes (_interior rings_), also
-/// represented by `LineString`s.
+/// `Polygon`的外边界（外环）由一个[`LineString`]表示。它可能包含零个或多个孔（内环），
+/// 这些内环也由`LineString`表示。
 ///
-/// A `Polygon` can be created with the [`Polygon::new`] constructor or the [`polygon!`][`crate::polygon!`] macro.
+/// 可以使用[`Polygon::new`]构造函数或[`polygon!`][`crate::polygon!`]宏创建`Polygon`。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// The _boundary_ of the polygon is the union of the
-/// boundaries of the exterior and interiors. The interior
-/// is all the points inside the polygon (not on the
-/// boundary).
+/// 多边形的边界是外部和内部边界的并集。内部是多边形内部的所有点（不在边界上）。
 ///
-/// The `Polygon` structure guarantees that all exterior and interior rings will
-/// be _closed_, such that the first and last `Coord` of each ring has
-/// the same value.
+/// `Polygon`结构保证所有外部和内部环都是闭合的，即每个环的第一个和最后一个`Coord`具有相同的值。
 ///
-/// # Validity
+/// # 有效性
 ///
-/// - The exterior and interior rings must be valid
-///   `LinearRing`s (see [`LineString`]).
+/// - 外部和内部环必须是有效的`LinearRing`（参见[`LineString`]）。
 ///
-/// - No two rings in the boundary may cross, and may
-///   intersect at a `Point` only as a tangent. In other
-///   words, the rings must be distinct, and for every pair of
-///   common points in two of the rings, there must be a
-///   neighborhood (a topological open set) around one that
-///   does not contain the other point.
+/// - 边界中的任意两个环不能相交，只能在一个`Point`处作为切线相交。
+///   换句话说，环必须是不同的，对于两个环中的每对公共点，
+///   必须存在一个包含其中一个点但不包含另一个点的邻域（拓扑开集）。
 ///
-/// - The closure of the interior of the `Polygon` must
-///   equal the `Polygon` itself. For instance, the exterior
-///   may not contain a spike.
+/// - `Polygon`内部的闭包必须等于`Polygon`本身。例如，外部不能包含尖峰。
 ///
-/// - The interior of the polygon must be a connected
-///   point-set. That is, any two distinct points in the
-///   interior must admit a curve between these two that lies
-///   in the interior.
+/// - 多边形的内部必须是一个连通的点集。也就是说，内部的任意两个不同点
+///   之间必须存在一条位于内部的曲线。
 ///
-/// Refer to section 6.1.11.1 of the OGC-SFA for a formal
-/// definition of validity. Besides the closed `LineString`
-/// guarantee, the `Polygon` structure does not enforce
-/// validity at this time. For example, it is possible to
-/// construct a `Polygon` that has:
+/// 有关有效性的正式定义，请参阅OGC-SFA的6.1.11.1节。除了闭合`LineString`保证外，
+/// `Polygon`结构目前不强制执行有效性。例如，可以构造一个具有以下特征的`Polygon`：
 ///
-/// - fewer than 3 coordinates per `LineString` ring
-/// - interior rings that intersect other interior rings
-/// - interior rings that extend beyond the exterior ring
+/// - 每个`LineString`环的坐标少于3个
+/// - 内部环与其他内部环相交
+/// - 内部环延伸超出外部环
 ///
-/// # `LineString` closing operation
+/// # `LineString`闭合操作
 ///
-/// Some APIs on `Polygon` result in a closing operation on a `LineString`. The
-/// operation is as follows:
+/// `Polygon`上的某些API会导致对`LineString`进行闭合操作。操作如下：
 ///
-/// If a `LineString`’s first and last `Coord` have different values, a
-/// new `Coord` will be appended to the `LineString` with a value equal to
-/// the first `Coord`.
+/// 如果`LineString`的第一个和最后一个`Coord`具有不同的值，
+/// 将向`LineString`追加一个新的`Coord`，其值等于第一个`Coord`。
 ///
 /// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
@@ -74,17 +55,15 @@ pub struct Polygon<T: CoordNum = f64> {
 }
 
 impl<T: CoordNum> Polygon<T> {
-    /// Create a new `Polygon` with the provided exterior `LineString` ring and
-    /// interior `LineString` rings.
+    /// 使用提供的外部`LineString`环和内部`LineString`环创建一个新的`Polygon`。
     ///
-    /// Upon calling `new`, the exterior and interior `LineString` rings [will
-    /// be closed].
+    /// 调用`new`时，外部和内部`LineString`环[将被闭合]。
     ///
-    /// [will be closed]: #linestring-closing-operation
+    /// [将被闭合]: #linestring-closing-operation
     ///
-    /// # Examples
+    /// # 示例
     ///
-    /// Creating a `Polygon` with no interior rings:
+    /// 创建一个没有内部环的`Polygon`：
     ///
     /// ```
     /// use geo_types::{LineString, Polygon};
@@ -95,7 +74,7 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// Creating a `Polygon` with an interior ring:
+    /// 创建一个带有内部环的`Polygon`：
     ///
     /// ```
     /// use geo_types::{LineString, Polygon};
@@ -111,8 +90,8 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// If the first and last `Coord`s of the exterior or interior
-    /// `LineString`s no longer match, those `LineString`s [will be closed]:
+    /// 如果外部或内部`LineString`的第一个和最后一个`Coord`不再匹配，
+    /// 这些`LineString`[将被闭合]：
     ///
     /// ```
     /// use geo_types::{coord, LineString, Polygon};
@@ -135,10 +114,9 @@ impl<T: CoordNum> Polygon<T> {
         }
     }
 
-    /// Consume the `Polygon`, returning the exterior `LineString` ring and
-    /// a vector of the interior `LineString` rings.
+    /// 消耗`Polygon`，返回外部`LineString`环和内部`LineString`环的向量。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{LineString, Polygon};
@@ -174,9 +152,9 @@ impl<T: CoordNum> Polygon<T> {
         (self.exterior, self.interiors)
     }
 
-    /// Return a reference to the exterior `LineString` ring.
+    /// 返回外部`LineString`环的引用。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{LineString, Polygon};
@@ -191,12 +169,11 @@ impl<T: CoordNum> Polygon<T> {
         &self.exterior
     }
 
-    /// Execute the provided closure `f`, which is provided with a mutable
-    /// reference to the exterior `LineString` ring.
+    /// 执行提供的闭包`f`，该闭包提供了对外部`LineString`环的可变引用。
     ///
-    /// After the closure executes, the exterior `LineString` [will be closed].
+    /// 闭包执行后，外部`LineString`[将被闭合]。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, LineString, Polygon};
@@ -216,8 +193,8 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// If the first and last `Coord`s of the exterior `LineString` no
-    /// longer match, the `LineString` [will be closed]:
+    /// 如果外部`LineString`的第一个和最后一个`Coord`不再匹配，
+    /// 该`LineString`[将被闭合]：
     ///
     /// ```
     /// use geo_types::{coord, LineString, Polygon};
@@ -237,7 +214,7 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// [will be closed]: #linestring-closing-operation
+    /// [将被闭合]: #linestring-closing-operation
     pub fn exterior_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut LineString<T>),
@@ -246,7 +223,7 @@ impl<T: CoordNum> Polygon<T> {
         self.exterior.close();
     }
 
-    /// Fallible alternative to [`exterior_mut`](Polygon::exterior_mut).
+    /// [`exterior_mut`](Polygon::exterior_mut)的可失败替代方案。
     pub fn try_exterior_mut<F, E>(&mut self, f: F) -> Result<(), E>
     where
         F: FnOnce(&mut LineString<T>) -> Result<(), E>,
@@ -256,9 +233,9 @@ impl<T: CoordNum> Polygon<T> {
         Ok(())
     }
 
-    /// Return a slice of the interior `LineString` rings.
+    /// 返回内部`LineString`环的切片。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, LineString, Polygon};
@@ -281,13 +258,11 @@ impl<T: CoordNum> Polygon<T> {
         &self.interiors
     }
 
-    /// Execute the provided closure `f`, which is provided with a mutable
-    /// reference to the interior `LineString` rings.
+    /// 执行提供的闭包`f`，该闭包提供了对内部`LineString`环的可变引用。
     ///
-    /// After the closure executes, each of the interior `LineString`s [will be
-    /// closed].
+    /// 闭包执行后，每个内部`LineString`[将被闭合]。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{coord, LineString, Polygon};
@@ -317,8 +292,8 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// If the first and last `Coord`s of any interior `LineString` no
-    /// longer match, those `LineString`s [will be closed]:
+    /// 如果任何内部`LineString`的第一个和最后一个`Coord`不再匹配，
+    /// 这些`LineString`[将被闭合]：
     ///
     /// ```
     /// use geo_types::{coord, LineString, Polygon};
@@ -349,7 +324,7 @@ impl<T: CoordNum> Polygon<T> {
     /// );
     /// ```
     ///
-    /// [will be closed]: #linestring-closing-operation
+    /// [将被闭合]: #linestring-closing-operation
     pub fn interiors_mut<F>(&mut self, f: F)
     where
         F: FnOnce(&mut [LineString<T>]),

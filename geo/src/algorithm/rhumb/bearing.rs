@@ -4,16 +4,16 @@ use crate::{Bearing, CoordFloat, Point, Rhumb};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `Rhumb::bearing` method from the `Bearing` trait instead"
+    note = "请使用 `Bearing` 特征中的 `Rhumb::bearing` 方法代替"
 )]
-/// Returns the bearing to another Point in degrees.
+/// 返回到另一个点的方位角，以度为单位。
 ///
 /// Bullock, R.: Great Circle Distances and Bearings Between Two Locations, 2007.
 /// (<https://dtcenter.org/met/users/docs/write_ups/gc_simple.pdf>)
 pub trait RhumbBearing<T: CoordFloat + FromPrimitive> {
-    /// Returns the bearing to another Point in degrees along a [rhumb line], where North is 0° and East is 90°.
+    /// 返回到另一个点的方位角，以度为单位，沿着[恒向线]，其中北为0°，东为90°。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```
     /// # use approx::assert_relative_eq;
@@ -27,7 +27,7 @@ pub trait RhumbBearing<T: CoordFloat + FromPrimitive> {
     /// let bearing = p_1.rhumb_bearing(p_2);
     /// assert_relative_eq!(bearing, 45., epsilon = 1.0e-6);
     /// ```
-    /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+    /// [恒向线]: https://en.wikipedia.org/wiki/Rhumb_line
     fn rhumb_bearing(&self, point: Point<T>) -> T;
 }
 

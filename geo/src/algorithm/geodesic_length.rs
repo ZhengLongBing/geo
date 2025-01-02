@@ -2,44 +2,41 @@ use crate::{Geodesic, Length, Line, LineString, MultiLineString};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length::<Geodesic>()` via the `Length` trait instead."
+    note = "请使用`Length`特征中的`line.length::<Geodesic>()`方法。"
 )]
-/// Determine the length of a geometry on an ellipsoidal model of the earth.
+/// 在地球椭球模型上确定几何体的长度。
 ///
-/// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
-/// like Vincenty, this method is accurate to a few nanometers and always converges.
+/// 这使用了[Karney (2013)]提供的测地线测量方法。与Vincenty等较旧的方法相比，该方法精确到几纳米且总是收敛。
 ///
 /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
 pub trait GeodesicLength<T, RHS = Self> {
-    /// Determine the length of a geometry on an ellipsoidal model of the earth.
+    /// 在地球椭球模型上确定几何体的长度。
     ///
-    /// This uses the geodesic measurement methods given by [Karney (2013)]. As opposed to older methods
-    /// like Vincenty, this method is accurate to a few nanometers and always converges.
+    /// 这使用了[Karney (2013)]提供的测地线测量方法。与Vincenty等较旧的方法相比，该方法精确到几纳米且总是收敛。
     ///
+    /// # 单位
     ///
-    /// # Units
+    /// - 返回值：米
     ///
-    /// - return value: meters
-    ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::prelude::*;
     /// use geo::LineString;
     ///
     /// let linestring = LineString::from(vec![
-    ///     // New York City
+    ///     // 纽约
     ///     (-74.006, 40.7128),
-    ///     // London
+    ///     // 伦敦
     ///     (-0.1278, 51.5074),
-    ///     // Osaka
+    ///     // 大阪
     ///     (135.5244559, 34.687455)
     /// ]);
     ///
     /// let length = linestring.geodesic_length();
     ///
     /// assert_eq!(
-    ///     15_109_158., // meters
+    ///     15_109_158., // 米
     ///     length.round()
     /// );
     /// ```
@@ -50,7 +47,7 @@ pub trait GeodesicLength<T, RHS = Self> {
 
 #[allow(deprecated)]
 impl GeodesicLength<f64> for Line {
-    /// The units of the returned value is meters.
+    /// 返回值的单位是米。
     fn geodesic_length(&self) -> f64 {
         self.length::<Geodesic>()
     }

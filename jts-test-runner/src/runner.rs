@@ -60,7 +60,7 @@ impl TestRunner {
         &self.failures
     }
 
-    /// `desc`: when specified runs just the test described by `desc`, otherwise all tests are run
+    /// `desc`：如果指定，只运行由 `desc` 描述的测试，否则运行所有测试
     pub fn matching_desc(mut self, desc: &str) -> Self {
         self.desc_filter = Some(desc.to_string());
         self
@@ -253,8 +253,8 @@ impl TestRunner {
                         }
                     };
 
-                    // JTS returns a variety of Geometry types depending on the convex hull
-                    // whereas geo *always* returns a polygon.
+                    // JTS 返回的几何类型因凸包而异
+                    // 而 geo 始终返回一个多边形。
                     let expected = match expected {
                         Geometry::LineString(ext) => Polygon::new(ext.clone(), vec![]),
                         Geometry::Polygon(p) => p.clone(),
@@ -385,7 +385,7 @@ impl TestRunner {
                     let actual = match (a, b) {
                         (Geometry::Polygon(polygon), Geometry::LineString(line_string))
                         | (Geometry::LineString(line_string), Geometry::Polygon(polygon)) => {
-                            // REVIEW: add a line_string flavor
+                            // REVIEW：添加 line_string 味道
                             polygon.clip(&MultiLineString(vec![line_string.clone()]), *invert)
                         }
                         (
@@ -415,7 +415,7 @@ impl TestRunner {
                             Geometry::MultiLineString(multi_line_string),
                         ) => multi_polygon.clip(multi_line_string, *invert),
 
-                        // We should be filtering the input test cases in such a way that we don't get here.
+                        // 我们应该过滤输入测试用例，这样我们就不会到这里。
                         _ => todo!("Handle {:?} and {:?}", a, b),
                     };
 
@@ -555,7 +555,7 @@ impl<T: GeoNum> RotatedEq<T> for MultiPolygon<T> {
         F: Fn(&Coord<T>, &Coord<T>) -> bool,
     {
         if self.0.len() != other.0.len() {
-            // We have some discrepancies about having a multipolygon with nothing in it vs a multipolygon with an empty polygon.
+            // 关于没有内容的多边形与空多边形存在一些差异。
             return self.is_empty() && other.is_empty();
         }
         let mut matched_in_other: BTreeSet<usize> = BTreeSet::new();
@@ -574,8 +574,7 @@ impl<T: GeoNum> RotatedEq<T> for MultiPolygon<T> {
     }
 }
 
-/// Test if two polygons are equal upto rotation, and
-/// permutation of interiors.
+/// 测试两个多边形是否在旋转和内部置换上相等。
 impl<T: GeoNum> RotatedEq<T> for Polygon<T> {
     fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
     where
@@ -606,7 +605,7 @@ impl<T: GeoNum> RotatedEq<T> for Polygon<T> {
     }
 }
 
-/// Test if two rings are equal upto rotation / reversal
+/// 测试两个环是否在旋转/反转上相等。
 impl<T: GeoNum> RotatedEq<T> for LineString<T> {
     fn is_rotated_eq<F>(&self, other: &Self, coord_matcher: F) -> bool
     where

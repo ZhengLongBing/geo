@@ -5,24 +5,24 @@ use geo_types::{Coord, CoordNum, Point};
 
 use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 
-/// A trait for accessing data from a generic Point.
+/// 用于从通用点访问数据的特征。
 ///
-/// Refer to [geo_types::Point] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅 [geo_types::Point]。
 pub trait PointTrait {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of the underlying coordinate, which implements [CoordTrait]
+    /// 底层坐标的类型，实现 [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// Dimensions of the coordinate tuple
+    /// 坐标元组的维度
     fn dim(&self) -> Dimensions;
 
-    /// The location of this 0-dimensional geometry.
+    /// 此0维几何体的位置。
     ///
-    /// According to Simple Features, a Point can have zero coordinates and be considered "empty".
+    /// 根据简单要素规范，一个点可以没有坐标并被视为"空"。
     fn coord(&self) -> Option<Self::CoordType<'_>>;
 }
 
@@ -60,10 +60,9 @@ impl<T: CoordNum> PointTrait for &Point<T> {
     }
 }
 
-/// An empty struct that implements [PointTrait].
+/// 实现 [PointTrait] 的空结构体。
 ///
-/// This can be used as the `PointType` of the `GeometryTrait` by implementations that don't have a
-/// Point concept
+/// 这可以被没有点概念的实现用作 `GeometryTrait` 的 `PointType`
 pub struct UnimplementedPoint<T>(PhantomData<T>);
 
 impl<T> PointTrait for UnimplementedPoint<T> {

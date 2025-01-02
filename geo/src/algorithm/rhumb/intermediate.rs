@@ -1,19 +1,16 @@
 use crate::{CoordFloat, InterpolatePoint, Point, Rhumb};
 use num_traits::FromPrimitive;
 
-#[deprecated(
-    since = "0.29.0",
-    note = "Please use the `InterpolatePoint` trait instead"
-)]
-/// Returns a new Point along a rhumb line between two existing points
+#[deprecated(since = "0.29.0", note = "请使用 `InterpolatePoint` 特征代替")]
+/// 返回沿两个现有点之间的恒向线的新点
 pub trait RhumbIntermediate<T: CoordFloat> {
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Rhumb::point_at_ratio_between` from the `InterpolatePoint` trait instead"
+        note = "请使用 `InterpolatePoint` 特征中的 `Rhumb::point_at_ratio_between` 方法代替"
     )]
-    /// Returns a new Point along a [rhumb line] between two existing points.
+    /// 返回沿两个现有点之间的[恒向线]上的新点。
     ///
-    /// # Examples
+    /// # 例子
     ///
     /// ```rust
     /// # use approx::assert_relative_eq;
@@ -39,12 +36,12 @@ pub trait RhumbIntermediate<T: CoordFloat> {
     /// assert_relative_eq!(i80.x(), i80_should.x(), epsilon = 0.2);
     /// assert_relative_eq!(i80.y(), i80_should.y(), epsilon = 0.2);
     /// ```
-    /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+    /// [恒向线]: https://en.wikipedia.org/wiki/Rhumb_line
     fn rhumb_intermediate(&self, other: &Point<T>, f: T) -> Point<T>;
 
     #[deprecated(
         since = "0.29.0",
-        note = "Please use `Rhumb::points_along_line` from the `InterpolatePoint` trait instead"
+        note = "请使用 `InterpolatePoint` 特征中的 `Rhumb::points_along_line` 方法代替"
     )]
     fn rhumb_intermediate_fill(
         &self,
@@ -129,7 +126,7 @@ mod test {
     fn should_be_start_end_test() {
         let p1 = Point::new(30.0, 40.0);
         let p2 = Point::new(40.0, 50.0);
-        let max_dist = 1500000.0; // meters
+        let max_dist = 1500000.0; // 米
         let include_ends = true;
         #[allow(deprecated)]
         let route = p1.rhumb_intermediate_fill(&p2, max_dist, include_ends);
@@ -140,7 +137,7 @@ mod test {
     fn should_add_i50_test() {
         let p1 = Point::new(30.0, 40.0);
         let p2 = Point::new(40.0, 50.0);
-        let max_dist = 1000000.0; // meters
+        let max_dist = 1000000.0; // 米
         let include_ends = true;
         #[allow(deprecated)]
         let i50 = p1.clone().rhumb_intermediate(&p2, 0.5);
@@ -153,7 +150,7 @@ mod test {
     fn should_add_i25_i50_i75_test() {
         let p1 = Point::new(30.0, 40.0);
         let p2 = Point::new(40.0, 50.0);
-        let max_dist = 400000.0; // meters
+        let max_dist = 400000.0; // 米
         let include_ends = true;
         #[allow(deprecated)]
         let i25 = p1.clone().rhumb_intermediate(&p2, 0.25);

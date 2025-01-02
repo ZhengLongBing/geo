@@ -1,6 +1,6 @@
-// This needs a public export for the stitchtriangles trait. For now we decided to make it private
-// so this benchmark is commented out. In case you need it and the trait still isn't public yet,
-// you need to temporarily change that to make this benchmark work again.
+// 这需要对stitchtriangles trait进行公有导出。目前我们决定将其设为私有
+// 因此此基准测试被注释掉。如果你需要它且trait仍未公有，
+// 你需要临时更改它以使此基准测试再次工作。
 //
 // use criterion::{criterion_group, criterion_main, criterion};
 // use geo::stitch::StitchTriangles;

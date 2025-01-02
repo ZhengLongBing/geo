@@ -2,7 +2,7 @@ use std::{borrow::Cow, cell::RefCell, cmp::Ordering, fmt::Debug, rc::Rc};
 
 use super::*;
 
-/// A wrapped segment that allows interior mutability.
+/// 一个允许内部可变性的包裹段。
 pub(super) struct IMSegment<C: Cross> {
     inner: Rc<RefCell<Segment<C>>>,
 }
@@ -30,27 +30,37 @@ impl<C: Cross> Debug for IMSegment<C> {
 }
 
 impl<C: Cross> IMSegment<C> {
+    /// 检查线段是否有重叠
     pub fn is_overlapping(&self) -> bool {
         RefCell::borrow(&self.inner).overlapping.is_some()
     }
+
+    /// 获取重叠的线段
     pub fn overlap(&self) -> Option<Self> {
         RefCell::borrow(&self.inner).overlapping.as_ref().cloned()
     }
+
+    /// 检查是不是第一个线段
     pub fn is_first_segment(&self) -> bool {
         RefCell::borrow(&self.inner).first_segment
     }
 
+    /// 设置左事件完成状态
     pub fn set_left_event_done(&self) {
         RefCell::borrow_mut(&self.inner).left_event_done = true;
     }
+
+    /// 检查左事件是否完成
     pub fn is_left_event_done(&self) -> bool {
         RefCell::borrow(&self.inner).left_event_done
     }
 
+    /// 获取几何信息
     pub fn geom(&self) -> LineOrPoint<<C as Cross>::Scalar> {
         RefCell::borrow(&self.inner).geom
     }
 
+    /// 获取左事件
     pub fn left_event(&self) -> Event<C::Scalar, Self> {
         let geom = self.geom();
         let left = geom.left();
@@ -65,6 +75,7 @@ impl<C: Cross> IMSegment<C> {
         }
     }
 
+    /// 获取右事件
     pub fn right_event(&self) -> Event<C::Scalar, Self> {
         let geom = self.geom();
         let right = geom.right();
@@ -79,6 +90,7 @@ impl<C: Cross> IMSegment<C> {
         }
     }
 
+    /// 处理重叠链
     pub fn chain_overlap(&self, child: Self) {
         let mut this = self.clone();
         while let Some(ovl) = this.overlap() {
@@ -93,6 +105,7 @@ impl<C: Cross> IMSegment<C> {
         }
     }
 
+    /// 为交叉点调整
     pub fn adjust_for_intersection(
         &self,
         adj_intersection: LineOrPoint<C::Scalar>,
@@ -132,7 +145,7 @@ impl<C: Cross + Clone> IMSegment<C> {
     ) -> Self {
         let segment: Self = Segment::new(crossable, geom).into();
 
-        // Push events to process the created segment.
+        // 推送事件以处理创建的段。
         for e in [segment.left_event(), segment.right_event()] {
             cb(e)
         }

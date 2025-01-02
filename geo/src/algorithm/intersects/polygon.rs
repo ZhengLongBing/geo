@@ -11,6 +11,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, p: &Coord<T>) -> bool {
+        // 检查点是否不在多边形外部
         self.coordinate_position(p) != CoordPos::Outside
     }
 }
@@ -22,6 +23,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, line: &Line<T>) -> bool {
+        // 检查线是否与多边形的外部或内部相交或是否与线段的端点相交
         self.exterior().intersects(line)
             || self.interiors().iter().any(|inner| inner.intersects(line))
             || self.intersects(&line.start)
@@ -37,6 +39,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rect: &Rect<T>) -> bool {
+        // 判断多边形是否与矩形转换而来的多边形相交
         self.intersects(&rect.to_polygon())
     }
 }
@@ -47,6 +50,7 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rect: &Triangle<T>) -> bool {
+        // 判断多边形是否与三角形转换而来的多边形相交
         self.intersects(&rect.to_polygon())
     }
 }
@@ -58,18 +62,20 @@ where
 {
     fn intersects(&self, polygon: &Polygon<T>) -> bool {
         if has_disjoint_bboxes(self, polygon) {
-            return false;
+            return false; // 如果边界框不相交，则直接返回false
         }
 
-        // self intersects (or contains) any line in polygon
-        self.intersects(polygon.exterior()) ||
-            polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
-            // self is contained inside polygon
-            polygon.intersects(self.exterior())
+        // 检查self是否与多边形的任何线相交或self是否包含在多边形中
+        self.intersects(polygon.exterior())
+            || polygon
+                .interiors()
+                .iter()
+                .any(|inner_line_string| self.intersects(inner_line_string))
+            || polygon.intersects(self.exterior())
     }
 }
 
-// Implementations for MultiPolygon
+// 对于MultiPolygon的实现
 
 impl<G, T> Intersects<G> for MultiPolygon<T>
 where
@@ -79,8 +85,9 @@ where
 {
     fn intersects(&self, rhs: &G) -> bool {
         if has_disjoint_bboxes(self, rhs) {
-            return false;
+            return false; // 如果边界框不相交，则直接返回false
         }
+        // 检查任何MultiPolygon中的多边形是否和rhs相交
         self.iter().any(|p| p.intersects(rhs))
     }
 }
@@ -95,6 +102,7 @@ symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
 mod tests {
     use crate::*;
     #[test]
+    // 测试两个Geometry对象是否相交
     fn geom_intersects_geom() {
         let a = Geometry::<f64>::from(polygon![]);
         let b = Geometry::from(polygon![]);

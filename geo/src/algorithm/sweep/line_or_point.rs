@@ -6,11 +6,10 @@ use crate::{
     Orientation,
 };
 
-/// Either a line segment or a point.
+/// 要么是线段，要么是点。
 ///
-/// The coordinates are ordered (see [`SweepPoint`]) and a line
-/// segment must have distinct points (use the `Point` variant if the
-/// coordinates are the equal).
+/// 坐标是有序的（参见 [`SweepPoint`]），并且线
+/// 段必须有不同的点（如果坐标相等，则使用 `Point` 变体）。
 #[derive(Clone, Copy)]
 pub enum LineOrPoint<T: GeoNum> {
     Point(SweepPoint<T>),
@@ -55,7 +54,7 @@ impl<T: GeoNum> From<(SweepPoint<T>, SweepPoint<T>)> for LineOrPoint<T> {
     }
 }
 
-/// Convert from a [`Line`] ensuring end point ordering.
+/// 从 [`Line`] 转换，确保终点顺序。
 impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
     fn from(l: Line<T>) -> Self {
         let start: SweepPoint<T> = l.start.into();
@@ -64,7 +63,7 @@ impl<T: GeoNum> From<Line<T>> for LineOrPoint<T> {
     }
 }
 
-/// Convert from a [`Coord`]
+/// 从 [`Coord`] 转换
 impl<T: GeoNum> From<Coord<T>> for LineOrPoint<T> {
     fn from(c: Coord<T>) -> Self {
         Self::Point(c.into())
@@ -72,13 +71,13 @@ impl<T: GeoNum> From<Coord<T>> for LineOrPoint<T> {
 }
 
 impl<T: GeoNum> LineOrPoint<T> {
-    /// Checks if the variant is a line.
+    /// 检查变体是否为线。
     #[inline]
     pub fn is_line(&self) -> bool {
         matches!(self, Self::Line { .. })
     }
 
-    /// Return a [`Line`] representation of self.
+    /// 返回自身的 [`Line`] 表示。
     #[inline]
     pub fn line(&self) -> Line<T> {
         match self {
@@ -133,7 +132,7 @@ impl<T: GeoNum> LineOrPoint<T> {
     }
 }
 
-/// Equality based on ordering defined for segments as per algorithm.
+/// 基于算法定义的段的排序进行相等性判断。
 impl<T: GeoNum> PartialEq for LineOrPoint<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
@@ -141,15 +140,14 @@ impl<T: GeoNum> PartialEq for LineOrPoint<T> {
     }
 }
 
-/// Ordering defined for segments as per algorithm.
+/// 段的排序根据算法定义。
 ///
-/// Requires the following conditions:
+/// 需要满足以下条件：
 ///
-/// 1. If comparing two lines, both the left ends must be strictly
-///    smaller than both right ends.
+/// 1. 如果比较两个线段，则两者的左端必须严格
+///    小于两者的右端。
 ///
-/// 2. A point is treated as a infinitesimal small vertical segment
-///    centered at its coordinates.
+/// 2. 一个点被视为一个以其坐标为中心的无穷小垂直线段。
 impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         match (self, other) {
@@ -157,8 +155,7 @@ impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
                 if p == o {
                     Some(Ordering::Equal)
                 } else {
-                    // Unequal points do not satisfy pre-condition and
-                    // can't be ordered.
+                    // 不等的点不满足前提条件，不能排序。
                     None
                 }
             }
@@ -192,8 +189,8 @@ impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
                     return None;
                 }
 
-                // Assertion: p1 <= p2
-                // Assertion: pi < q_j
+                // 断言：p1 <= p2
+                // 断言：pi < q_j
                 Some(
                     T::Ker::orient2d(**left_a, **right_a, **left_b)
                         .as_ordering()
@@ -207,11 +204,11 @@ impl<T: GeoNum> PartialOrd for LineOrPoint<T> {
 }
 
 impl<T: GeoFloat> LineOrPoint<T> {
-    /// Intersect a line with self and return a point, a overlapping segment or `None`.
+    /// 与自身相交并返回一个点、重叠的线段或 `None`。
     ///
-    /// The `other` argument must be a line variant (debug builds will panic otherwise).
+    /// `other` 参数必须是线的变体（在调试版本中，否则将导致 panic）。
     pub fn intersect_line(&self, other: &Self) -> Option<Self> {
-        debug_assert!(other.is_line(), "tried to intersect with a point variant!");
+        debug_assert!(other.is_line(), "尝试与点变体相交！");
 
         let line = other.line();
         match self {
@@ -249,32 +246,21 @@ impl<T: GeoFloat> LineOrPoint<T> {
         let ord = self.partial_cmp(other);
         match self.intersect_line(other) {
             Some(Self::Point(p)) => {
-                // NOTE: A key issue with using non-exact numbers (f64, etc.) in
-                // this algo. is that line-intersection may return
-                // counter-intuitive points.
+                // 注意：使用非精确数值（f64 等）在这个算法中存在的一个关键问题是
+                // 交点可能返回非直观的点。
                 //
-                // Specifically, this causes two issues:
+                // 具体来说，这会导致两个问题：
                 //
-                // 1. The point of intersection r lies between the end-points in
-                // the lexicographic ordering. However, with finite repr., the
-                // line (1, 1) - (1 + eps, -1), where eps is ulp(1), does not
-                // admit r that lies between the end-points. Further, the
-                // end-points may be a very bad approximation to the actual
-                // intersection points (eg. intersect with x-axis).
+                // 1. 交点 r 按字典顺序位于终点之间。然而，在有限表示下，线 (1, 1) - (1 + eps, -1)，其中 eps 是 ulp(1)，不
+                // 承认 r 位于终点之间。另外，终点可能是实际交点的一个非常糟糕的近似（例如，与 x 轴相交）。
                 //
-                // We detect and force r to be greater than both end-points; the
-                // other case is not easy to handle as the sweep has already
-                // progressed to a p strictly > r already.
+                // 我们检测并强制 r 大于两个终点；另一种情况不容易处理，因为扫描已经进
+                // 行到一个严格大于 r 的 p。
                 //
-                // 2. The more severe issue is that in general r may not lie
-                // exactly on the line. Thus, with the segment stored on the
-                // active-segments tree (B-Tree / Splay), this may in adverse
-                // cases, cause the ordering between the segments to be
-                // incorrect, hence invalidating the segments. This is not easy
-                // to correct without a intrusive data-structure built
-                // specifically for this algo., that can track the neighbors of
-                // tree-nodes, and fix / report this issue. The crate
-                // `btree-slab` seems like a great starting point.
+                // 2. 更严重的问题是，r 通常可能不完全在直线上。因此，随着段存储在活动段树（B 树 / Splay）中，这
+                // 在不利情况下，可能会导致段之间的排序不正确，从而使段无效。这不容易在没有专为此算法构建的侵入数据结
+                // 构的情况下进行校正，该数据结构可以跟踪树节点的邻居，并修复或报告此问题。crate `btree-slab`
+                // 似乎是一个很好的起点。
                 let (mut x, y) = p.x_y();
 
                 let c = self.left();
@@ -285,7 +271,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                 let p = Coord { x, y }.into();
                 debug_assert!(
                     p >= self.left(),
-                    "line intersection before first line: {p:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
+                    "交点在第一条线之前: {p:?}\n\tline({lp1:?} - {lp2:?}) X line({lp3:?} - {lp4:?})",
                     lp1 = self.left(),
                     lp2 = self.right(),
                     lp3 = other.left(),
@@ -293,7 +279,7 @@ impl<T: GeoFloat> LineOrPoint<T> {
                 );
                 debug_assert!(
                     p >= other.left(),
-                    "line intersection before second line: {p:?}\n\tLine({lp1:?} - {lp2:?}) X Line({lp3:?} - {lp4:?})",
+                    "交点在第二条线之前: {p:?}\n\tline({lp1:?} - {lp2:?}) X line({lp3:?} - {lp4:?})",
                     lp1 = self.left(),
                     lp2 = self.right(),
                     lp3 = other.left(),
@@ -306,15 +292,15 @@ impl<T: GeoFloat> LineOrPoint<T> {
                     let cmp = l1.partial_cmp(&l2).unwrap();
                     if l1.is_line() && l2.is_line() && cmp.then(ord) != ord {
                         debug!(
-                            "ordering changed by intersection: {l1:?} {ord:?} {l2:?}",
+                            "由交点改变的排序：{l1:?} {ord:?} {l2:?}",
                             l1 = self,
                             l2 = other
                         );
-                        debug!("\tparts: {l1:?}, {l2:?}");
-                        debug!("\tintersection: {p:?} {cmp:?}");
+                        debug!("\t部分: {l1:?}, {l2:?}");
+                        debug!("\t交点: {p:?} {cmp:?}");
 
-                        // RM: This is a complicated intersection that is changing the ordering.
-                        // Heuristic: approximate with a trivial intersection point that preserves the topology.
+                        // RM: 这是一个改变排序的复杂交点。
+                        // 启发式：用一个简单的交点近似以保持拓扑结构。
                         return Some(if self.left() > other.left() {
                             self.left().into()
                         } else {
@@ -340,7 +326,7 @@ mod tests {
 
     use super::LineOrPoint;
 
-    // Used for debugging sweep fp issues
+    // 用于调试扫描浮点问题
     #[test]
     #[ignore]
     fn check_ordering() {

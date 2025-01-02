@@ -4,33 +4,33 @@ use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Triangle};
 
-/// A trait for accessing data from a generic Triangle.
+/// 从通用三角形访问数据的特征。
 ///
-/// A triangle is a bounded area whose three vertices are defined by [coordinates][CoordTrait].
+/// 三角形是一个有界区域，其三个顶点由[坐标][CoordTrait]定义。
 ///
-/// Refer to [geo_types::Triangle] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅[geo_types::Triangle]。
 pub trait TriangleTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying coordinate, which implements [CoordTrait]
+    /// 每个底层坐标的类型，实现 [CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// Access the first coordinate in this Triangle
+    /// 访问此三角形中的第一个坐标
     fn first(&self) -> Self::CoordType<'_>;
 
-    /// Access the second coordinate in this Triangle
+    /// 访问此三角形中的第二个坐标
     fn second(&self) -> Self::CoordType<'_>;
 
-    /// Access the third coordinate in this Triangle
+    /// 访问此三角形中的第三个坐标
     fn third(&self) -> Self::CoordType<'_>;
 
-    /// Access the three underlying coordinates
+    /// 访问三个底层坐标
     fn coords(&self) -> [Self::CoordType<'_>; 3] {
         [self.first(), self.second(), self.third()]
     }
@@ -48,14 +48,17 @@ impl<T: CoordNum> TriangleTrait for Triangle<T> {
         Dimensions::Xy
     }
 
+    /// 返回三角形的第一个点的引用。
     fn first(&self) -> Self::CoordType<'_> {
         &self.0
     }
 
+    /// 返回三角形的第二个点的引用。
     fn second(&self) -> Self::CoordType<'_> {
         &self.1
     }
 
+    /// 返回三角形的第三个点的引用。
     fn third(&self) -> Self::CoordType<'_> {
         &self.2
     }
@@ -73,23 +76,25 @@ impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
         Dimensions::Xy
     }
 
+    /// 返回三角形的第一个点的引用。
     fn first(&self) -> Self::CoordType<'_> {
         &self.0
     }
 
+    /// 错误的实现，应该返回第二个点的引用。
     fn second(&self) -> Self::CoordType<'_> {
         &self.0
     }
 
+    /// 错误的实现，应该返回第三个点的引用。
     fn third(&self) -> Self::CoordType<'_> {
         &self.0
     }
 }
 
-/// An empty struct that implements [TriangleTrait].
+/// 实现 [TriangleTrait] 的空结构体。
 ///
-/// This can be used as the `TriangleType` of the `GeometryTrait` by implementations that don't
-/// have a Triangle concept
+/// 对于没有三角形概念的实现，这可以用作 `GeometryTrait` 的 `TriangleType`
 pub struct UnimplementedTriangle<T>(PhantomData<T>);
 
 impl<T> TriangleTrait for UnimplementedTriangle<T> {

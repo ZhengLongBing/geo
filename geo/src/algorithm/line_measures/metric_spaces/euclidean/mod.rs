@@ -5,39 +5,34 @@ use crate::line_measures::densify::densify_between;
 use crate::{CoordFloat, Point};
 use num_traits::FromPrimitive;
 
-/// Operations on the [Euclidean plane] measure distance with the pythagorean formula -
-/// what you'd measure with a ruler.
+/// 在[欧几里得平面]上的操作使用毕达哥拉斯公式计算距离 - 就像你用尺子测量一样。
 ///
-/// If you have lon/lat points, use the [`Haversine`], [`Geodesic`], or other [metric spaces] -
-/// Euclidean methods will give nonsense results.
+/// 如果你有经/纬度坐标点，使用[`Haversine`]、[`Geodesic`]或其他[度量空间] - 欧几里得方法将会产生不合逻辑的结果。
 ///
-/// If you wish to use Euclidean operations with lon/lat, the coordinates must first be transformed
-/// using the [`Transform::transform`](crate::Transform::transform) / [`Transform::transform_crs_to_crs`](crate::Transform::transform_crs_to_crs) methods or their
-/// immutable variants. Use of these requires the proj feature
+/// 如果你希望在经/纬度数据上使用欧几里得操作，必须先使用[`Transform::transform`](crate::Transform::transform) / [`Transform::transform_crs_to_crs`](crate::Transform::transform_crs_to_crs)方法或它们的不可变版本对坐标进行转换。这需要使用 `proj` 功能。
 ///
-/// [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
+/// [欧几里得平面]: https://en.wikipedia.org/wiki/Euclidean_plane
 /// [`Transform`]: crate::Transform
 /// [`Haversine`]: super::Haversine
 /// [`Geodesic`]: super::Geodesic
-/// [metric spaces]: super
+/// [度量空间]: super
 pub struct Euclidean;
 
-/// Interpolate Point(s) along a line on the [Euclidean plane].
+/// 在[欧几里得平面]上沿线插值点。
 ///
-/// [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
+/// [欧几里得平面]: https://en.wikipedia.org/wiki/Euclidean_plane
 impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
-    /// Returns the point at the given distance along the line between `start` and `end`.
+    /// 返回沿着从`start`到`end`线段的指定距离上的点。
     ///
-    /// # Units
-    /// - `distance`: Measured in whatever units your `start` and `end` points use.
+    /// # 单位
+    /// - `distance`: 使用`start`和`end`点的单位进行测量。
     ///
-    ///   `distance` and your `start` and `end` points should have non-angular
-    ///   units, like meters or miles, **not** lon/lat.
-    ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
+    ///   `distance`以及`start`和`end`点应该使用非角度单位，比如米或英里，而不是经/纬度。
+    ///   对于经/纬度点，使用[`Haversine`]或[`Geodesic`] [度量空间]。
     ///
     /// [`Haversine`]: crate::line_measures::Haversine
     /// [`Geodesic`]: crate::line_measures::Geodesic
-    /// [metric spaces]: crate::line_measures::metric_spaces
+    /// [度量空间]: crate::line_measures::metric_spaces
     fn point_at_distance_between(
         start: Point<F>,
         end: Point<F>,
@@ -49,41 +44,37 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for Euclidean {
         start + offset
     }
 
-    /// Returns the point at the given ratio along the line between `start` and `end`.
+    /// 返回沿着从`start`到`end`线段的指定比例上的点。
     ///
-    /// # Units
-    /// - `distance`: Measured in whatever units your `start` and `end` points use.
+    /// # 单位
+    /// - `distance`: 使用`start`和`end`点的单位进行测量。
     ///
-    ///   `distance` and your `start` and `end` points should have non-angular
-    ///   units, like meters or miles, **not** lon/lat.
-    ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
+    ///   `distance`以及`start`和`end`点应该使用非角度单位，比如米或英里，而不是经/纬度。
+    ///   对于经/纬度点，使用[`Haversine`]或[`Geodesic`] [度量空间]。
     ///
     /// [`Haversine`]: crate::line_measures::Haversine
     /// [`Geodesic`]: crate::line_measures::Geodesic
-    /// [metric spaces]: crate::line_measures::metric_spaces
+    /// [度量空间]: crate::line_measures::metric_spaces
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F> {
         let diff = end - start;
         start + diff * ratio_from_start
     }
 
-    /// Interpolates `Point`s along a line between `start` and `end`.
+    /// 在`start`和`end`之间插值`Point`。
     ///
-    /// As many points as necessary will be added such that the distance between points
-    /// never exceeds `max_distance`. If the distance between start and end is less than
-    /// `max_distance`, no additional points will be included in the output.
+    /// 将添加尽可能多的点，以使两点之间的距离从不超过`max_distance`。如果起点和终点之间的距离小于`max_distance`，则输出中不会包含其他点。
     ///
-    /// `include_ends`: Should the start and end points be included in the output?
+    /// `include_ends`: 是否应在输出中包含起点和终点？
     ///
-    /// # Units
-    /// - `max_distance`: Measured in whatever units your `start` and `end` points use.
+    /// # 单位
+    /// - `max_distance`: 使用`start`和`end`点的单位进行测量。
     ///
-    ///   `max_distance` and your `start` and `end` points should have non-angular
-    ///   units, like meters or miles, **not** lon/lat.
-    ///   For lon/lat points, use the [`Haversine`] or [`Geodesic`] [metric spaces].
+    ///   `max_distance`以及`start`和`end`点应该使用非角度单位，比如米或英里，而不是经/纬度。
+    ///   对于经/纬度点，使用[`Haversine`]或[`Geodesic`] [度量空间]。
     ///
     /// [`Haversine`]: crate::line_measures::Haversine
     /// [`Geodesic`]: crate::line_measures::Geodesic
-    /// [metric spaces]: crate::line_measures::metric_spaces
+    /// [度量空间]: crate::line_measures::metric_spaces
     fn points_along_line(
         start: Point<F>,
         end: Point<F>,
@@ -113,14 +104,14 @@ mod tests {
 
         #[test]
         fn new_york_to_london() {
-            // web mercator
+            // web 墨卡托
             let new_york_city = Point::new(-8238310.24, 4942194.78);
-            // web mercator
+            // web 墨卡托
             let london = Point::new(-14226.63, 6678077.70);
             let distance: f64 = MetricSpace::distance(new_york_city, london);
 
             assert_relative_eq!(
-                8_405_286., // meters in web mercator
+                8_405_286., // web 墨卡托的米
                 distance.round()
             );
         }
@@ -128,7 +119,7 @@ mod tests {
         #[test]
         fn test_point_at_distance_between() {
             let new_york_city = Point::new(-8_238_310.24, 4_942_194.78);
-            // web mercator
+            // web 墨卡托
             let london = Point::new(-14_226.63, 6_678_077.70);
             let start = MetricSpace::point_at_distance_between(new_york_city, london, 0.0);
             assert_relative_eq!(new_york_city, start);

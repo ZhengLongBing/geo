@@ -1,27 +1,26 @@
-/// The logical dimension of the geometry.
+/// 几何体的逻辑维度。
 ///
-///
+/// 这个枚举定义了不同类型的几何维度。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Dimensions {
-    /// A two-dimensional geometry with X and Y values
+    /// 具有 X 和 Y 值的二维几何体
     Xy,
 
-    /// A three-dimensional geometry with X, Y, and Z values
+    /// 具有 X、Y 和 Z 值的三维几何体
     Xyz,
 
-    /// A three-dimensional geometry with X, Y, and M values
+    /// 具有 X、Y 和 M 值的三维几何体
     Xym,
 
-    /// A four-dimensional geometry with X, Y, Z, and M values
+    /// 具有 X、Y、Z 和 M 值的四维几何体
     Xyzm,
 
-    /// A geometry with unknown logical type. The contained `usize` value represents the number of
-    /// physical dimensions.
+    /// 逻辑类型未知的几何体。包含的 `usize` 值表示物理维度的数量。
     Unknown(usize),
 }
 
 impl Dimensions {
-    /// The physical number of dimensions in this geometry.
+    /// 返回此几何体的物理维度数量。
     pub fn size(&self) -> usize {
         match self {
             Self::Xy => 2,

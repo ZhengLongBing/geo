@@ -5,15 +5,15 @@ use crate::GeoFloat;
 
 use std::iter;
 
-/// Find the closest `Point` between a given geometry and an input `Point`.
-/// The closest point may intersect the geometry, be a single
-/// point, or be indeterminate, as indicated by the value of the returned enum.
+/// 找到给定几何体与输入点之间最近的点。
+/// 最近的点可能与几何体相交，是一个单一的点，
+/// 或者是不确定的，这由返回的枚举值指示。
 ///
-/// # Examples
+/// # 例子
 ///
-/// We have a horizontal line which goes through `(-50, 0) -> (50, 0)`,
-/// and want to find the closest point to the point `(0, 100)`.
-/// Drawn on paper, the point on the line which is closest to `(0, 100)` is the origin (0, 0).
+/// 我们有一条水平线，经过 `(-50, 0) -> (50, 0)`，
+/// 并希望找到距离点 `(0, 100)` 最近的点。
+/// 在纸上画出来，距离 `(0, 100)` 最近的点是原点 (0, 0)。
 ///
 /// ```rust
 /// # use geo::ClosestPoint;
@@ -24,8 +24,9 @@ use std::iter;
 /// let closest = horizontal_line.closest_point(&p);
 /// assert_eq!(closest, Closest::SinglePoint(Point::new(0.0, 0.0)));
 /// ```
+
 pub trait ClosestPoint<F: GeoFloat, Rhs = Point<F>> {
-    /// Find the closest point between `self` and `p`.
+    /// 找到 `self` 和 `p` 之间的最近点。
     fn closest_point(&self, p: &Rhs) -> Closest<F>;
 }
 
@@ -54,22 +55,21 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
         let line_length = self.length::<Euclidean>();
         if line_length == F::zero() {
-            // if we've got a zero length line, technically the entire line
-            // is the closest point...
+            // 如果线段长度为零，技术上整个线段都是最近的点...
             return Closest::Indeterminate;
         }
 
-        // For some line AB, there is some point, C, which will be closest to
-        // P. The line AB will be perpendicular to CP.
+        // 对于某条线段 AB，存在某点 C，使其距离 P 最近。
+        // 线段 AB 将垂直于 CP。
         //
-        // Line equation: P = start + t * (end - start)
+        // 线段方程: P = start + t * (end - start)
 
         let direction_vector = Point::from(self.end - self.start);
         let to_p = Point::from(p.0 - self.start);
 
         let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
 
-        // check the cases where the closest point is "outside" the line
+        // 检查最近点在线外的情况
         if t < F::zero() {
             return Closest::SinglePoint(self.start.into());
         } else if t > F::one() {
@@ -88,11 +88,11 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
     }
 }
 
-/// A generic function which takes some iterator of points and gives you the
-/// "best" `Closest` it can find. Where "best" is the first intersection or
-/// the `Closest::SinglePoint` which is closest to `p`.
+/// 一个通用函数，接受某些点的迭代器，并返回找到的
+/// "最佳" `Closest`。其中 "最佳" 是第一个相交点或
+/// 距离 `p` 最近的 `Closest::SinglePoint`。
 ///
-/// If the iterator is empty, we get `Closest::Indeterminate`.
+/// 如果迭代器为空，我们得到 `Closest::Indeterminate`。
 fn closest_of<C, F, I>(iter: I, p: Point<F>) -> Closest<F>
 where
     F: GeoFloat,
@@ -105,7 +105,7 @@ where
         let got = element.closest_point(&p);
         best = got.best_of_two(&best, p);
         if matches!(best, Closest::Intersection(_)) {
-            // short circuit - nothing can be closer than an intersection
+            // 短路 - 没有什么能比相交更近
             return best;
         }
     }
@@ -176,6 +176,7 @@ impl<F: GeoFloat> ClosestPoint<F> for GeometryCollection<F> {
         closest_of(self.iter(), *p)
     }
 }
+
 impl<F: GeoFloat> ClosestPoint<F> for Geometry<F> {
     crate::geometry_delegate_impl! {
         fn closest_point(&self, p: &Point<F>) -> Closest<F>;
@@ -188,8 +189,7 @@ mod tests {
     use crate::algorithm::{Contains, Translate};
     use crate::{point, polygon};
 
-    /// Create a test which checks that we get `$should_be` when trying to find
-    /// the closest distance between `$p` and the line `(0, 0) -> (100, 100)`.
+    /// 创建一个测试，检查在尝试找到 `$p` 与线 `(0, 0) -> (100, 100)` 之间的最近距离时，是否得到 `$should_be`。
     macro_rules! closest {
         (intersects: $name:ident, $p:expr) => {
             closest!($name, $p => Closest::Intersection($p.into()));
@@ -252,7 +252,7 @@ mod tests {
             assert_eq!(
                 line_string.closest_point(&p),
                 line.closest_point(&p),
-                "closest point to: {:?}",
+                "最近点为: {:?}",
                 p
             );
         }
@@ -267,7 +267,7 @@ mod tests {
         assert_eq!(got, Closest::Indeterminate);
     }
 
-    /// A polygon with 2 holes in it.
+    /// 一个带有两个孔的多边形。
     fn holy_polygon() -> Polygon<f32> {
         let square: LineString<f32> = a_square(100.0);
         let ring_1 = a_square(20.0).translate(10.0, 10.0);
@@ -279,10 +279,7 @@ mod tests {
     fn polygon_without_rings_and_point_outside_is_same_as_linestring() {
         let poly = holy_polygon();
         let p = Point::new(1000.0, 12345.678);
-        assert!(
-            !poly.exterior().contains(&p),
-            "`p` should be outside the polygon!"
-        );
+        assert!(!poly.exterior().contains(&p), "`p` 应该在多边形之外!");
 
         let poly_closest = poly.closest_point(&p);
         let exterior_closest = poly.exterior().closest_point(&p);
@@ -305,7 +302,7 @@ mod tests {
     fn polygon_with_point_near_interior_ring() {
         let poly = holy_polygon();
         let p = point!(x: 17.0, y: 33.0);
-        assert!(poly.intersects(&p), "sanity check");
+        assert!(poly.intersects(&p), "合理性检查");
 
         assert_eq!(Closest::Intersection(p), poly.closest_point(&p));
     }
@@ -320,7 +317,7 @@ mod tests {
         ];
         let result = square.closest_point(&point!(x: 1.0, y: 2.0));
 
-        // the point is within the square, so the closest point should be the point itself.
+        // 点在正方形内，所以最近点应该是点自身。
         assert_eq!(result, Closest::Intersection(point!(x: 1.0, y: 2.0)));
     }
 

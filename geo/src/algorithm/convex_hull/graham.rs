@@ -2,15 +2,13 @@ use super::{swap_with_first_and_remove, trivial_hull};
 use crate::kernels::*;
 use crate::{Coord, GeoNum, LineString};
 
-/// The [Graham's scan] algorithm to compute the convex hull
-/// of a collection of points. This algorithm is less
-/// performant than the quick hull, but allows computing all
-/// the points on the convex hull, as opposed to a strict
-/// convex hull that does not include collinear points.
+/// [Graham's scan] 算法用于计算
+/// 一组点的凸包。此算法的性能不如快速凸包，但允许
+/// 计算凸包上的所有点，而不是不包括共线点的严格凸包。
 ///
-/// # References
+/// # 参考资料
 ///
-/// Graham, R.L. (1972). ["An Efficient Algorithm for
+/// Graham, R.L.（1972）。["An Efficient Algorithm for
 /// Determining the Convex Hull of a Finite Planar
 /// Set"](http://www.math.ucsd.edu/~ronspubs/72_10_convex_hull.pdf)
 /// (PDF). \
@@ -23,23 +21,22 @@ where
     T: GeoNum,
 {
     if points.len() < 4 {
-        // Nothing to build with fewer than four points.
+        // 如果点数量少于四个，就无法构建。
         return trivial_hull(points, include_on_hull);
     }
 
-    // Allocate output vector
+    // 分配输出向量
     let mut output = Vec::with_capacity(points.len());
 
-    // Find lexicographically least point and add to hull
+    // 找到字典序最小的点并添加到凸包中
     use crate::utils::least_index;
     use std::cmp::Ordering;
     let min_idx = least_index(points);
     let head = swap_with_first_and_remove(&mut points, min_idx);
     output.push(*head);
 
-    // Sort rest of the points by angle it makes with head
-    // point. If two points are collinear with head, we sort
-    // by distance. We use kernel predicates here.
+    // 按与头点的角度对其余点进行排序。如果两个点与头点共线，
+    // 则按距离排序。在这里我们使用核谓词。
     let cmp = |q: &Coord<T>, r: &Coord<T>| match T::Ker::orient2d(*q, *head, *r) {
         Orientation::CounterClockwise => Ordering::Greater,
         Orientation::Clockwise => Ordering::Less,
@@ -70,16 +67,14 @@ where
                 }
             }
         }
-        // Corner case: if the lex. least point added before
-        // this loop is repeated, then we should not end up
-        // adding it here (because output.len() == 1 in the
-        // first iteration)
+        // 角落情况：如果之前在这个循环前添加的字典序最小点被重复，
+        // 那么我们不应该在这里再次添加它（因为在第一次迭代中 output.len() == 1）
         if include_on_hull || pt != output.last().unwrap() {
             output.push(*pt);
         }
     }
 
-    // Close and output the line string
+    // 关闭并输出线串
     let mut output = LineString::new(output);
     output.close();
     output

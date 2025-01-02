@@ -3,26 +3,23 @@ use crate::{coord, CoordNum, Point};
 #[cfg(any(feature = "approx", test))]
 use approx::{AbsDiffEq, RelativeEq, UlpsEq};
 
-/// A lightweight struct used to store coordinates on the 2-dimensional
-/// Cartesian plane.
+/// 用于存储二维笛卡尔平面上坐标的轻量级结构体。
 ///
-/// Unlike `Point` (which in the future may contain additional information such
-/// as an envelope, a precision model, and spatial reference system
-/// information), a `Coord` only contains ordinate values and accessor
-/// methods.
+/// 与`Point`不同（`Point`在未来可能包含额外信息，如包络、精度模型和空间参考系统信息），
+/// `Coord`仅包含坐标值和访问方法。
 ///
-/// This type implements the [vector space] operations:
-/// [`Add`], [`Sub`], [`Neg`], [`Zero`],
-/// [`Mul<T>`][`Mul`], and [`Div<T>`][`Div`] traits.
+/// 此类型实现了[向量空间]操作：
+/// [`Add`]、[`Sub`]、[`Neg`]、[`Zero`]、
+/// [`Mul<T>`][`Mul`]和[`Div<T>`][`Div`]特征。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// This type does not represent any geospatial primitive,
-/// but is used in their definitions. The only requirement
-/// is that the coordinates it contains are valid numbers
-/// (for eg. not `f64::NAN`).
+/// 此类型不表示任何地理空间基元，
+/// 但用于它们的定义中。唯一的要求是
+/// 它包含的坐标是有效数字
+///（例如，不是`f64::NAN`）。
 ///
-/// [vector space]: //en.wikipedia.org/wiki/Vector_space
+/// [向量空间]: //en.wikipedia.org/wiki/Vector_space
 #[derive(Eq, PartialEq, Clone, Copy, Debug, Hash, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Coord<T: CoordNum = f64> {
@@ -30,9 +27,10 @@ pub struct Coord<T: CoordNum = f64> {
     pub y: T,
 }
 
-#[deprecated(note = "Renamed to `geo_types::Coord` (or `geo::Coord`)")]
+#[deprecated(note = "重命名为 `geo_types::Coord`（或 `geo::Coord`）")]
 pub type Coordinate<T = f64> = Coord<T>;
 
+// 从元组实现 From trait
 impl<T: CoordNum> From<(T, T)> for Coord<T> {
     #[inline]
     fn from(coords: (T, T)) -> Self {
@@ -43,6 +41,7 @@ impl<T: CoordNum> From<(T, T)> for Coord<T> {
     }
 }
 
+// 从数组实现 From trait
 impl<T: CoordNum> From<[T; 2]> for Coord<T> {
     #[inline]
     fn from(coords: [T; 2]) -> Self {
@@ -53,6 +52,7 @@ impl<T: CoordNum> From<[T; 2]> for Coord<T> {
     }
 }
 
+// 从 Point 实现 From trait
 impl<T: CoordNum> From<Point<T>> for Coord<T> {
     #[inline]
     fn from(point: Point<T>) -> Self {
@@ -63,6 +63,7 @@ impl<T: CoordNum> From<Point<T>> for Coord<T> {
     }
 }
 
+// 实现到元组的 From trait
 impl<T: CoordNum> From<Coord<T>> for (T, T) {
     #[inline]
     fn from(coord: Coord<T>) -> Self {
@@ -70,6 +71,7 @@ impl<T: CoordNum> From<Coord<T>> for (T, T) {
     }
 }
 
+// 实现到数组的 From trait
 impl<T: CoordNum> From<Coord<T>> for [T; 2] {
     #[inline]
     fn from(coord: Coord<T>) -> Self {
@@ -78,9 +80,9 @@ impl<T: CoordNum> From<Coord<T>> for [T; 2] {
 }
 
 impl<T: CoordNum> Coord<T> {
-    /// Returns a tuple that contains the x/horizontal & y/vertical component of the coordinate.
+    /// 返回包含坐标的x/水平和y/垂直分量的元组。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::coord;
@@ -102,9 +104,9 @@ impl<T: CoordNum> Coord<T> {
 
 use core::ops::{Add, Div, Mul, Neg, Sub};
 
-/// Negate a coordinate.
+/// 对坐标取反。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::coord;
@@ -130,9 +132,9 @@ where
     }
 }
 
-/// Add two coordinates.
+/// 添加两个坐标。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::coord;
@@ -156,9 +158,9 @@ impl<T: CoordNum> Add for Coord<T> {
     }
 }
 
-/// Subtract a coordinate from another.
+/// 从一个坐标中减去另一个坐标。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::coord;
@@ -182,9 +184,9 @@ impl<T: CoordNum> Sub for Coord<T> {
     }
 }
 
-/// Multiply coordinate wise by a scalar.
+/// 坐标与标量相乘。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::coord;
@@ -207,9 +209,9 @@ impl<T: CoordNum> Mul<T> for Coord<T> {
     }
 }
 
-/// Divide coordinate wise by a scalar.
+/// 坐标除以标量。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::coord;
@@ -233,9 +235,9 @@ impl<T: CoordNum> Div<T> for Coord<T> {
 }
 
 use num_traits::Zero;
-/// Create a coordinate at the origin.
+/// 在原点创建一个坐标。
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo_types::Coord;
@@ -256,6 +258,7 @@ impl<T: CoordNum> Coord<T> {
     }
 }
 
+// 实现 Zero trait
 impl<T: CoordNum> Zero for Coord<T> {
     #[inline]
     fn zero() -> Self {
@@ -267,6 +270,7 @@ impl<T: CoordNum> Zero for Coord<T> {
     }
 }
 
+// 实现 AbsDiffEq trait
 #[cfg(any(feature = "approx", test))]
 impl<T: CoordNum + AbsDiffEq> AbsDiffEq for Coord<T>
 where
@@ -285,6 +289,7 @@ where
     }
 }
 
+// 实现 RelativeEq trait
 #[cfg(any(feature = "approx", test))]
 impl<T: CoordNum + RelativeEq> RelativeEq for Coord<T>
 where
@@ -302,6 +307,7 @@ where
     }
 }
 
+// 实现 UlpsEq trait
 #[cfg(any(feature = "approx", test))]
 impl<T: CoordNum + UlpsEq> UlpsEq for Coord<T>
 where
@@ -319,6 +325,7 @@ where
     }
 }
 
+// 为 rstar 0.8 版本实现 Point trait
 #[cfg(feature = "rstar_0_8")]
 impl<T> ::rstar_0_8::Point for Coord<T>
 where
@@ -355,6 +362,7 @@ where
     }
 }
 
+// 为 rstar 0.9 版本实现 Point trait
 #[cfg(feature = "rstar_0_9")]
 impl<T> ::rstar_0_9::Point for Coord<T>
 where
@@ -391,6 +399,7 @@ where
     }
 }
 
+// 为 rstar 0.10 版本实现 Point trait
 #[cfg(feature = "rstar_0_10")]
 impl<T> ::rstar_0_10::Point for Coord<T>
 where
@@ -427,6 +436,7 @@ where
     }
 }
 
+// 为 rstar 0.11 版本实现 Point trait
 #[cfg(feature = "rstar_0_11")]
 impl<T> ::rstar_0_11::Point for Coord<T>
 where

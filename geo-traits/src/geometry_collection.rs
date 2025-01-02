@@ -5,33 +5,33 @@ use crate::{Dimensions, GeometryTrait, UnimplementedGeometry};
 #[cfg(feature = "geo-types")]
 use geo_types::{CoordNum, Geometry, GeometryCollection};
 
-/// A trait for accessing data from a generic GeometryCollection.
+/// 用于从通用几何集合访问数据的特征。
 ///
-/// A GeometryCollection is a collection of [Geometry][GeometryTrait] types.
+/// 几何集合是 [Geometry][GeometryTrait] 类型的集合。
 pub trait GeometryCollectionTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying geometry, which implements [GeometryTrait]
+    /// 每个底层几何体的类型，需实现 [GeometryTrait]
     type GeometryType<'a>: 'a + GeometryTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// An iterator over the geometries in this GeometryCollection
+    /// 此几何集合中几何体的迭代器
     fn geometries(
         &self,
     ) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::GeometryType<'_>> {
         GeometryCollectionIterator::new(self, 0, self.num_geometries())
     }
 
-    /// The number of geometries in this GeometryCollection
+    /// 此几何集合中几何体的数量
     fn num_geometries(&self) -> usize;
 
-    /// Access to a specified geometry in this GeometryCollection
-    /// Will return None if the provided index is out of bounds
+    /// 访问此几何集合中指定的几何体
+    /// 如果提供的索引超出范围，将返回 None
     fn geometry(&self, i: usize) -> Option<Self::GeometryType<'_>> {
         if i >= self.num_geometries() {
             None
@@ -40,11 +40,11 @@ pub trait GeometryCollectionTrait: Sized {
         }
     }
 
-    /// Access to a specified geometry in this GeometryCollection
+    /// 访问此几何集合中指定的几何体
     ///
-    /// # Safety
+    /// # 安全性
     ///
-    /// Accessing an index out of bounds is UB.
+    /// 访问超出范围的索引是未定义行为。
     unsafe fn geometry_unchecked(&self, i: usize) -> Self::GeometryType<'_>;
 }
 
@@ -90,10 +90,9 @@ impl<'a, T: CoordNum> GeometryCollectionTrait for &'a GeometryCollection<T> {
     }
 }
 
-/// An empty struct that implements [GeometryCollectionTrait].
+/// 实现 [GeometryCollectionTrait] 的空结构体。
 ///
-/// This can be used as the `GeometryCollectionType` of the `GeometryTrait` by implementations that
-/// don't have a GeometryCollection concept
+/// 这可以被用作那些没有几何集合概念的实现的 `GeometryTrait` 的 `GeometryCollectionType`
 pub struct UnimplementedGeometryCollection<T>(PhantomData<T>);
 
 impl<T> GeometryCollectionTrait for UnimplementedGeometryCollection<T> {

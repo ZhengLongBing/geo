@@ -3,20 +3,14 @@ use num_traits::ToPrimitive;
 use crate::{Coord, CoordFloat, CoordNum, MapCoords, MapCoordsInPlace};
 use std::{fmt, ops::Mul, ops::Neg};
 
-/// Apply an [`AffineTransform`] like [`scale`](AffineTransform::scale),
-/// [`skew`](AffineTransform::skew), or [`rotate`](AffineTransform::rotate) to a
-/// [`Geometry`](crate::geometry::Geometry).
+/// 应用[`AffineTransform`]如[`scale`](AffineTransform::scale)、[`skew`](AffineTransform::skew)或[`rotate`](AffineTransform::rotate)到[`Geometry`](crate::geometry::Geometry)。
 ///
-/// Multiple transformations can be composed in order to be efficiently applied in a single
-/// operation. See [`AffineTransform`] for more on how to build up a transformation.
+/// 多种变换可以组合成一个单一操作进行高效应用。请参阅[`AffineTransform`]以了解更多关于如何建立转换的信息。
 ///
-/// If you are not composing operations, traits that leverage this same machinery exist which might
-/// be more readable. See: [`Scale`](crate::algorithm::Scale),
-/// [`Translate`](crate::algorithm::Translate), [`Rotate`](crate::algorithm::Rotate),
-/// and [`Skew`](crate::algorithm::Skew).
+/// 如果您不进行操作组合，存在利用同一机制的特征（trait），这些特征可能更具可读性。参见：[`Scale`](crate::algorithm::Scale)，[`Translate`](crate::algorithm::Translate)，[`Rotate`](crate::algorithm::Rotate)，和[`Skew`](crate::algorithm::Skew)。
 ///
-/// # Examples
-/// ## Build up transforms by beginning with a constructor, then chaining mutation operations
+/// # 示例
+/// ## 从构造函数开始构建变换，然后链式调用变异操作
 /// ```
 /// use geo::{AffineOps, AffineTransform};
 /// use geo::{point, line_string, BoundingRect};
@@ -34,11 +28,11 @@ use std::{fmt, ops::Mul, ops::Neg};
 /// );
 /// ```
 pub trait AffineOps<T: CoordNum> {
-    /// Apply `transform` immutably, outputting a new geometry.
+    /// 不可变地应用 `transform`，输出一个新的几何体。
     #[must_use]
     fn affine_transform(&self, transform: &AffineTransform<T>) -> Self;
 
-    /// Apply `transform` to mutate `self`.
+    /// 应用 `transform` 以改变 `self`。
     fn affine_transform_mut(&mut self, transform: &AffineTransform<T>);
 }
 
@@ -52,42 +46,37 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
     }
 }
 
-/// A general affine transformation matrix, and associated operations.
+/// 一个通用的仿射变换矩阵及相关操作。
 ///
-/// Note that affine ops are **already implemented** on most `geo-types` primitives, using this module.
+/// 请注意，仿射操作已经在大多数 `geo-types` 基元上实现，使用此模块。
 ///
-/// Affine transforms using the same numeric type (e.g. [`CoordFloat`]) can be **composed**,
-/// and the result can be applied to geometries using e.g. [`MapCoords`]. This allows the
-/// efficient application of transforms: an arbitrary number of operations can be chained.
-/// These are then composed, producing a final transformation matrix which is applied to the geometry coordinates.
+/// 使用相同数字类型（例如：[`CoordFloat`]）的仿射变换可以被组合，其结果可以应用于几何图形，例如使用 [`MapCoords`]。这允许变换的高效应用：可以链式调用任意数量的操作。然后将它们组合，生成一个最终的变换矩阵并应用于几何坐标。
 ///
-/// `AffineTransform` is a row-major matrix.
-/// 2D affine transforms require six matrix parameters:
+/// `AffineTransform` 是一个行优先存储的矩阵。
+/// 2D 仿射变换需要六个矩阵参数：
 ///
 /// `[a, b, xoff, d, e, yoff]`
 ///
-/// these map onto the `AffineTransform` rows as follows:
+/// 这些参数映射到 `AffineTransform` 的行如下：
 /// ```ignore
 /// [[a, b, xoff],
 /// [d, e, yoff],
 /// [0, 0, 1]]
 /// ```
-/// The equations for transforming coordinates `(x, y) -> (x', y')` are given as follows:
+/// 转换坐标 (x, y) -> (x', y') 的方程如下：
 ///
 /// `x' = ax + by + xoff`
 ///
 /// `y' = dx + ey + yoff`
 ///
-/// # Usage
+/// # 用法
 ///
-/// Two types of operation are provided: construction and mutation. **Construction** functions create a *new* transform
-/// and are denoted by the use of the **present tense**: `scale()`, `translate()`, `rotate()`, and `skew()`.
+/// 提供了两种操作类型：构造和变异。**构造**函数创建一个*新的*变换，并用**现在时**表示：`scale()`、`translate()`、`rotate()` 和 `skew()`。
 ///
-/// **Mutation** methods *add* a transform to the existing `AffineTransform`, and are denoted by the use of the past participle:
-/// `scaled()`, `translated()`, `rotated()`, and `skewed()`.
+/// **变异**方法*添加*变换到现有的 `AffineTransform` 中，并且用过去分词形式表示：`scaled()`、`translated()`、`rotated()` 和 `skewed()`。
 ///
-/// # Examples
-/// ## Build up transforms by beginning with a constructor, then chaining mutation operations
+/// # 示例
+/// ## 从构造函数开始构建变换，然后链式调用变异操作
 /// ```
 /// use geo::{AffineOps, AffineTransform};
 /// use geo::{point, line_string, BoundingRect};
@@ -105,7 +94,7 @@ impl<T: CoordNum, M: MapCoordsInPlace<T> + MapCoords<T, T, Output = Self>> Affin
 /// );
 /// ```
 ///
-/// ## Create affine transform manually, and access elements using getter methods
+/// ## 手动创建仿射变换，并使用获取器方法访问元素
 /// ```
 /// use geo::AffineTransform;
 ///
@@ -125,18 +114,18 @@ pub struct AffineTransform<T: CoordNum = f64>([[T; 3]; 3]);
 
 impl<T: CoordNum> Default for AffineTransform<T> {
     fn default() -> Self {
-        // identity matrix
+        // 单位矩阵
         Self::identity()
     }
 }
 
 impl<T: CoordNum> AffineTransform<T> {
-    /// Create a new affine transformation by composing two `AffineTransform`s.
+    /// 通过组合两个 `AffineTransform` 创建一个新的仿射变换。
     ///
-    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// 这是一个**累积**操作；新变换*添加*到现有变换中。
     #[must_use]
     pub fn compose(&self, other: &Self) -> Self {
-        // lol
+        // 哈哈
         Self([
             [
                 (other.0[0][0] * self.0[0][0])
@@ -161,7 +150,7 @@ impl<T: CoordNum> AffineTransform<T> {
                     + (other.0[1][2] * self.0[2][2]),
             ],
             [
-                // this section isn't technically necessary since the last row is invariant: [0, 0, 1]
+                // 这一部分技术上不是必须的，因为最后一行是不变的：[0, 0, 1]
                 (other.0[2][0] * self.0[0][0])
                     + (other.0[2][1] * self.0[1][0])
                     + (other.0[2][2] * self.0[2][0]),
@@ -175,21 +164,21 @@ impl<T: CoordNum> AffineTransform<T> {
         ])
     }
 
-    /// Create a new affine transformation by composing an arbitrary number of `AffineTransform`s.
+    /// 通过组合任意数量的 `AffineTransform` 创建一个新的仿射变换。
     ///
-    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// 这是一个**累积**操作；新变换*添加*到现有变换中。
     /// ```
     /// use geo::AffineTransform;
     /// let mut transform = AffineTransform::identity();
     ///
-    /// // create two transforms that cancel each other
+    /// // 创建两个相互抵消的变换
     /// let transform1 = AffineTransform::translate(1.0, 2.0);
     /// let transform2 = AffineTransform::translate(-1.0, -2.0);
     /// let transforms = vec![transform1, transform2];
     ///
-    /// // apply them
+    /// // 应用它们
     /// let outcome = transform.compose_many(&transforms);
-    /// // we should be back to square one
+    /// // 我们应该回到起点
     /// assert!(outcome.is_identity());
     /// ```
     #[must_use]
@@ -200,9 +189,9 @@ impl<T: CoordNum> AffineTransform<T> {
         ))
     }
 
-    /// Create the identity matrix
+    /// 创建单位矩阵
     ///
-    /// The matrix is:
+    /// 矩阵为：
     /// ```ignore
     /// [[1, 0, 0],
     /// [0, 1, 0],
@@ -219,19 +208,18 @@ impl<T: CoordNum> AffineTransform<T> {
         )
     }
 
-    /// Whether the transformation is equivalent to the [identity matrix](Self::identity),
-    /// that is, whether it's application will be a a no-op.
+    /// 判断变换是否等价于[单位矩阵](Self::identity)，也就是说，应用它是否是无效操作。
     ///
     /// ```
     /// use geo::AffineTransform;
     /// let mut transform = AffineTransform::identity();
     /// assert!(transform.is_identity());
     ///
-    /// // mutate the transform a bit
+    /// // 稍微变换一下
     /// transform = transform.translated(1.0, 2.0);
     /// assert!(!transform.is_identity());
     ///
-    /// // put it back
+    /// // 将其复原
     /// transform = transform.translated(-1.0, -2.0);
     /// assert!(transform.is_identity());
     /// ```
@@ -239,12 +227,11 @@ impl<T: CoordNum> AffineTransform<T> {
         self == &Self::identity()
     }
 
-    /// **Create** a new affine transform for scaling, scaled by factors along the `x` and `y` dimensions.
-    /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, but
-    /// any coordinate may be specified.
-    /// Negative scale factors will mirror or reflect coordinates.
+    /// **创建**一个缩放的仿射变换，在 `x` 和 `y` 维度上按比例缩放。
+    /// 原点通常是几何图形的2D边界框中心，但可以指定任何坐标。
+    /// 负缩放因子将镜像或反映坐标。
     ///
-    /// The matrix is:
+    /// 矩阵为：
     /// ```ignore
     /// [[xfact, 0, xoff],
     /// [0, yfact, yoff],
@@ -260,20 +247,19 @@ impl<T: CoordNum> AffineTransform<T> {
         Self::new(xfact, T::zero(), xoff, T::zero(), yfact, yoff)
     }
 
-    /// **Add** an affine transform for scaling, scaled by factors along the `x` and `y` dimensions.
-    /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, but
-    /// any coordinate may be specified.
-    /// Negative scale factors will mirror or reflect coordinates.
-    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// **添加**缩放的仿射变换，在 `x` 和 `y` 维度上按比例缩放。
+    /// 原点通常是几何图形的2D边界框中心，但可以指定任何坐标。
+    /// 负缩放因子将会镜像或反射坐标。
+    /// 这是一个**累积**操作；新变换*添加*到现有变换中。
     #[must_use]
     pub fn scaled(mut self, xfact: T, yfact: T, origin: impl Into<Coord<T>>) -> Self {
         self.0 = self.compose(&Self::scale(xfact, yfact, origin)).0;
         self
     }
 
-    /// **Create** an affine transform for translation, shifted by offsets along the `x` and `y` dimensions.
+    /// **创建**平移的仿射变换，在 `x` 和 `y` 维度上通过偏移进行移动。
     ///
-    /// The matrix is:
+    /// 矩阵为：
     /// ```ignore
     /// [[1, 0, xoff],
     /// [0, 1, yoff],
@@ -283,16 +269,16 @@ impl<T: CoordNum> AffineTransform<T> {
         Self::new(T::one(), T::zero(), xoff, T::zero(), T::one(), yoff)
     }
 
-    /// **Add** an affine transform for translation, shifted by offsets along the `x` and `y` dimensions
+    /// **添加**平移的仿射变换，在 `x` 和 `y` 维度上通过偏移进行移动。
     ///
-    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// 这是一个**累积**操作；新变换*添加*到现有变换中。
     #[must_use]
     pub fn translated(mut self, xoff: T, yoff: T) -> Self {
         self.0 = self.compose(&Self::translate(xoff, yoff)).0;
         self
     }
 
-    /// Apply the current transform to a coordinate
+    /// 应用当前变换到一个坐标
     pub fn apply(&self, coord: Coord<T>) -> Coord<T> {
         Coord {
             x: (self.0[0][0] * coord.x + self.0[0][1] * coord.y + self.0[0][2]),
@@ -300,47 +286,46 @@ impl<T: CoordNum> AffineTransform<T> {
         }
     }
 
-    /// Create a new custom transform matrix
+    /// 创建一个新的自定义变换矩阵
     ///
-    /// The argument order matches that of the affine transform matrix:
+    /// 参数顺序与仿射变换矩阵一致：
     ///```ignore
     /// [[a, b, xoff],
     ///  [d, e, yoff],
-    ///  [0, 0, 1]] <-- not part of the input arguments
+    ///  [0, 0, 1]] <-- 不属于输入参数
     /// ```
     pub fn new(a: T, b: T, xoff: T, d: T, e: T, yoff: T) -> Self {
         Self([[a, b, xoff], [d, e, yoff], [T::zero(), T::zero(), T::one()]])
     }
 
-    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    /// 请参阅 [AffineTransform::new] 以了解该值在仿射变换中的作用。
     pub fn a(&self) -> T {
         self.0[0][0]
     }
-    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    /// 请参阅 [AffineTransform::new] 以了解该值在仿射变换中的作用。
     pub fn b(&self) -> T {
         self.0[0][1]
     }
-    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    /// 请参阅 [AffineTransform::new] 以了解该值在仿射变换中的作用。
     pub fn xoff(&self) -> T {
         self.0[0][2]
     }
-    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    /// 请参阅 [AffineTransform::new] 以了解该值在仿射变换中的作用。
     pub fn d(&self) -> T {
         self.0[1][0]
     }
-    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    /// 请参阅 [AffineTransform::new] 以了解该值在仿射变换中的作用。
     pub fn e(&self) -> T {
         self.0[1][1]
     }
-    /// See [AffineTransform::new] for this value's role in the affine transformation.
+    /// 请参阅 [AffineTransform::new] 以了解该值在仿射变换中的作用。
     pub fn yoff(&self) -> T {
         self.0[1][2]
     }
 }
 
 impl<T: CoordNum + Neg> AffineTransform<T> {
-    /// Return the inverse of a given transform. Composing a transform with its inverse yields
-    /// the [identity matrix](Self::identity)
+    /// 返回给定变换的逆。将变换与其逆组合会得到[单位矩阵](Self::identity)
     #[must_use]
     pub fn inverse(&self) -> Option<Self>
     where
@@ -357,11 +342,11 @@ impl<T: CoordNum + Neg> AffineTransform<T> {
         let determinant = a * e - b * d;
 
         if determinant == T::zero() {
-            return None; // The matrix is not invertible
+            return None; // 矩阵不可逆
         }
         let inv_det = T::one() / determinant;
 
-        // If conversion of either the b or d matrix value fails, bail out
+        // 如果 b 或 d 矩阵值的转换失败，则中止
         Some(Self::new(
             e * inv_det,
             T::from(-b * inv_det)?,
@@ -399,13 +384,13 @@ impl<T: CoordNum> From<(T, T, T, T, T, T)> for AffineTransform<T> {
 }
 
 impl<U: CoordFloat> AffineTransform<U> {
-    /// **Create** an affine transform for rotation, using an arbitrary point as its centre.
+    /// **创建**旋转的仿射变换，使用任意点作为中心。
     ///
-    /// Note that this operation is only available for geometries with floating point coordinates.
+    /// 请注意，此操作仅适用于浮点坐标的几何体。
     ///
-    /// `angle` is given in **degrees**.
+    /// `angle` 以**度数**给出。
     ///
-    /// The matrix (angle denoted as theta) is:
+    /// 矩阵（角度表示为 theta）为：
     /// ```ignore
     /// [[cos_theta, -sin_theta, xoff],
     /// [sin_theta, cos_theta, yoff],
@@ -422,27 +407,26 @@ impl<U: CoordFloat> AffineTransform<U> {
         Self::new(cos_theta, -sin_theta, xoff, sin_theta, cos_theta, yoff)
     }
 
-    /// **Add** an affine transform for rotation, using an arbitrary point as its centre.
+    /// **添加**旋转的仿射变换，使用任意点作为中心。
     ///
-    /// Note that this operation is only available for geometries with floating point coordinates.
+    /// 请注意，此操作仅适用于浮点坐标的几何体。
     ///
-    /// `angle` is given in **degrees**.
+    /// `angle` 以**度数**给出。
     ///
-    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// 这是一个**累积**操作；新变换*添加*到现有变换中。
     #[must_use]
     pub fn rotated(mut self, angle: U, origin: impl Into<Coord<U>>) -> Self {
         self.0 = self.compose(&Self::rotate(angle, origin)).0;
         self
     }
 
-    /// **Create** an affine transform for skewing.
+    /// **创建**倾斜的仿射变换。
     ///
-    /// Note that this operation is only available for geometries with floating point coordinates.
+    /// 请注意，此操作仅适用于浮点坐标的几何体。
     ///
-    /// Geometries are sheared by angles along x (`xs`) and y (`ys`) dimensions.
-    /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, but
-    /// any coordinate may be specified. Angles are given in **degrees**.
-    /// The matrix is:
+    /// 将几何体沿 x(`xs`) 和 y(`ys`) 维度按照一定角度剪切。
+    /// 原点通常是几何图形的2D边界框中心，但可以指定任何坐标。角度以**度数**给出。
+    /// 矩阵为：
     /// ```ignore
     /// [[1, tan(x), xoff],
     /// [tan(y), 1, yoff],
@@ -455,7 +439,7 @@ impl<U: CoordFloat> AffineTransform<U> {
         let Coord { x: x0, y: y0 } = origin.into();
         let mut tanx = xs.to_radians().tan();
         let mut tany = ys.to_radians().tan();
-        // These checks are stolen from Shapely's implementation -- may not be necessary
+        // 这些检查借鉴自 Shapely 的实现 - 可能不必要
         if tanx.abs() < U::from::<f64>(2.5e-16).unwrap() {
             tanx = U::zero();
         }
@@ -467,15 +451,14 @@ impl<U: CoordFloat> AffineTransform<U> {
         Self::new(U::one(), tanx, xoff, tany, U::one(), yoff)
     }
 
-    /// **Add** an affine transform for skewing.
+    /// **添加**倾斜的仿射变换。
     ///
-    /// Note that this operation is only available for geometries with floating point coordinates.
+    /// 请注意，此操作仅适用于浮点坐标的几何体。
     ///
-    /// Geometries are sheared by angles along x (`xs`) and y (`ys`) dimensions.
-    /// The point of origin is *usually* given as the 2D bounding box centre of the geometry, but
-    /// any coordinate may be specified. Angles are given in **degrees**.
+    /// 将几何体沿 x(`xs`) 和 y(`ys`) 维度按照一定角度剪切。
+    /// 原点通常是几何图形的2D边界框中心，但可以指定任何坐标。角度以**度数**给出。
     ///
-    /// This is a **cumulative** operation; the new transform is *added* to the existing transform.
+    /// 这是一个**累积**操作；新变换*添加*到现有变换中。
     #[must_use]
     pub fn skewed(mut self, xs: U, ys: U, origin: impl Into<Coord<U>>) -> Self {
         self.0 = self.compose(&Self::skew(xs, ys, origin)).0;
@@ -496,9 +479,9 @@ mod tests {
             T::default_max_relative()
         }
 
-        /// Equality assertion within a relative limit.
+        /// 在相对极限内的相等断言。
         ///
-        /// # Examples
+        /// # 示例
         ///
         /// ```
         /// use geo_types::AffineTransform;
@@ -534,9 +517,9 @@ mod tests {
             T::default_epsilon()
         }
 
-        /// Equality assertion with an absolute limit.
+        /// 具有绝对限制的相等断言。
         ///
-        /// # Examples
+        /// # 示例
         ///
         /// ```
         /// use geo_types::MultiPoint;
@@ -558,7 +541,7 @@ mod tests {
     use super::*;
     use crate::{wkt, Point};
 
-    // given a matrix with the shape
+    // 给定一个形状的矩阵
     // [[a, b, xoff],
     // [d, e, yoff],
     // [0, 0, 1]]
@@ -577,17 +560,17 @@ mod tests {
     #[test]
     fn test_transform_composition() {
         let p0 = Point::new(0.0f64, 0.0);
-        // scale once
+        // 缩放一次
         let mut scale_a = AffineTransform::default().scaled(2.0, 2.0, p0);
-        // rotate
+        // 旋转
         scale_a = scale_a.rotated(45.0, p0);
-        // rotate back
+        // 旋转回去
         scale_a = scale_a.rotated(-45.0, p0);
-        // scale up again, doubling
+        // 再次放大，倍增
         scale_a = scale_a.scaled(2.0, 2.0, p0);
-        // scaled once
+        // 缩放一次
         let scale_b = AffineTransform::default().scaled(2.0, 2.0, p0);
-        // scaled once, but equal to 2 + 2
+        // 缩放一次，但等于2 + 2
         let scale_c = AffineTransform::default().scaled(4.0, 4.0, p0);
         assert_ne!(&scale_a.0, &scale_b.0);
         assert_relative_eq!(&scale_a, &scale_c);
@@ -607,7 +590,7 @@ mod tests {
         let transform = AffineTransform::translate(1.0, 1.0).scaled(2.0, 2.0, (0.0, 0.0));
         let tinv = transform.inverse().unwrap();
         let identity = transform.compose(&tinv);
-        // test really only needs this, but let's be sure
+        // 测试其实只需要这个，但让我们确保一下
         assert!(identity.is_identity());
 
         let mut poly = wkt! { POLYGON((0.0 0.0,0.0 2.0,1.0 2.0)) };

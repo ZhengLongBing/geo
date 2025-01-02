@@ -5,34 +5,33 @@ use crate::{CoordTrait, Dimensions, UnimplementedCoord};
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, LineString};
 
-/// A trait for accessing data from a generic LineString.
+/// 用于从通用LineString访问数据的特征。
 ///
-/// A LineString is an ordered collection of two or more [points][CoordTrait], representing a path
-/// between locations.
+/// LineString是两个或更多[点][CoordTrait]的有序集合，表示位置之间的路径。
 ///
-/// Refer to [geo_types::LineString] for information about semantics and validity.
+/// 有关语义和有效性的信息，请参阅[geo_types::LineString]。
 pub trait LineStringTrait: Sized {
-    /// The coordinate type of this geometry
+    /// 此几何体的坐标类型
     type T;
 
-    /// The type of each underlying coordinate, which implements [CoordTrait]
+    /// 每个底层坐标的类型，实现[CoordTrait]
     type CoordType<'a>: 'a + CoordTrait<T = Self::T>
     where
         Self: 'a;
 
-    /// The dimension of this geometry
+    /// 此几何体的维度
     fn dim(&self) -> Dimensions;
 
-    /// An iterator over the coordinates in this LineString
+    /// 此LineString中坐标的迭代器
     fn coords(&self) -> impl DoubleEndedIterator + ExactSizeIterator<Item = Self::CoordType<'_>> {
         LineStringIterator::new(self, 0, self.num_coords())
     }
 
-    /// The number of coordinates in this LineString
+    /// 此LineString中坐标的数量
     fn num_coords(&self) -> usize;
 
-    /// Access to a specified coordinate in this LineString
-    /// Will return None if the provided index is out of bounds
+    /// 访问此LineString中指定的坐标
+    /// 如果提供的索引超出范围，将返回None
     #[inline]
     fn coord(&self, i: usize) -> Option<Self::CoordType<'_>> {
         if i >= self.num_coords() {
@@ -42,11 +41,11 @@ pub trait LineStringTrait: Sized {
         }
     }
 
-    /// Access to a specified coordinate in this LineString
+    /// 访问此LineString中指定的坐标
     ///
-    /// # Safety
+    /// # 安全性
     ///
-    /// Accessing an index out of bounds is UB.
+    /// 访问超出范围的索引是未定义行为。
     unsafe fn coord_unchecked(&self, i: usize) -> Self::CoordType<'_>;
 }
 
@@ -92,10 +91,9 @@ impl<'a, T: CoordNum> LineStringTrait for &'a LineString<T> {
     }
 }
 
-/// An empty struct that implements [LineStringTrait].
+/// 实现[LineStringTrait]的空结构体。
 ///
-/// This can be used as the `LineStringType` of the `GeometryTrait` by implementations that don't
-/// have a LineString concept
+/// 这可以被用作那些没有LineString概念的实现的`GeometryTrait`的`LineStringType`
 pub struct UnimplementedLineString<T>(PhantomData<T>);
 
 impl<T> LineStringTrait for UnimplementedLineString<T> {

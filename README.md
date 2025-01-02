@@ -1,43 +1,43 @@
 [![geo](https://avatars1.githubusercontent.com/u/10320338?v=4&s=50)](https://github.com/georust)
 
-[![geo on Crates.io](https://img.shields.io/crates/v/geo.svg?color=brightgreen)](https://crates.io/crates/geo)
-[![Coverage Status](https://img.shields.io/coverallsCoverage/github/georust/geo.svg)](https://coveralls.io/github/georust/geo?branch=trying)
-[![Documentation](https://img.shields.io/docsrs/geo/latest.svg)](https://docs.rs/geo)
+[![geo 在 Crates.io 上](https://img.shields.io/crates/v/geo.svg?color=brightgreen)](https://crates.io/crates/geo)
+[![覆盖率状态](https://img.shields.io/coverallsCoverage/github/georust/geo.svg)](https://coveralls.io/github/georust/geo?branch=trying)
+[![文档](https://img.shields.io/docsrs/geo/latest.svg)](https://docs.rs/geo)
 [![Discord](https://img.shields.io/discord/598002550221963289)](https://discord.gg/Fp2aape)
 
 # geo
 
-## Geospatial Primitives, Algorithms, and Utilities
+## 地理空间基本类型、算法和工具
 
-### Chat or ask questions on [Discord](https://discord.gg/Fp2aape)
+### 在 [Discord](https://discord.gg/Fp2aape) 上聊天或提问
 
-The `geo` crate provides geospatial primitive types such as `Point`, `LineString`, and `Polygon`, and provides algorithms and operations such as:
-- Area and centroid calculation
-- Simplification and convex hull operations
-- Euclidean and Haversine distance measurement
-- Intersection checks
-- Affine transforms such as rotation and translation
-- All DE-9IM spatial predicates such as contains, crosses, and touches.
+`geo` crate 提供了诸如 `Point`、`LineString` 和 `Polygon` 这样的地理空间基本类型，并提供了诸如以下的算法和操作：
+- 面积和中心点计算
+- 简化和凸包操作
+- 欧几里得和 Haversine 距离测量
+- 相交检查
+- 仿射变换，如旋转和位移
+- 所有 DE-9IM 空间谓词，例如 contains、crosses 和 touches。
 
-Please refer to [the documentation](https://docs.rs/geo) for a complete list.
+请参考[文档](https://docs.rs/geo)以获取完整的列表。
 
-The primitive types also provide the basis for other functionality in the `Geo` ecosystem, including:
+基本类型也为 `Geo` 生态系统中的其他功能提供基础，包括：
 
-- [Coordinate transformation and projection](https://github.com/georust/proj)
-- Serialization to and from [GeoJSON](https://github.com/georust/geojson) and [WKT](https://github.com/georust/wkt)
-- [Geocoding](https://github.com/georust/geocoding)
-- [Working with GPS data](https://github.com/georust/gpx)
+- [坐标转换和投影](https://github.com/georust/proj)
+- 从 [GeoJSON](https://github.com/georust/geojson) 和 [WKT](https://github.com/georust/wkt) 进行序列化和反序列化
+- [地理编码](https://github.com/georust/geocoding)
+- [处理 GPS 数据](https://github.com/georust/gpx)
 
-## Example
+## 示例
 
 ```rust
-// primitives
+// 基本类型
 use geo::{line_string, polygon};
 
-// algorithms
+// 算法
 use geo::ConvexHull;
 
-// An L shape
+// 一个 L 形状
 let poly = polygon![
     (x: 0.0, y: 0.0),
     (x: 4.0, y: 0.0),
@@ -48,7 +48,7 @@ let poly = polygon![
     (x: 0.0, y: 0.0),
 ];
 
-// Calculate the polygon's convex hull
+// 计算多边形的凸包
 let hull = poly.convex_hull();
 
 assert_eq!(
@@ -64,21 +64,17 @@ assert_eq!(
 );
 ```
 
-## Contributing
+## 贡献
 
-Contributions are welcome! Have a look at the [issues](https://github.com/georust/geo/issues), and open a pull request if you'd like to add an algorithm or some functionality.
+欢迎贡献！看看这些[问题](https://github.com/georust/geo/issues)，如果你想添加算法或功能，可以发起一个拉取请求。
 
-## License
+## 许可
 
-Licensed under either of
+可以选择使用以下许可之一：
 
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+ * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) 或 http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT 许可证 ([LICENSE-MIT](LICENSE-MIT) 或 http://opensource.org/licenses/MIT)
 
-at your option.
+### 贡献内容
 
-### Contribution
-
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+除非您明确声明，否则您有意提交的任何用于包含在此作品中的贡献，将依据 Apache-2.0 许可证进行上述双重许可，且无任何附加条款或条件。

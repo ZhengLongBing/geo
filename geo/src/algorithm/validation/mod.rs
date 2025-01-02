@@ -1,4 +1,4 @@
-//! Provides a way to check the validity of geometries, based on the [OGC Simple Feature Access - Part 1: Common Architecture standard].
+//! 提供了一种检查几何体有效性的方法，基于 [OGC Simple Feature Access - Part 1: Common Architecture standard]。
 //!
 //! [OGC Simple Feature Access - Part 1: Common Architecture standard]: https://www.ogc.org/standards/sfa
 mod coord;
@@ -32,7 +32,7 @@ pub use triangle::InvalidTriangle;
 use std::boxed::Box;
 use std::fmt;
 
-/// A trait to check if a geometry is valid and report the reason(s) of invalidity.
+/// 验证几何体是否有效，并报告无效原因的一个 trait。
 ///
 /// ```
 /// use geo::algorithm::Validation;
@@ -44,16 +44,16 @@ use std::fmt;
 /// let invalid_polygon = wkt!(POLYGON((0. 0., 1. 1.),(3. 3., 3. 4.,4. 4.)));
 /// assert!(!invalid_polygon.is_valid());
 ///
-/// // Get the first validation error, as a `Result`
+/// // 获取第一个验证错误，作为 `Result`
 /// let validation_error = invalid_polygon.check_validation().unwrap_err();
 /// use geo::algorithm::validation::{InvalidPolygon, RingRole};
 /// assert_eq!(validation_error, InvalidPolygon::TooFewPointsInRing(RingRole::Exterior));
 ///
-/// // Get a human readable error
+/// // 获取一个可读的错误信息
 /// let text = validation_error.to_string();
 /// assert_eq!(text, "exterior ring must have at least 3 distinct points");
-//
-/// // Get all validation errors
+///
+/// // 获取所有的验证错误
 /// let all_validation_errors = invalid_polygon.validation_errors();
 /// assert_eq!(all_validation_errors.len(), 2);
 /// assert_eq!(all_validation_errors[0].to_string(), "exterior ring must have at least 3 distinct points");
@@ -62,18 +62,14 @@ use std::fmt;
 pub trait Validation {
     type Error: std::error::Error;
 
-    /// Check if the geometry is valid.
+    /// 检查几何体是否有效。
     fn is_valid(&self) -> bool {
         self.check_validation().is_ok()
     }
 
-    /// Return the reason(s) of invalidity of the geometry.
+    /// 返回几何体无效的原因。
     ///
-    /// Though we try to return *all* problems with a geometry, it's possible that previous errors
-    /// will obscure subsequent errors. For example, a MultiPolygon requires all its elements to be
-    /// valid and non-overlapping. If one of the individual polygons is invalid, we can't guarantee
-    /// the correctness of their "overlap" check which assumes valid input. Therefore, you should
-    /// re-validate after attempting to correct any validation errors.
+    /// 尽管我们尝试返回几何体的*所有*问题，但之前的错误可能会掩盖随后的错误。例如，一个 MultiPolygon 要求其所有元素都有效且不重叠。如果其中一个多边形无效，我们不能保证其“重叠”检查的正确性，因为它假设输入是有效的。因此，在尝试纠正任何验证错误后，您应该重新验证。
     fn validation_errors(&self) -> Vec<Self::Error> {
         let mut validation_errors = Vec::new();
 
@@ -86,21 +82,21 @@ pub trait Validation {
         validation_errors
     }
 
-    /// Return the first reason of invalidity of the geometry.
+    /// 返回几何体无效的第一个原因。
     fn check_validation(&self) -> Result<(), Self::Error> {
         self.visit_validation(Box::new(Err))
     }
 
-    /// Visit the validation of the geometry.
+    /// 访问几何体的验证。
     ///
-    /// The closure `handle_validation_error` is called for each validation error.
+    /// 闭包 `handle_validation_error` 会在每个验证错误时被调用。
     fn visit_validation<T>(
         &self,
         handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
     ) -> Result<(), T>;
 }
 
-/// The role of a ring in a [`Polygon`](crate::Polygon).
+/// [`Polygon`](crate::Polygon) 中环的角色。
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum RingRole {
     Exterior,
@@ -116,11 +112,11 @@ impl fmt::Display for RingRole {
     }
 }
 
-/// The position of the problem in a multi-geometry, starting at 0.
+/// 多几何体中问题的位置，从0开始。
 #[derive(Debug, PartialEq, Clone)]
 pub struct GeometryIndex(pub usize);
 
-/// The index of the coordinate in the geometry
+/// 几何体中坐标的索引
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CoordIndex(pub usize);
 

@@ -5,14 +5,14 @@ use core::slice;
 use std::fmt::Debug;
 use std::iter;
 
-/// Iterate over lines of a geometry.
+/// 迭代一个几何图形的线段。
 pub trait LinesIter<'a> {
     type Scalar: CoordNum;
     type Iter: Iterator<Item = Line<Self::Scalar>>;
 
-    /// Iterate over all exterior and (if any) interior lines of a geometry.
+    /// 迭代一个几何图形的所有外部线段和（如果有）内部线段。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::line_string;
@@ -63,7 +63,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for LineString<T> {
     }
 }
 
-/// Iterator over lines in a [LineString].
+/// 对 [LineString] 中的线段进行迭代。
 #[derive(Debug)]
 pub struct LineStringIter<'a, T: CoordNum>(slice::Windows<'a, Coord<T>>);
 
@@ -77,12 +77,12 @@ impl<T: CoordNum> Iterator for LineStringIter<'_, T> {
     type Item = Line<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // Can't use LineString::lines() because it returns an `impl Trait`
-        // and there is no way to name that type in `LinesIter::Iter` until [RFC 2071] is stabilized.
+        // 不能使用 LineString::lines() 因为它返回一个 `impl Trait`
+        // 在 [RFC 2071] 稳定之前，没有办法在 `LinesIter::Iter` 中命名该类型。
         //
         // [RFC 2071]: https://rust-lang.github.io/rfcs/2071-impl-trait-existential-types.html
         self.0.next().map(|w| {
-            // SAFETY: slice::windows(2) is guaranteed to yield a slice with exactly 2 elements
+            // 安全性：slice::windows(2) 保证产生一个恰好包含 2 个元素的切片
             unsafe { Line::new(*w.get_unchecked(0), *w.get_unchecked(1)) }
         })
     }
@@ -146,7 +146,7 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     }
 }
 
-/// Utility to transform `Iterator<LinesIter>` into `Iterator<Iterator<Line>>`.
+/// 将 `Iterator<LinesIter>` 转换为 `Iterator<Iterator<Line>>` 的工具。
 #[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
 
@@ -229,17 +229,17 @@ mod test {
             ],
         );
         let want = vec![
-            // exterior ring
+            // 外环
             Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 10. }),
             Line::new(coord! { x: 0., y: 10. }, coord! { x: 10., y: 10. }),
             Line::new(coord! { x: 10., y: 10. }, coord! { x: 10., y: 0. }),
             Line::new(coord! { x: 10., y: 0. }, coord! { x: 0., y: 0. }),
-            // first interior ring
+            // 第一个内环
             Line::new(coord! { x: 1., y: 1. }, coord! { x: 1., y: 2. }),
             Line::new(coord! { x: 1., y: 2. }, coord! { x: 2., y: 2. }),
             Line::new(coord! { x: 2., y: 2. }, coord! { x: 2., y: 1. }),
             Line::new(coord! { x: 2., y: 1. }, coord! { x: 1., y: 1. }),
-            // second interior ring
+            // 第二个内环
             Line::new(coord! { x: 3., y: 3. }, coord! { x: 5., y: 3. }),
             Line::new(coord! { x: 5., y: 3. }, coord! { x: 5., y: 5. }),
             Line::new(coord! { x: 5., y: 5. }, coord! { x: 3., y: 5. }),
@@ -261,17 +261,17 @@ mod test {
             ),
         ]);
         let want = vec![
-            // first polygon - exterior ring
+            // 第一个多边形 - 外环
             Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 10. }),
             Line::new(coord! { x: 0., y: 10. }, coord! { x: 10., y: 10. }),
             Line::new(coord! { x: 10., y: 10. }, coord! { x: 10., y: 0. }),
             Line::new(coord! { x: 10., y: 0. }, coord! { x: 0., y: 0. }),
-            // first polygon - interior ring
+            // 第一个多边形 - 内环
             Line::new(coord! { x: 1., y: 1. }, coord! { x: 1., y: 2. }),
             Line::new(coord! { x: 1., y: 2. }, coord! { x: 2., y: 2. }),
             Line::new(coord! { x: 2., y: 2. }, coord! { x: 2., y: 1. }),
             Line::new(coord! { x: 2., y: 1. }, coord! { x: 1., y: 1. }),
-            // second polygon - exterior ring
+            // 第二个多边形 - 外环
             Line::new(coord! { x: 3., y: 3. }, coord! { x: 5., y: 3. }),
             Line::new(coord! { x: 5., y: 3. }, coord! { x: 5., y: 5. }),
             Line::new(coord! { x: 5., y: 5. }, coord! { x: 3., y: 5. }),

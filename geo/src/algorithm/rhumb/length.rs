@@ -4,43 +4,42 @@ use crate::{CoordFloat, Length, Line, LineString, MultiLineString, Rhumb};
 
 #[deprecated(
     since = "0.29.0",
-    note = "Please use the `line.length::<Rhumb>()` via the `Length` trait instead."
+    note = "请改用 `Length` 特征中的 `line.length::<Rhumb>()` 方法。"
 )]
-/// Determine the length of a geometry assuming each segment is a [rhumb line].
+/// 确定几何体的长度，假设每段是一个[恒向线]。
 ///
-/// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+/// [恒向线]: https://en.wikipedia.org/wiki/Rhumb_line
 ///
-/// *Note*: this implementation uses a mean earth radius of 6371.088 km, based on the [recommendation of
-/// the IUGG](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
+/// *注意*：此实现使用平均地球半径6371.088公里，基于[IUGG的建议](ftp://athena.fsv.cvut.cz/ZFG/grs80-Moritz.pdf)
 pub trait RhumbLength<T, RHS = Self> {
-    /// Determine the length of a geometry assuming each segment is a [rhumb line].
+    /// 确定几何体的长度，假设每段是一个[恒向线]。
     ///
-    /// # Units
+    /// # 单位
     ///
-    /// - return value: meters
+    /// - 返回值：米
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::prelude::*;
     /// use geo::LineString;
     ///
     /// let linestring = LineString::<f64>::from(vec![
-    ///     // New York City
+    ///     // 纽约市
     ///     (-74.006, 40.7128),
-    ///     // London
+    ///     // 伦敦
     ///     (-0.1278, 51.5074),
     /// ]);
     ///
     /// let length = linestring.rhumb_length();
     ///
     /// assert_eq!(
-    ///     5_794_129., // meters
+    ///     5_794_129., // 米
     ///     length.round()
     /// );
     /// ```
     ///
-    /// [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
+    /// [恒向线]: https://en.wikipedia.org/wiki/Rhumb_line
     fn rhumb_length(&self) -> T;
 }
 

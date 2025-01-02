@@ -1,30 +1,29 @@
 use crate::{CoordFloat, Point};
 
-/// Interpolate a `Point` along a line between two existing points
+/// 在两个已存在点之间的线上插值一个`Point`
 pub trait InterpolatePoint<F: CoordFloat> {
-    /// Returns a new Point along a line between two existing points.
+    /// 返回在两个已存在点之间的线上插值出的一个新点。
     ///
-    /// See [specific implementations](#implementors) for details.
+    /// 详见[具体实现](#implementors)。
     fn point_at_distance_between(
         start: Point<F>,
         end: Point<F>,
         distance_from_start: F,
     ) -> Point<F>;
 
-    /// Returns a new Point along a line between two existing points.
+    /// 返回在两个已存在点之间的线上插值出的一个新点。
     ///
-    /// See [specific implementations](#implementors) for details.
+    /// 详见[具体实现](#implementors)。
     fn point_at_ratio_between(start: Point<F>, end: Point<F>, ratio_from_start: F) -> Point<F>;
 
-    /// Interpolates `Point`s along a line between `start` and `end`.
+    /// 插值出在`start`和`end`之间的`Point`。
     ///
-    /// See [specific implementations](#implementors) for details.
+    /// 详见[具体实现](#implementors)。
     ///
-    /// As many points as necessary will be added such that the distance between points
-    /// never exceeds `max_distance`. If the distance between start and end is less than
-    /// `max_distance`, no additional points will be included in the output.
+    /// 将根据需要添加点，以确保点之间的距离不超过`max_distance`。
+    /// 如果起始和终点之间的距离小于`max_distance`，则输出中不包含附加点。
     ///
-    /// `include_ends`: Should the start and end points be included in the output?
+    /// `include_ends`: 是否将起点和终点包含在输出中？
     fn points_along_line(
         start: Point<F>,
         end: Point<F>,
@@ -101,8 +100,7 @@ mod tests {
 
         #[test]
         fn point_at_distance_between_collapsed_line() {
-            // This method just documents existing behavior. I don't think our current behavior
-            // is especially useful, but we might consider handling it uniformly one day.
+            // 此方法仅记录现有行为。我认为我们当前的行为不是特别有用，但我们可能会考虑某天统一处理。
             let start: Point = Point::new(1.0, 1.0);
 
             let distance = 0.0;

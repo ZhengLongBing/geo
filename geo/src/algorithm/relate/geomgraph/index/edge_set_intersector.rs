@@ -6,25 +6,23 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 pub(crate) trait EdgeSetIntersector<F: GeoFloat> {
-    /// Compute all intersections between the edges within a set, recording those intersections on
-    /// the intersecting edges.
+    /// 计算集合内边的所有交集，将这些交集记录在相交的边上。
     ///
-    /// `edges`: the set of edges to check. Mutated to record any intersections.
-    /// `check_for_self_intersecting_edges`: if false, an edge is not checked for intersections with itself.
-    /// `segment_intersector`: the SegmentIntersector to use
+    /// `edges`: 要检查的边集合，会被修改以记录任何交集。
+    /// `check_for_self_intersecting_edges`: 如果为 false，则不会检查边与自身的交集。
+    /// `segment_intersector`: 要使用的 SegmentIntersector
     fn compute_intersections_within_set(
         &self,
-        graph: &GeometryGraph<F>,
-        check_for_self_intersecting_edges: bool,
-        segment_intersector: &mut SegmentIntersector<F>,
+        graph: &GeometryGraph<F>,                        // 图形图对象
+        check_for_self_intersecting_edges: bool,         // 是否检查自身交集标志
+        segment_intersector: &mut SegmentIntersector<F>, // 用于处理分段交集的对象
     );
 
-    /// Compute all intersections between two sets of edges, recording those intersections on
-    /// the intersecting edges.
+    /// 计算两个边集合之间的所有交集，将这些交集记录在相交的边上。
     fn compute_intersections_between_sets<'a>(
         &self,
-        graph_0: &GeometryGraph<'a, F>,
-        graph_1: &GeometryGraph<'a, F>,
-        segment_intersector: &mut SegmentIntersector<F>,
+        graph_0: &GeometryGraph<'a, F>, // 第一个图形图对象
+        graph_1: &GeometryGraph<'a, F>, // 第二个图形图对象
+        segment_intersector: &mut SegmentIntersector<F>, // 用于处理分段交集的对象
     );
 }

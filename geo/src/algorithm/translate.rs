@@ -1,16 +1,15 @@
 use crate::{AffineOps, AffineTransform, CoordNum};
 
 pub trait Translate<T: CoordNum> {
-    /// Translate a Geometry along its axes by the given offsets
+    /// 沿几何图形的坐标轴按照给定的偏移量进行平移
     ///
-    /// ## Performance
+    /// ## 性能
     ///
-    /// If you will be performing multiple transformations, like [`Scale`](crate::Scale),
-    /// [`Skew`](crate::Skew), [`Translate`], or [`Rotate`](crate::Rotate), it is more
-    /// efficient to compose the transformations and apply them as a single operation using the
-    /// [`AffineOps`] trait.
+    /// 如果您将进行多次变换，例如[`Scale`](crate::Scale)、[`Skew`](crate::Skew)、
+    /// [`Translate`] 或 [`Rotate`](crate::Rotate)，使用 [`AffineOps`] 特质将变换组合
+    /// 并作为一个单一操作应用会更加高效。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo::Translate;

@@ -1,215 +1,185 @@
+// Start of Selection
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 
-//! The `geo` crate provides geospatial primitive types and algorithms.
+//! `geo` crate 提供地理空间基本类型和算法。
 //!
-//! # Types
+//! # 类型
 //!
-//! - **[`Coord`]**: A two-dimensional coordinate. All geometry types are composed of [`Coord`]s, though [`Coord`] itself is not a [`Geometry`] type
-//! - **[`Point`]**: A single point represented by one [`Coord`]
-//! - **[`MultiPoint`]**: A collection of [`Point`]s
-//! - **[`Line`]**: A line segment represented by two [`Coord`]s
-//! - **[`LineString`]**: A series of contiguous line segments represented by two or more
-//!   [`Coord`]s
-//! - **[`MultiLineString`]**: A collection of [`LineString`]s
-//! - **[`Polygon`]**: A bounded area represented by one [`LineString`] exterior ring, and zero or
-//!   more [`LineString`] interior rings
-//! - **[`MultiPolygon`]**: A collection of [`Polygon`]s
-//! - **[`Rect`]**: An axis-aligned bounded rectangle represented by minimum and maximum
-//!   [`Coord`]s
-//! - **[`Triangle`]**: A bounded area represented by three [`Coord`] vertices
-//! - **[`GeometryCollection`]**: A collection of [`Geometry`]s
-//! - **[`Geometry`]**: An enumeration of all geometry types, excluding [`Coord`]
+//! - **[`Coord`]**: 二维坐标。所有几何类型都由[`Coord`]组成，尽管[`Coord`]本身不是[`Geometry`]类型
+//! - **[`Point`]**: 由一个[`Coord`]表示的单点
+//! - **[`MultiPoint`]**: 多个[`Point`]的集合
+//! - **[`Line`]**: 由两个[`Coord`]表示的线段
+//! - **[`LineString`]**: 由两个或多个[`Coord`]表示的连续线段序列
+//! - **[`MultiLineString`]**: 多个[`LineString`]的集合
+//! - **[`Polygon`]**: 由一个[`LineString`]外环和零个或多个[`LineString`]内环表示的有界区域
+//! - **[`MultiPolygon`]**: 多个[`Polygon`]的集合
+//! - **[`Rect`]**: 由最小和最大[`Coord`]表示的轴对齐的有界矩形
+//! - **[`Triangle`]**: 由三个[`Coord`]顶点表示的有界区域
+//! - **[`GeometryCollection`]**: 多个[`Geometry`]的集合
+//! - **[`Geometry`]**: 所有几何类型（除[`Coord`]外）的枚举类型
 //!
-//! The preceding types are reexported from the [`geo-types`] crate. Consider using that crate
-//! if you only need access to these types and no other `geo` functionality.
+//! 上述类型从[`geo-types`] crate重新导出。如果您只需要访问这些类型而不需要其他`geo`功能，可以考虑使用该crate。
 //!
-//! ## Semantics
+//! ## 语义
 //!
-//! The geospatial types provided here aim to adhere to the [OpenGIS Simple feature access][OGC-SFA]
-//! standards. Thus, the types here are inter-operable with other implementations of the standards:
-//! [JTS], [GEOS], etc.
+//! 此处提供的地理空间类型旨在符合[OpenGIS简单要素访问][OGC-SFA]标准。因此，这些类型可以与其他标准的实现互操作：[JTS]、[GEOS]等。
 //!
-//! # Algorithms
+//! # 算法
 //!
-//! ## Measures
+//! ## 度量
 //!
-//! Algorithms for measures along a line, and how a line is measured.
+//! 沿线度量的算法，以及线的度量方式。
 //!
-//! ### Metric Spaces
+//! ### 度量空间
 //!
-//! - **[`Euclidean`]**: The [Euclidean plane] measures distance with the pythagorean formula. Not suitable for lon/lat geometries.
-//! - **[`Haversine`]**: The [Haversine Formula] measures distance on a sphere. Only suitable for lon/lat geometries.
-//! - **[`Geodesic`]**: Geodesic methods based on [Karney (2013)] more accurately reflect the shape of the Earth, but are slower than Haversine. Only suitable for lon/lat geometries.
-//! - **[`Rhumb`]**: [Rhumb line] (a.k.a. loxodrome) measures can be useful for navigation applications where maintaining a constant bearing or direction is important. Only suitable for lon/lat geometries.
+//! - **[`Euclidean`]**: [Euclidean plane]使用毕达哥拉斯公式来测量距离。不适用于经纬度几何。
+//! - **[`Haversine`]**: [Haversine公式]测量球体上的距离。仅适用于经纬度几何。
+//! - **[`Geodesic`]**: 基于[Karney (2013)]的测地方法更准确地反映地球的形状，但比Haversine慢。仅适用于经纬度几何。
+//! - **[`Rhumb`]**: [店位置线]（又称loxodrome）度量在需要保持恒定方位或方向的导航应用中可能有用。仅适用于经纬度几何。
 //!
-//! ### Operations on Metric Spaces
+//! ### 度量空间的操作
 //!
-//! - **[`Distance`]**: Calculate the minimum distance between two geometries.
-//! - **[`Length`]**: Calculate the length of a `Line`, `LineString`, or `MultiLineString`.
-//! - **[`Bearing`]**: Calculate the bearing between two points.
+//! - **[`Distance`]**: 计算两个几何体之间的最小距离。
+//! - **[`Length`]**: 计算`Line`、`LineString`或`MultiLineString`的长度。
+//! - **[`Bearing`]**: 计算两点之间的方位。
 //!
-//! - **[`Destination`]**: Calculate the destination point from an origin point, given a bearing and a distance.
-//! - **[`InterpolatePoint`]**: Interpolate points along a line.
-//! - **[`Densify`]**: Insert points into a geometry so there is never more than `max_segment_length` between points.
+//! - **[`Destination`]**: 给定方位和距离，从起始点计算目的地点。
+//! - **[`InterpolatePoint`]**: 沿着直线插入点。
+//! - **[`Densify`]**: 向几何体中插入点，以便两个点之间从不超过`max_segment_length`。
 //!
-//! ### Misc measures
+//! ### 杂项度量
 //!
-//! - **[`HausdorffDistance`]**: Calculate "the maximum of the distances from a point in any of the sets to the nearest point in the other set." (Rote, 1991)
-//! - **[`VincentyDistance`]**: Calculate the minimum geodesic distance between geometries using Vincenty’s formula
-//! - **[`VincentyLength`]**: Calculate the geodesic length of a geometry using Vincenty’s formula
-//! - **[`FrechetDistance`]**: Calculate the similarity between [`LineString`]s using the Fréchet distance
+//! - **[`HausdorffDistance`]**: 计算“从任何一个集合中的一点到另一个集合中最近一点的距离的最大值。”（Rote, 1991）
+//! - **[`VincentyDistance`]**: 使用Vincenty公式计算几何体之间的最小测地距离
+//! - **[`VincentyLength`]**: 使用Vincenty公式计算几何体的测地长度
+//! - **[`FrechetDistance`]**: 使用弗雷歇距离计算[`LineString`]之间的相似性
 //!
-//! ## Area
+//! ## 面积
 //!
-//! - **[`Area`]**: Calculate the planar area of a geometry
-//! - **[`ChamberlainDuquetteArea`]**: Calculate the geodesic area of a geometry on a sphere using the algorithm presented in _Some Algorithms for Polygons on a Sphere_ by Chamberlain and Duquette (2007)
-//! - **[`GeodesicArea`]**: Calculate the geodesic area and perimeter of a geometry on an ellipsoid using the algorithm presented in _Algorithms for geodesics_ by Charles Karney (2013)
+//! - **[`Area`]**: 计算几何体的平面区域
+//! - **[`ChamberlainDuquetteArea`]**: 使用Chamberlain和Duquette（2007）在_球面上的多边形的一些算法_中提出的算法计算几何体在球体上的测地面积
+//! - **[`GeodesicArea`]**: 使用Charles Karney（2013）在_测地算法_中提出的算法计算几何体在椭球体上的测地面积和周长
 //!
-//! ## Boolean Operations
+//! ## 布尔运算
 //!
-//! - **[`BooleanOps`]**: Combine or split (Multi)Polygons using intersection, union, xor, or difference operations
-//! - **[`unary_union`]**: Efficient union of many [`Polygon`] or [`MultiPolygon`]s
+//! - **[`BooleanOps`]**: 使用交集、联合、异或或差运算组合或拆分（Multi）多边形
+//! - **[`unary_union`]**: 高效地联合多个[`Polygon`]或[`MultiPolygon`]。
 //!
-//! ## Outlier Detection
+//! ## 异常值检测
 //!
-//! - **[`OutlierDetection`]**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+//! - **[`OutlierDetection`]**: 使用[LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)检测一组点中的异常值
 //!
-//! ## Simplification
+//! ## 简化
 //!
-//! - **[`Simplify`]**: Simplify a geometry using the Ramer–Douglas–Peucker algorithm
-//! - **[`SimplifyIdx`]**: Calculate a simplified geometry using the Ramer–Douglas–Peucker algorithm, returning coordinate indices
-//! - **[`SimplifyVw`]**: Simplify a geometry using the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwPreserve`]**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
-//! - **[`SimplifyVwIdx`]**: Calculate a simplified geometry using the Visvalingam-Whyatt algorithm, returning coordinate indices
+//! - **[`Simplify`]**: 使用Ramer-Douglas-Peucker算法简化几何体
+//! - **[`SimplifyIdx`]**: 使用Ramer-Douglas-Peucker算法计算简化的几何体，返回坐标索引
+//! - **[`SimplifyVw`]**: 使用Visvalingam-Whyatt算法简化几何体
+//! - **[`SimplifyVwPreserve`]**: 使用Visvalingam-Whyatt算法的拓扑保存变体简化几何体
+//! - **[`SimplifyVwIdx`]**: 使用Visvalingam-Whyatt算法计算简化的几何体，返回坐标索引
 //!
-//! ## Query
+//! ## 查询
 //!
-//! - **[`ClosestPoint`]**: Find the point on a geometry
-//!   closest to a given point
-//! - **[`HaversineClosestPoint`]**: Find the point on a geometry
-//!   closest to a given point on a sphere using spherical coordinates and lines being great arcs
-//! - **[`IsConvex`]**: Calculate the convexity of a
-//!   [`LineString`]
-//! - **[`LineInterpolatePoint`]**:
-//!   Generates a point that lies a given fraction along the line
-//! - **[`LineLocatePoint`]**: Calculate the
-//!   fraction of a line’s total length representing the location of the closest point on the
-//!   line to the given point
-//! - **[`InteriorPoint`]**:
-//!     Calculates a representative point inside a `Geometry`
+//! - **[`ClosestPoint`]**: 找到几何体上最接近给定点的点
+//! - **[`HaversineClosestPoint`]**: 使用球面坐标和线为大圆弧找到几何体上最接近给定点的点
+//! - **[`IsConvex`]**: 计算[`LineString`]的凸性
+//! - **[`LineInterpolatePoint`]**: 生成一个在给定线段上位于给定比例的位置的点
+//! - **[`LineLocatePoint`]**: 计算线段总长的一部分代表从线段到给定点最近点的位置
+//! - **[`InteriorPoint`]**: 计算几何体内的一个代表点
 //!
-//! ## Topology
+//! ## 拓扑
 //!
-//! - **[`Contains`]**: Calculate if a geometry contains another
-//!   geometry
-//! - **[`CoordinatePosition`]**: Calculate
-//!   the position of a coordinate relative to a geometry
-//! - **[`HasDimensions`]**: Determine the dimensions of a geometry
-//! - **[`Intersects`]**: Calculate if a geometry intersects
-//!   another geometry
-//! - **[`line_intersection`]**: Calculates the
-//!   intersection, if any, between two lines
-//! - **[`Relate`]**: Topologically relate two geometries based on
-//!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics
-//! - **[`Within`]**: Calculate if a geometry lies completely within another geometry
+//! - **[`Contains`]**: 计算一个几何是否包含另一个几何
+//! - **[`CoordinatePosition`]**: 计算一个坐标相对几何的位置
+//! - **[`HasDimensions`]**: 确定几何的维度
+//! - **[`Intersects`]**: 计算一个几何是否与另一个几何相交
+//! - **[`line_intersection`]**: 计算两条线之间的交点（如果有的话）
+//! - **[`Relate`]**: 基于[DE-9IM](https://en.wikipedia.org/wiki/DE-9IM)语义拓扑关系两个几何
+//! - **[`Within`]**: 计算一个几何是否完全位于另一个几何内
 //!
-//! ## Triangulation
+//! ## 三角剖分
 //!
-//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `"earcutr"` feature, which is enabled by default
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: 使用earcut算法三角剖分多边形。需要启用默认启用的`"earcutr"`功能
 //!
-//! ## Winding
+//! ## 绕线
 //!
-//! - **[`Orient`]**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
-//! - **[`Winding`]**: Calculate and manipulate the [`WindingOrder`](winding_order::WindingOrder) of a [`LineString`]
+//! - **[`Orient`]**: 对[`Polygon`]的内部和外部环应用指定的绕线[`Direction`](orient::Direction)
+//! - **[`Winding`]**: 计算并操作[`LineString`]的[`WindingOrder`](winding_order::WindingOrder)
 //!
-//! ## Iteration
+//! ## 迭代
 //!
-//! - **[`CoordsIter`]**: Iterate over the coordinates of a geometry
-//! - **[`MapCoords`]**: Map a function over all the coordinates
-//!   in a geometry, returning a new geometry
-//! - **[`MapCoordsInPlace`]**: Map a function over all the
-//!   coordinates in a geometry in-place
-//! - **[`LinesIter`]**: Iterate over lines of a geometry
+//! - **[`CoordsIter`]**: 迭代几何的坐标
+//! - **[`MapCoords`]**: 在几何的所有坐标上映射一个函数，返回一个新几何体
+//! - **[`MapCoordsInPlace`]**: 就地在几何的所有坐标上映射一个函数
+//! - **[`LinesIter`]**: 迭代几何的线条
 //!
-//! ## Boundary
+//! ## 边界
 //!
-//! - **[`BoundingRect`]**: Calculate the axis-aligned
-//!   bounding rectangle of a geometry
-//! - **[`MinimumRotatedRect`]**: Calculate the
-//!   minimum bounding box of a geometry
-//! - **[`ConcaveHull`]**: Calculate the concave hull of a
-//!   geometry
-//! - **[`ConvexHull`]**: Calculate the convex hull of a
-//!   geometry
-//! - **[`Extremes`]**: Calculate the extreme coordinates and
-//!   indices of a geometry
+//! - **[`BoundingRect`]**: 计算几何的轴对齐边界矩形
+//! - **[`MinimumRotatedRect`]**: 计算几何的最小边界盒
+//! - **[`ConcaveHull`]**: 计算几何的凹壳
+//! - **[`ConvexHull`]**: 计算几何的凸壳
+//! - **[`Extremes`]**: 计算几何的极值坐标和索引
 //!
-//! ## Affine transformations
+//! ## 仿射变换
 //!
-//! - **[`Rotate`]**: Rotate a geometry around its centroid
-//! - **[`Scale`]**: Scale a geometry up or down by a factor
-//! - **[`Skew`]**: Skew a geometry by shearing angles along the `x` and `y` dimension
-//! - **[`Translate`]**: Translate a geometry along its axis
-//! - **[`AffineOps`]**: generalised composable affine operations
+//! - **[`Rotate`]**: 围绕几何的质心旋转几何
+//! - **[`Scale`]**: 按因子缩放几何
+//! - **[`Skew`]**: 沿`x`和`y`维度倾斜几何
+//! - **[`Translate`]**: 沿轴平移几何
+//! - **[`AffineOps`]**: 广义可组合的仿射操作
 //!
-//! ## Conversion
+//! ## 转换
 //!
-//! - **[`Convert`]**: Convert (infalliby) the numeric type of a geometry’s coordinate value
-//! - **[`TryConvert`]**: Convert (falliby) the numeric type of a geometry’s coordinate value
-//! - **[`ToDegrees`]**: Radians to degrees coordinate transforms for a given geometry
-//! - **[`ToRadians`]**: Degrees to radians coordinate transforms for a given geometry
+//! - **[`Convert`]**: 转换（无错误）几何坐标值的数值类型
+//! - **[`TryConvert`]**: 转换（可能有错误）几何坐标值的数值类型
+//! - **[`ToDegrees`]**: 将给定几何体的坐标从弧度转换为角度
+//! - **[`ToRadians`]**: 将给定几何体的坐标从角度转换为弧度
 //!
-//! ## Miscellaneous
+//! ## 杂项
 //!
-//! - **[`Centroid`]**: Calculate the centroid of a geometry
-//! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm
-//! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
-//! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments
-//! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance
-//! - **[`Transform`]**: Transform a geometry using Proj
-//! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
-//! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
+//! - **[`Centroid`]**: 计算几何体的质心
+//! - **[`ChaikinSmoothing`]**: 使用Chaikin算法平滑`LineString`、`Polygon`、`MultiLineString`和`MultiPolygon`
+//! - **[`proj`]**: 使用`proj` crate投影几何体（需要启用`use-proj`功能）
+//! - **[`LineStringSegmentize`]**: 将LineString分割为`n`段
+//! - **[`LineStringSegmentizeHaversine`]**: 使用Haversine距离分割LineString
+//! - **[`Transform`]**: 使用Proj变换几何体
+//! - **[`RemoveRepeatedPoints`]**: 从几何体中移除重复的点
+//! - **[`Validation`]**: 检测几何体是否结构正确。一些算法可能无法正确处理无效几何体
 //!
-//! # Spatial Indexing
+//! # 空间索引
 //!
-//! `geo` geometries ([`Point`], [`Line`], [`LineString`], [`Polygon`], [`MultiPolygon`]) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)
-//! R*-tree crate for fast distance and nearest-neighbour queries. Multi- geometries can be added to the tree by iterating over
-//! their members and adding them. Note in particular the availability of the [`bulk_load`](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#method.bulk_load)
-//! method and [`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html) struct.
+//! `geo`几何（[`Point`]、[`Line`]、[`LineString`]、[`Polygon`]、[`MultiPolygon`]）可与[rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage) R*-tree crate一起使用以进行快速距离和最近邻查询。多几何可以通过迭代其成员并添加它们来添加到树中。特别请注意[`bulk_load`](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#method.bulk_load)方法和[`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html)结构的可用性。
 //!
-//! # Features
+//! # 功能
 //!
-//! The following optional [Cargo features] are available:
+//! 以下可选[Cargo features]可用：
 //!
 //! - `earcutr`:
-//!     - Enables the `earcutr` crate, which provides triangulation of polygons using the earcut algorithm
-//!     - ☑ Enabled by default
+//!     - 启用`earcutr` crate，它提供使用earcut算法对多边形进行三角剖分
+//!     - ☑ 默认启用
 //! - `proj-network`:
-//!     - Enables [network grid] support for the [`proj` crate]
-//!     - After enabling this feature, [further configuration][proj crate file download] is required to use the network grid.
-//!     - ☐ Disabled by default
+//!     - 为[`proj` crate]启用[网络网格]支持
+//!     - 启用此功能后，[需要进一步配置][proj crate file download]以使用网络网格。
+//!     - ☐ 默认禁用
 //! - `use-proj`:
-//!     - Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
-//!     - ☐ Disabled by default
+//!     - 启用使用[`proj` crate]对`Point`几何体进行坐标转换和变换
+//!     - ☐ 默认禁用
 //! - `use-serde`:
-//!     - Allows geometry types to be serialized and deserialized with [Serde]
-//!     - ☐ Disabled by default
+//!     - 允许使用[Serde]对几何类型进行序列化和反序列化
+//!     - ☐ 默认禁用
 //! - `multithreading`:
-//!     - Enables multithreading support (via Rayon), and activates the `multithreading` flag
-//!       in `geo-types`, enabling multi-threaded iteration over `Multi*` geometries
-//!     - ☑ Enabled by default
+//!     - 启用多线程支持（通过Rayon），并激活`geo-types`中的`multithreading`标志，支持对`Multi*`几何体的多线程迭代
+//!     - ☑ 默认启用
 //!
-//! # Ecosystem
+//! # 生态系统
 //!
-//! There’s a wide variety of `geo`-compatible crates in the ecosystem that offer functionality not
-//! included in the `geo` crate, including:
+//! 在`geo` crate生态系统中，有许多兼容`geo`的crate提供了`geo` crate中未包含的功能，包括：
 //!
-//! * Reading and writing file formats (e.g. [GeoJSON][geojson crate], [WKT][wkt crate],
-//!   [shapefile][shapefile crate])
-//! * [Latitude and longitude parsing][latlng crate]
-//! * [Label placement][polylabel crate]
-//! * [Geocoding][geocoding crate]
-//! * [and much more...][georust website]
+//! * 读取和写入文件格式（例如[GeoJSON][geojson crate]、[WKT][wkt crate]、[shapefile][shapefile crate]）
+//! * [经纬度解析][latlng crate]
+//! * [标签放置][polylabel crate]
+//! * [地理编码][geocoding crate]
+//! * [以及更多...][georust website]
 //!
 //! [Euclidean plane]: https://en.wikipedia.org/wiki/Euclidean_plane
 //! [`geo-types`]: https://crates.io/crates/geo-types
@@ -246,7 +216,7 @@ pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNu
 pub mod geometry;
 pub use geometry::*;
 
-/// This module includes all the functions of geometric calculations
+/// 此模块包含所有几何计算的函数。
 pub mod algorithm;
 mod geometry_cow;
 mod types;
@@ -261,45 +231,35 @@ extern crate approx;
 #[macro_use]
 extern crate log;
 
-/// Mean radius of Earth in meters
-/// This is the value recommended by the IUGG:
-/// Moritz, H. (2000). Geodetic Reference System 1980. Journal of Geodesy, 74(1), 128–133. doi:10.1007/s001900050278
-/// "Derived Geometric Constants: mean radius" (p133)
-/// https://link.springer.com/article/10.1007%2Fs001900050278
-/// https://sci-hub.se/https://doi.org/10.1007/s001900050278
-/// https://en.wikipedia.org/wiki/Earth_radius#Mean_radius
+/// 地球的平均半径，单位为米
+/// 这是国际大地测量协会推荐的值：
 const MEAN_EARTH_RADIUS: f64 = 6371008.8;
 
-// Radius of Earth at the equator in meters (derived from the WGS-84 ellipsoid)
+// 地球在赤道的半径，单位为米（由WGS-84椭球体推导出）
 const EQUATORIAL_EARTH_RADIUS: f64 = 6_378_137.0;
 
-// Radius of Earth at the poles in meters (derived from the WGS-84 ellipsoid)
+// 地球在极地的半径，单位为米（由WGS-84椭球体推导出）
 const POLAR_EARTH_RADIUS: f64 = 6_356_752.314_245;
 
-// Flattening of the WGS-84 ellipsoid - https://en.wikipedia.org/wiki/Flattening
+// WGS-84椭球体的扁率 - https://en.wikipedia.org/wiki/Flattening
 const EARTH_FLATTENING: f64 =
     (EQUATORIAL_EARTH_RADIUS - POLAR_EARTH_RADIUS) / EQUATORIAL_EARTH_RADIUS;
 
-/// A prelude which re-exports the traits for manipulating objects in this
-/// crate. Typically imported with `use geo::prelude::*`.
+/// 一个通常用来重新导出这个crate中操作对象的特性段。通常使用`use geo::prelude::*`进行导入。
 pub mod prelude {
     pub use crate::algorithm::*;
 }
 
-/// A common numeric trait used for geo algorithms
+/// 针对geo算法使用的一种常用数值特性。
 ///
-/// Different numeric types have different tradeoffs. `geo` strives to utilize generics to allow
-/// users to choose their numeric types. If you are writing a function which you'd like to be
-/// generic over all the numeric types supported by geo, you probably want to constrain
-/// your function input to `GeoFloat`. For methods which work for integers, and not just floating
-/// point, see [`GeoNum`].
+/// 不同的数值类型有不同的权衡。`geo`努力使用泛型让用户选择他们的数值类型。如果你正在写一个希望对`geo`支持的所有数值类型都通用的函数，你可能需要限制函数输入为`GeoFloat`。针对整数而不仅仅是浮点数的方法，参见[`GeoNum`]。
 ///
-/// # Examples
+/// # 例子
 ///
 /// ```
 /// use geo::{GeoFloat, MultiPolygon, Polygon, Point};
 ///
-/// // An admittedly silly method implementation, but the signature shows how to use the GeoFloat trait
+/// // 一个明显愚蠢的方法实现，但签名显示了如何使用GeoFloat特性
 /// fn farthest_from<'a, T: GeoFloat>(point: &Point<T>, polygons: &'a MultiPolygon<T>) -> Option<&'a Polygon<T>> {
 ///     polygons.iter().fold(None, |accum, next| {
 ///         match accum {
@@ -329,18 +289,17 @@ impl<T> GeoFloat for T where
 {
 }
 
-/// A trait for methods which work for both integers **and** floating point
+/// 对整数**和**浮点数都有效的方法特性。
 pub trait GeoNum: CoordNum {
     type Ker: Kernel<Self>;
 
-    /// Return the ordering between self and other.
+    /// 返回self和other之间的排序。
     ///
-    /// For integers, this should behave just like [`Ord`].
+    /// 对于整数，这应该和[`Ord`]一样。
     ///
-    /// For floating point numbers, unlike the standard partial comparison between floating point numbers, this comparison
-    /// always produces an ordering.
+    /// 对于浮点数，不像标准的浮点数部分比较，这种比较始终产生排序。
     ///
-    /// See [f64::total_cmp](https://doc.rust-lang.org/src/core/num/f64.rs.html#1432) for details.
+    /// 详见[f64::total_cmp](https://doc.rust-lang.org/src/core/num/f64.rs.html#1432)。
     fn total_cmp(&self, other: &Self) -> Ordering;
 }
 
@@ -365,7 +324,7 @@ macro_rules! impl_geo_num_for_int {
     };
 }
 
-// This is the list of primitives that we support.
+// 这是我们支持的原始类型列表。
 impl_geo_num_for_float!(f32);
 impl_geo_num_for_float!(f64);
 impl_geo_num_for_int!(i16);

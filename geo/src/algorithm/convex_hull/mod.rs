@@ -2,19 +2,19 @@ use crate::geometry::{Coord, LineString, Polygon};
 use crate::kernels::*;
 use crate::GeoNum;
 
-/// Returns the convex hull of a geometry. The hull is always oriented counter-clockwise.
+/// 返回几何图形的凸包。凸包总是逆时针方向。
 ///
-/// This implementation uses the QuickHull algorithm,
-/// based on [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1 December 1996)](https://dx.doi.org/10.1145%2F235815.235821)
-/// Original paper here: <http://www.cs.princeton.edu/~dpd/Papers/BarberDobkinHuhdanpaa.pdf>
+/// 此实现使用快速凸包算法，
+/// 基于 [Barber, C. Bradford; Dobkin, David P.; Huhdanpaa, Hannu (1996年12月1日)](https://dx.doi.org/10.1145%2F235815.235821)
+/// 原始论文链接：<http://www.cs.princeton.edu/~dpd/Papers/BarberDobkinHuhdanpaa.pdf>
 ///
-/// # Examples
+/// # 示例
 ///
 /// ```
 /// use geo::{line_string, polygon};
 /// use geo::ConvexHull;
 ///
-/// // an L shape
+/// // 一个L形
 /// let poly = polygon![
 ///     (x: 0.0, y: 0.0),
 ///     (x: 4.0, y: 0.0),
@@ -25,7 +25,7 @@ use crate::GeoNum;
 ///     (x: 0.0, y: 0.0),
 /// ];
 ///
-/// // The correct convex hull coordinates
+/// // 正确的凸包坐标
 /// let correct_hull = line_string![
 ///     (x: 4.0, y: 0.0),
 ///     (x: 4.0, y: 1.0),
@@ -66,18 +66,14 @@ pub use qhull::quick_hull;
 pub mod graham;
 pub use graham::graham_hull;
 
-// Helper function that outputs the convex hull in the
-// trivial case: input with at most 3 points. It ensures the
-// output is ccw, and does not repeat points unless
-// required.
+// 辅助函数，用于在简单情况下输出凸包：输入最多为 3 个点。它确保输出是逆时针的，并且不会重复点，除非需要。
 fn trivial_hull<T>(points: &mut [Coord<T>], include_on_hull: bool) -> LineString<T>
 where
     T: GeoNum,
 {
     assert!(points.len() < 4);
 
-    // Remove repeated points unless collinear points
-    // are to be included.
+    // 除非需要包含共线点，否则删除重复点。
     let mut ls: Vec<Coord<T>> = points.to_vec();
     if !include_on_hull {
         ls.sort_unstable_by(lex_cmp);
@@ -86,7 +82,7 @@ where
         }
     }
 
-    // A linestring with a single point is invalid.
+    // 一个仅有单个点的线串是无效的。
     if ls.len() == 1 {
         ls.push(ls[0]);
     }
@@ -94,19 +90,19 @@ where
     let mut ls = LineString::new(ls);
     ls.close();
 
-    // Maintain the CCW invariance
+    // 维护逆时针不变性
     use super::winding_order::Winding;
     ls.make_ccw_winding();
     ls
 }
 
-/// Utility function for convex hull ops
+/// 凸包操作的工具函数
 ///
-/// 1. _swap_ the element at `idx` with the element at `head` (0th position)
-/// 2. remove the _new_ `head` element (modifying the slice)
-/// 3. return a _mutable ref_ to the removed head element
+/// 1. 交换 `idx` 处的元素与 `head`（第0个位置）的元素
+/// 2. 移除新的 `head` 元素（修改切片）
+/// 3. 返回被移除的头元素的可变引用
 fn swap_with_first_and_remove<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a mut T {
-    // temporarily replace `slice` with an empty value
+    // 临时用一个空值替换 `slice`
     let tmp = std::mem::take(slice);
     tmp.swap(0, idx);
     let (h, t) = tmp.split_first_mut().unwrap();

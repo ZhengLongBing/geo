@@ -3,9 +3,9 @@ use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat};
 
-// ┌────────────────────────────────┐
-// │ Implementations for Point      │
-// └────────────────────────────────┘
+// ┌──────────────────────────────────┐
+// │ Point 的实现                      │
+// └──────────────────────────────────┘
 
 impl<T> Contains<Coord<T>> for Point<T>
 where
@@ -31,7 +31,7 @@ where
 {
     fn contains(&self, line: &Line<T>) -> bool {
         if line.start == line.end {
-            // degenerate line is a point
+            // 退化的线作为一个点
             line.start == self.0
         } else {
             false
@@ -47,7 +47,7 @@ where
         if line_string.is_empty() {
             return false;
         }
-        // only a degenerate LineString could be within a point
+        // 只有退化的 LineString 可以包含在一个点中
         line_string.coords().all(|c| c == &self.0)
     }
 }
@@ -60,7 +60,7 @@ where
         if polygon.is_empty() {
             return false;
         }
-        // only a degenerate Polygon could be within a point
+        // 只有退化的 Polygon 可以包含在一个点中
         polygon.coords_iter().all(|coord| coord == self.0)
     }
 }
@@ -85,7 +85,7 @@ where
         if multi_line_string.is_empty() {
             return false;
         }
-        // only a degenerate MultiLineString could be within a point
+        // 只有退化的 MultiLineString 可以包含在一个点中
         multi_line_string
             .iter()
             .all(|line_string| self.contains(line_string))
@@ -100,7 +100,7 @@ where
         if multi_polygon.is_empty() {
             return false;
         }
-        // only a degenerate MultiPolygon could be within a point
+        // 只有退化的 MultiPolygon 可以包含在一个点中
         multi_polygon.iter().all(|polygon| self.contains(polygon))
     }
 }
@@ -124,7 +124,7 @@ where
     T: CoordNum,
 {
     fn contains(&self, rect: &Rect<T>) -> bool {
-        // only a degenerate Rect could be within a point
+        // 只有退化的 Rect 可以包含在一个点中
         rect.min() == rect.max() && rect.min() == self.0
     }
 }
@@ -134,16 +134,16 @@ where
     T: CoordNum,
 {
     fn contains(&self, triangle: &Triangle<T>) -> bool {
-        // only a degenerate Triangle could be within a point
+        // 只有退化的 Triangle 可以包含在一个点中
         triangle.0 == triangle.1 && triangle.0 == triangle.2 && triangle.0 == self.0
     }
 }
 
 impl_contains_geometry_for!(Point<T>);
 
-// ┌────────────────────────────────┐
-// │ Implementations for MultiPoint │
-// └────────────────────────────────┘
+// ┌──────────────────────────────────┐
+// │ MultiPoint  的实现               │
+// └──────────────────────────────────┘
 
 impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, MultiPoint<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 

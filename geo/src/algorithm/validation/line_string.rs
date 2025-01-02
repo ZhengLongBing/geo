@@ -5,9 +5,9 @@ use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidLineString {
-    /// A valid [`LineString`] must have at least 2 distinct points to be valid - it must have a non-zero length.
+    /// 有效的 [`LineString`] 必须至少有2个不同的点 - 必须有非零长度。
     TooFewPoints,
-    /// A valid [`LineString`] must have finite coordinates.
+    /// 有效的 [`LineString`] 必须具有有限的坐标。
     NonFiniteCoord(CoordIndex),
 }
 
@@ -15,10 +15,10 @@ impl fmt::Display for InvalidLineString {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InvalidLineString::TooFewPoints => {
-                write!(f, "line string must have at least 2 distinct points")
+                write!(f, "线字符串必须至少有2个不同的点")
             }
             InvalidLineString::NonFiniteCoord(idx) => {
-                write!(f, "coordinate at index {} is non-finite", idx.0)
+                write!(f, "索引为 {} 的坐标不是有限的", idx.0)
             }
         }
     }
@@ -37,7 +37,7 @@ impl<F: GeoFloat> Validation for LineString<F> {
             return Ok(());
         }
 
-        // Perform the various checks
+        // 执行各种检查
         if utils::check_too_few_points(self, false) {
             handle_validation_error(InvalidLineString::TooFewPoints)?;
         }

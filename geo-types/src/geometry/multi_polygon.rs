@@ -9,26 +9,21 @@ use core::iter::FromIterator;
 #[cfg(feature = "multithreading")]
 use rayon::prelude::*;
 
-/// A collection of [`Polygon`s](struct.Polygon.html). Can
-/// be created from a `Vec` of `Polygon`s, or from an
-/// Iterator which yields `Polygon`s. Iterating over this
-/// object yields the component `Polygon`s.
+/// [`Polygon`](struct.Polygon.html)的集合。可以从`Vec<Polygon>`创建，
+/// 或者从产生`Polygon`的迭代器创建。对这个对象进行迭代会产生组成它的`Polygon`。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// The _interior_ and the _boundary_ are the union of the
-/// interior and the boundary of the constituent polygons.
+/// _内部_和_边界_是构成多边形的内部和边界的并集。
 ///
-/// # Validity
+/// # 有效性
 ///
-/// - The interiors of no two constituent polygons may intersect.
+/// - 任意两个构成多边形的内部不能相交。
 ///
-/// - The boundaries of two (distinct) constituent polygons may only intersect at finitely many points.
+/// - 两个（不同的）构成多边形的边界只能在有限多个点上相交。
 ///
-/// Refer to section 6.1.14 of the OGC-SFA for a formal
-/// definition of validity. Note that the validity is not
-/// enforced, but expected by the operations and
-/// predicates that operate on it.
+/// 参考OGC-SFA的6.1.14节获取正式的有效性定义。注意，这里不强制执行有效性，
+/// 但在对其进行操作和断言时会假设其有效。
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiPolygon<T: CoordNum = f64>(pub Vec<Polygon<T>>);
@@ -109,7 +104,7 @@ impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPolygo
 }
 
 impl<T: CoordNum> MultiPolygon<T> {
-    /// Instantiate Self from the raw content value
+    /// 从原始内容值实例化Self
     pub fn new(value: Vec<Polygon<T>>) -> Self {
         Self(value)
     }
@@ -133,9 +128,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{polygon, Polygon, MultiPolygon};
@@ -177,9 +172,9 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 带有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{polygon, Polygon, MultiPolygon};
@@ -265,7 +260,7 @@ mod test {
             }
         }
 
-        // Do it again to prove that `multi` wasn't `moved`.
+        // 再次执行以证明`multi`没有被`移动`。
         first = true;
         for p in &multi {
             if first {

@@ -1,10 +1,8 @@
-//! Polygon monotone subdivision algorithm
+//! 多边形单调细分算法
 //!
-//! This implementation is based on these awesome [lecture notes] by David
-//! Mount.  The broad idea is to run a left-right planar sweep on the segments
-//! of the polygon and try to iteratively extend parallel monotone chains.
+//! 该实现基于David Mount的这些优秀[讲座笔记]。其大致思想是对多边形的段进行左右平面扫描，并尝试迭代地扩展平行单调链。
 //!
-//! [lecture notes]:
+//! [讲座笔记]:
 //! //www.cs.umd.edu/class/spring2020/cmsc754/Lects/lect05-triangulate.pdf
 
 use super::{MonoPoly, SimpleSweep};
@@ -14,14 +12,9 @@ use crate::{
 };
 use std::{cell::Cell, mem::replace};
 
-/// Construct a monotone subdivision (along the X-axis) of an iterator of polygons.
+/// 构建沿X轴的多边形迭代器的单调细分。
 ///
-/// Returns the set of monotone polygons that make up the subdivision.  The
-/// input polygon(s) must be a valid `MultiPolygon` (see the validity section in
-/// [`MultiPolygon`]).  In particular, each polygon must be simple, not
-/// self-intersect, and contain only finite coordinates;  further, the polygons
-/// must have distinct interiors, and their boundaries may only intersect at
-/// finite points.
+/// 返回构成细分的单调多边形集合。输入多边形必须是有效的`MultiPolygon`（参见[`MultiPolygon`]的有效性部分）。特别地，每个多边形必须简单、不可自交、只包含有限的坐标；此外，多边形必须有明显不同的内部，其边界只能在有限点相交。
 pub fn monotone_subdivision<T: GeoNum, I: IntoIterator<Item = Polygon<T>>>(
     iter: I,
 ) -> Vec<MonoPoly<T>> {
@@ -35,7 +28,7 @@ pub(super) struct Builder<T: GeoNum> {
 }
 
 impl<T: GeoNum> Builder<T> {
-    /// Create a new builder from a polygon.
+    /// 从多边形创建一个新的构建器。
     pub fn from_polygons_iter<I: IntoIterator<Item = Polygon<T>>>(iter: I) -> Self {
         let iter = iter.into_iter().flat_map(|polygon| {
             let (ext, ints) = polygon.into_inner();
@@ -48,7 +41,7 @@ impl<T: GeoNum> Builder<T> {
                         None
                     } else {
                         let line = LineOrPoint::from(line);
-                        debug!("adding line {:?}", line);
+                        debug!("添加线 {:?}", line);
                         Some((line, Default::default()))
                     }
                 })
@@ -65,8 +58,7 @@ impl<T: GeoNum> Builder<T> {
     }
 
     fn process_next_pt(&mut self) -> bool {
-        // Step 1. Get all the incoming and outgoing segments at the next point,
-        // and sort each of them by sweep ordering.
+        // 步骤1：获取下一个点处的所有进出段，并按扫描顺序对它们进行排序。
         let mut incoming = vec![];
         let mut outgoing = vec![];
 
@@ -80,7 +72,7 @@ impl<T: GeoNum> Builder<T> {
             EventType::LineLeft => {
                 outgoing.push(seg);
             }
-            _ => unreachable!("unexpected event type"),
+            _ => unreachable!("意外的事件类型"),
         }) {
             pt
         } else {
@@ -90,33 +82,29 @@ impl<T: GeoNum> Builder<T> {
         outgoing.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
         info!(
-            "\n\nprocessing point {:?}, #in={}, #out={}",
+            "\n\n处理点 {:?}, #入={}, #出={}",
             pt,
             incoming.len(),
             outgoing.len()
         );
 
-        // Step 2. Calculate region below the point, and if any previous point
-        // registered a help.
+        // 步骤2：计算点下方的区域，并检查是否有任何先前的点注册了帮助。
         let bot_segment = self.sweep.prev_active_from_geom(pt.into());
         let (bot_region, bot_help) = bot_segment
             .as_ref()
             .map(|seg| (seg.payload().next_is_inside.get(), seg.payload().help.get()))
             .unwrap_or((false, None));
-        debug!("bot region: {:?}", bot_region);
-        debug!("bot segment: {:?}", bot_segment.as_ref().map(|s| s.line()));
+        debug!("下方区域: {:?}", bot_region);
+        debug!("下方段: {:?}", bot_segment.as_ref().map(|s| s.line()));
 
-        // Step 3. Reduce incoming segments.  Any two consecutive incoming
-        // segment that encloses the input region should now complete a
-        // mono-polygon; so we `finish` their chains.  Thus, we should be left
-        // with at-most two incoming segments.
+        // 步骤3：简化进入段。任何包围输入区域的两段连续进入段现在应该完成一个单调多边形；因此我们“完成”它们的链。我们应该至多剩下两段进入段。
         if !incoming.is_empty() {
             let n = incoming.len();
 
             #[allow(clippy::bool_to_int_with_if)]
             let start_idx = if bot_region { 1 } else { 0 };
             let ub_idx = n - (n - start_idx) % 2;
-            debug!("reducing incoming segments: {n} -> {start_idx}..{ub_idx}");
+            debug!("简化进入段: {n} -> {start_idx}..{ub_idx}");
 
             let mut iter = incoming.drain(start_idx..ub_idx);
             while let Some(first) = iter.next() {
@@ -127,7 +115,7 @@ impl<T: GeoNum> Builder<T> {
                     .take()
                     .unwrap();
 
-                // Any help registered on the first segment should be considered.
+                // 考虑在第一个段注册的任何帮助。
                 if let Some(help) = first.payload().help.get() {
                     first.payload().help.set(None);
                     let mut fhc = self.chains[help[0]].take().unwrap();
@@ -142,10 +130,9 @@ impl<T: GeoNum> Builder<T> {
             }
         }
         debug_assert!(incoming.len() <= 2);
-        // Handle help on bot segment and reduce further to at-most two chain
-        // indices that need to be extended.
+        // 处理下段上的帮助并进一步减少到需要扩展的至多两个链索引。
         let in_chains = if let Some(h) = bot_help {
-            debug!("serving to help: {h:?}");
+            debug!("提供帮助: {h:?}");
             bot_segment.as_ref().unwrap().payload().help.set(None);
             if !incoming.is_empty() {
                 let sc = self.chains[incoming[0].payload().chain_idx.get()]
@@ -200,15 +187,13 @@ impl<T: GeoNum> Builder<T> {
             }
         };
 
-        // Step 4. Reduce outgoing segments.  Any two consecutive outgoing
-        // segment that encloses the input region can be started as a new
-        // region.  This again reduces the outgoing list to atmost two segments.
+        // 步骤4：简化出段。任何包围输入区域的两段连续出段可以开始一个新区域。这再次将出段列表简化到最多两个段。
         if !outgoing.is_empty() {
             let n = outgoing.len();
             #[allow(clippy::bool_to_int_with_if)]
             let start_idx = if bot_region { 1 } else { 0 };
             let ub_idx = n - (n - start_idx) % 2;
-            debug!("reducing outgoing segments: {n} -> {start_idx}..{ub_idx}");
+            debug!("简化出段: {n} -> {start_idx}..{ub_idx}");
             let mut iter = outgoing.drain(start_idx..ub_idx);
             while let Some(first) = iter.next() {
                 let second = iter.next().unwrap();
@@ -225,14 +210,11 @@ impl<T: GeoNum> Builder<T> {
         }
         debug_assert!(outgoing.len() <= 2);
 
-        // Step 5. Tie up incoming and outgoing as applicable
+        // 步骤5：绑扎适用的进出段
         debug!("in_chains: {in_chains:?}");
         match in_chains {
             (None, None) => {
-                // No incoming segments left after reduction.  Since we have
-                // reduced the outgoing, the only case is the "split vertex" or
-                // "<" case.  Here, we will use the helper_chain to extend the
-                // chain.
+                // 简化后没有剩余的进入段。由于我们已经简化了出段，唯一的情况是“分裂顶点”或“<”情况。在这里，我们将使用helper_chain来扩展链。
                 if !outgoing.is_empty() {
                     assert!(outgoing.len() == 2);
                     let first = &outgoing[0];
@@ -286,7 +268,7 @@ impl<T: GeoNum> Builder<T> {
                     first.payload().chain_idx.set(idx);
                     second.payload().chain_idx.set(jdx);
                 } else {
-                    debug!("registering help: [{}, {}]", idx, jdx);
+                    debug!("注册帮助: [{}, {}]", idx, jdx);
                     bot_segment
                         .as_ref()
                         .unwrap()
@@ -310,14 +292,14 @@ pub(super) struct Chain<T: GeoNum>(LineString<T>);
 impl<T: GeoNum + std::fmt::Debug> std::fmt::Debug for Chain<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let bot: Vec<SweepPoint<T>> = self.0 .0.iter().map(|c| (*c).into()).collect();
-        f.debug_tuple("Chain").field(&bot).finish()
+        f.debug_tuple("链").field(&bot).finish()
     }
 }
 
 impl<T: GeoNum> Chain<T> {
     pub fn from_segment_pair(start: Coord<T>, first: Coord<T>, second: Coord<T>) -> [Self; 2] {
         let [x, y, z] = [SweepPoint::from(start), first.into(), second.into()];
-        debug!("Creating chain from {x:?} -> {y:?}");
+        debug!("从 {x:?} -> {y:?} 创建链");
         debug!("                    {x:?} -> {z:?}");
         [
             Chain(line_string![start, first]),
@@ -333,7 +315,7 @@ impl<T: GeoNum> Chain<T> {
         let top = self.0 .0.pop().unwrap();
         let prev = *self.0 .0.last().unwrap();
         debug!(
-            "chain swap: {:?} -> {:?}",
+            "链交换: {:?} -> {:?}",
             SweepPoint::from(top),
             SweepPoint::from(pt)
         );
@@ -353,7 +335,7 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn push(&mut self, pt: Coord<T>) {
-        debug!("chain push: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
+        debug!("链推进: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
         self.0 .0.push(pt);
     }
 
@@ -361,17 +343,17 @@ impl<T: GeoNum> Chain<T> {
         assert!(
             self.0 .0[0] == other.0 .0[0]
                 && self.0 .0.last().unwrap() == other.0 .0.last().unwrap(),
-            "chains must finish with same start/end points"
+            "链必须以相同的起始/结束点结束"
         );
-        debug!("finishing {self:?} with {other:?}");
+        debug!("结束 {self:?} 与 {other:?}");
         MonoPoly::new(other.0, self.0)
     }
 }
 
 #[derive(Debug, Default, Clone)]
 struct Info {
-    next_is_inside: Cell<bool>,
-    helper_chain: Cell<Option<usize>>,
-    help: Cell<Option<[usize; 2]>>,
-    chain_idx: Cell<usize>,
+    next_is_inside: Cell<bool>,        // 存储下一个点是否位于内侧
+    helper_chain: Cell<Option<usize>>, // 存储帮助链的索引
+    help: Cell<Option<[usize; 2]>>,    // 存储包含两个索引的帮助信息
+    chain_idx: Cell<usize>,            // 存储链索引
 }

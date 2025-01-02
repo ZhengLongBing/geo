@@ -5,17 +5,17 @@ use crate::{GeoFloat, MultiPolygon, Relate};
 
 use std::fmt;
 
-/// A [`MultiPolygon`] is valid if:
-/// - [x] all its polygons are valid,
-/// - [x] elements do not overlaps (i.e. their interiors must not intersect)
-/// - [x] elements touch only at points
+/// 一个 [`MultiPolygon`] 是有效的，如果：
+/// - [x] 它的所有多边形都是有效的，
+/// - [x] 元素之间不重叠（即它们的内部不相交）
+/// - [x] 元素只能在点处接触
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidMultiPolygon {
-    /// For a [`MultiPolygon`] to be valid, each member [`Polygon`](crate::Polygon) must be valid.
+    /// 对于一个 [`MultiPolygon`] 来说，要有效其中的每个 [`Polygon`](crate::Polygon) 必须是有效的。
     InvalidPolygon(GeometryIndex, InvalidPolygon),
-    /// No [`Polygon`](crate::Polygon) in a valid [`MultiPolygon`] may overlap (2-dimensional intersection)
+    /// 一个有效的 [`MultiPolygon`] 中的任何 [`Polygon`](crate::Polygon) 不能重叠（二维交集）
     ElementsOverlaps(GeometryIndex, GeometryIndex),
-    /// No [`Polygon`](crate::Polygon) in a valid [`MultiPolygon`] may touch on a line (1-dimensional intersection)
+    /// 一个有效的 [`MultiPolygon`] 中的任何 [`Polygon`](crate::Polygon) 不能在一条线上接触（一维交集）
     ElementsTouchOnALine(GeometryIndex, GeometryIndex),
 }
 
@@ -23,17 +23,13 @@ impl fmt::Display for InvalidMultiPolygon {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InvalidMultiPolygon::InvalidPolygon(idx, err) => {
-                write!(f, "polygon at index {} is invalid: {}", idx.0, err)
+                write!(f, "索引为 {} 的多边形无效: {}", idx.0, err)
             }
             InvalidMultiPolygon::ElementsOverlaps(idx1, idx2) => {
-                write!(f, "polygons at indices {} and {} overlap", idx1.0, idx2.0)
+                write!(f, "索引为 {} 和 {} 的多边形重叠", idx1.0, idx2.0)
             }
             InvalidMultiPolygon::ElementsTouchOnALine(idx1, idx2) => {
-                write!(
-                    f,
-                    "polygons at indices {} and {} touch on a line",
-                    idx1.0, idx2.0
-                )
+                write!(f, "索引为 {} 和 {} 的多边形在一条线上接触", idx1.0, idx2.0)
             }
         }
     }
@@ -49,6 +45,7 @@ impl<F: GeoFloat> Validation for MultiPolygon<F> {
         mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
     ) -> Result<(), T> {
         for (i, polygon) in self.0.iter().enumerate() {
+            // 检查每个多边形是否有效
             polygon.visit_validation(Box::new(&mut |invalid_polygon| {
                 handle_validation_error(InvalidMultiPolygon::InvalidPolygon(
                     GeometryIndex(i),
@@ -56,7 +53,7 @@ impl<F: GeoFloat> Validation for MultiPolygon<F> {
                 ))
             }))?;
 
-            // Special case for MultiPolygon: elements must not overlap and must touch only at points
+            // 特殊情况 MultiPolygon: 元素不能重叠且只能在点处接触
             for (j, pol2) in self.0.iter().enumerate().skip(i + 1) {
                 let im = polygon.relate(pol2);
                 if im.get(CoordPos::Inside, CoordPos::Inside) == Dimensions::TwoDimensional {
@@ -87,9 +84,9 @@ mod tests {
 
     #[test]
     fn test_multipolygon_invalid() {
-        // The following multipolygon contains two invalid polygon
-        // and it is invalid itself because the two polygons of the multipolygon are not disjoint
-        // (here they are identical)
+        // 以下多边形包含两个无效的多边形
+        // 它本身也是无效的，因为多边形的两个多边形不是不相交的
+        // （这里它们是相同的）
         let multi_polygon = wkt!(
             MULTIPOLYGON (
                 (

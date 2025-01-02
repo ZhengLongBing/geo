@@ -8,47 +8,37 @@ use core::iter::FromIterator;
 #[cfg(feature = "multithreading")]
 use rayon::prelude::*;
 
-/// A collection of
-/// [`LineString`s](line_string/struct.LineString.html). Can
-/// be created from a `Vec` of `LineString`s or from an
-/// Iterator which yields `LineString`s. Iterating over this
-/// object yields the component `LineString`s.
+/// [`LineString`](line_string/struct.LineString.html)的集合。
+/// 可以从`LineString`的`Vec`或产生`LineString`的迭代器创建。
+/// 迭代此对象会产生组成的`LineString`。
 ///
-/// # Semantics
+/// # 语义
 ///
-/// The _boundary_ of a `MultiLineString` is obtained by
-/// applying the “mod 2” union rule: A `Point` is in the
-/// boundary of a `MultiLineString` if it is in the
-/// boundaries of an odd number of elements of the
-/// `MultiLineString`.
+/// `MultiLineString`的_边界_通过应用"模2"并集规则获得：
+/// 如果一个`Point`在`MultiLineString`的奇数个元素的边界上，
+/// 则它在`MultiLineString`的边界上。
 ///
-/// The _interior_ of a `MultiLineString` is the union of
-/// the interior, and boundary of the constituent
-/// `LineString`s, _except_ for the boundary as defined
-/// above. In other words, it is the set difference of the
-/// boundary from the union of the interior and boundary of
-/// the constituents.
+/// `MultiLineString`的_内部_是组成`LineString`的内部和边界的并集，
+/// _除了_上面定义的边界。换句话说，它是边界与组成部分的内部和边界的并集的差集。
 ///
-/// A `MultiLineString` is _simple_ if and only if all of
-/// its elements are simple and the only intersections
-/// between any two elements occur at `Point`s that are on
-/// the boundaries of both elements. A `MultiLineString` is
-/// _closed_ if all of its elements are closed. The boundary
-/// of a closed `MultiLineString` is always empty.
+/// 当且仅当所有元素都是简单的，并且任意两个元素之间的唯一交点
+/// 发生在两个元素边界上的`Point`处时，`MultiLineString`是_简单的_。
+/// 如果所有元素都是闭合的，则`MultiLineString`是_闭合的_。
+/// 闭合`MultiLineString`的边界始终为空。
 #[derive(Eq, PartialEq, Clone, Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct MultiLineString<T: CoordNum = f64>(pub Vec<LineString<T>>);
 
 impl<T: CoordNum> MultiLineString<T> {
-    /// Instantiate Self from the raw content value
+    /// 从原始内容值实例化Self
     pub fn new(value: Vec<LineString<T>>) -> Self {
         Self(value)
     }
 
-    /// True if the MultiLineString is empty or if all of its LineStrings are closed - see
-    /// [`LineString::is_closed`].
+    /// 如果MultiLineString为空或其所有LineString都是闭合的，则返回true - 参见
+    /// [`LineString::is_closed`]。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{MultiLineString, LineString, line_string};
@@ -59,14 +49,14 @@ impl<T: CoordNum> MultiLineString<T> {
     /// let closed_line_string: LineString<f32> = line_string![(x: 0., y: 0.), (x: 5., y: 0.), (x: 0., y: 0.)];
     /// assert!(MultiLineString::new(vec![closed_line_string.clone()]).is_closed());
     ///
-    /// // MultiLineString is not closed if *any* of it's LineStrings are not closed
+    /// // 如果*任何*LineString未闭合，则MultiLineString不闭合
     /// assert!(!MultiLineString::new(vec![open_line_string, closed_line_string]).is_closed());
     ///
-    /// // An empty MultiLineString is closed
+    /// // 空的MultiLineString是闭合的
     /// assert!(MultiLineString::<f32>::new(vec![]).is_closed());
     /// ```
     pub fn is_closed(&self) -> bool {
-        // Note: Unlike JTS et al, we consider an empty MultiLineString as closed.
+        // 注意：与JTS等不同，我们认为空的MultiLineString是闭合的。
         self.iter().all(LineString::is_closed)
     }
 }
@@ -160,9 +150,9 @@ where
         T::default_max_relative()
     }
 
-    /// Equality assertion within a relative limit.
+    /// 在相对限制内的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{MultiLineString, line_string};
@@ -202,9 +192,9 @@ where
         T::default_epsilon()
     }
 
-    /// Equality assertion with an absolute limit.
+    /// 带有绝对限制的相等性断言。
     ///
-    /// # Examples
+    /// # 示例
     ///
     /// ```
     /// use geo_types::{MultiLineString, line_string};
@@ -262,7 +252,7 @@ mod test {
             }
         }
 
-        // Do it again to prove that `multi` wasn't `moved`.
+        // 再次执行以证明`multi`没有被`移动`。
         first = true;
         for p in &multi {
             if first {
